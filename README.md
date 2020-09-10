@@ -28,7 +28,7 @@ alias wireles='python prc/wireles.py'
 ```
 then you can run various of application with the line
 ```bash
-wireles [applications name] [case name]'
+wireles [applications name] [case name]
 ```
 applications list:
 - create: create case with dummy default file
