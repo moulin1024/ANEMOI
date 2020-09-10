@@ -1,8 +1,9 @@
 ## WireLES2
 @author: Mou Lin (mou.lin@epfl.ch),Tristan Revaz(tristan.revaz@epfl.ch)
+![Farmers Market Finder Demo](./animation.gif)
 
 ### Introduction
-WireLES2 is large-eddy simulation code written in CUDA Fortran for simulating atmospheric boundary layer flows. It solves the filtered continuity equation and the filtered Navier-Stokes equations (using the Boussinesq approximation). The numerical method used in this code is based on the PhD thesis of Albertson, 1996 [1] (attached in doc/theory).
+WireLES2 is a large-eddy simulation code written in CUDA Fortran for simulating atmospheric boundary layer flows. It solves the filtered continuity equation and the filtered Navier-Stokes equations (using the Boussinesq approximation). The numerical method used in this code is based on the PhD thesis of Albertson, 1996 [1] (attached in doc/theory).
 
 Its main features can be summarized as follows: It uses a second-order Adams–Bashforth explicit scheme for time advancement and a hybrid pseudospectral finite-difference scheme for the spatial discretization. The lateral boundary conditions are periodic. The top boundary condition is set up as a flux-free condition. The bottom boundary condition requires the calculation of the instantaneous surface shear stress, which is accomplished through the local application of Monin–Obukhov similarity theory. The SGS fluxes of momentum are parameterized using Lagrangian scale-dependent dynamic models [2]. 
 
@@ -44,8 +45,8 @@ applications list:
 - h5gen: generating self-explained hdf5 file of the simulation data for customized postprocessing
 
 A simple workflow: create --> edit --> pre --> solve/debug --> post/anime
-
-To make life easier, a bash script *test_example.sh* has been provided in ./test to allow the new user to run a example case easily. 
+ 
+To make life easier, a bash script *test_run.sh* has been provided to allow the new user to run a example case easily. 
 
    
 ### Reference
