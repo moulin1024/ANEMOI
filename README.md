@@ -45,7 +45,7 @@ applications list:
 
 A simple workflow: create --> edit --> pre --> solve/debug --> post/anime
  
-To make life easier, a bash script *test_run.sh* has been provided in ./test to allow the new user to run a example case easily. 
+To make life easier, a bash script *test_run.sh* has been provided to allow the new user to run a example case easily. 
 
    
 ### Reference
