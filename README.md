@@ -44,8 +44,8 @@ applications list:
 - h5gen: generating self-explained hdf5 file of the simulation data for customized postprocessing
 
 A simple workflow: create --> edit --> pre --> solve/debug --> post/anime
-
-To make life easier, a bash script *test_example.sh* has been provided in ./test to allow the new user to run a example case easily. 
+ 
+To make life easier, a bash script *test_run.sh* has been provided in ./test to allow the new user to run a example case easily. 
 
    
 ### Reference
