@@ -1,5 +1,6 @@
 ## WireLES2
 @author: Mou Lin (mou.lin@epfl.ch),Tristan Revaz(tristan.revaz@epfl.ch)
+![Farmers Market Finder Demo](./animation.gif)
 
 ### Introduction
 WireLES2 is large-eddy simulation code written in CUDA Fortran for simulating atmospheric boundary layer flows. It solves the filtered continuity equation and the filtered Navier-Stokes equations (using the Boussinesq approximation). The numerical method used in this code is based on the PhD thesis of Albertson, 1996 [1] (attached in doc/theory).
