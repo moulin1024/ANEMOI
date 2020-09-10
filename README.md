@@ -35,8 +35,9 @@ applications list:
 - solve: submit case to the cluster through the slurm 
 - debug: run the case on the local machine or cluster interactive debug mode
 - make: compile the case
+- post: quick build-in post processing of the simulation data
 - anime: produce an animation of the flow from instant fields output
-- write: cuda fft
+- h5gen: generating self-explained hdf5 file of the simulation data for customized postprocessing
 
 A simple workflow: create --> edit --> pre --> solve/debug --> post/anime
 
