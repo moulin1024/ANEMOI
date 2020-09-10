@@ -1,3 +1,4 @@
 *.pyc
 *.o
 *.png
+*.DS_Store

@@ -335,15 +335,15 @@ program main
         ! applying pressure gradient (not needed fror)
         if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx)
         
-        if (turb_flag == 1) then
-            if (device_id == 0) then
-                call turbine_force(fx,fy,fz,u,v,w,alpha_cl_cd,t)
-                ! applying forcing to the rhs
-                call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
-                call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
-                call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
-            end if
-        end if
+        ! if (turb_flag == 1) then
+        !     if (device_id == 0) then
+        !         call turbine_force(fx,fy,fz,u,v,w,alpha_cl_cd,t)
+        !         ! applying forcing to the rhs
+        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
+        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
+        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
+        !     end if
+        ! end if
         !-----------------------------------------------------------------------
         ! Time stepping
         !-----------------------------------------------------------------------        

@@ -60,31 +60,28 @@ subroutine pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan)
         allocate(h_3(ni,nj,nz))
     endif
 
-    ! ! !---------------------------------------------------------------------------
-    ! ! ! compute forward fft interior
-    ! ! print *,rhs_p(:,3,3)
+    !---------------------------------------------------------------------------
+    ! compute forward fft interior
     call cufftExec(plan(1),rhs_p(:,:,2:nzb+1),h_x)
-    ! !---------------------------------------------------------------------------
-    ! ! redistribute mpi
+    !---------------------------------------------------------------------------
+    ! redistribute the  mpi
+    ! Notice: In a single processor (GPU) it is simply doing h_x = h_3
     call slab_transpose_z2y<<<grid1, tBlock1>>>(h_x,h_3)
     ! ! call mpi_alltoall(h_3(1,1,1),lsize,mpi_double_complex(fp), &
     ! !     h_2(1,1,1),lsize,mpi_double_complex(fp),nall,ierr)
-    ! h_2 = h_3
-
+    
     !---------------------------------------------------------------------------
     ! solve tri-diag matrix
     call solve_tridiag<<<grid, tBlock>>>(h_3,me)
     
     !-------------------------------------------------------------------------
     ! redistribute mpi
-    ! h_3 = h_2
-
+    ! Notice: In a single processor (GPU) it is simply doing h_3 = h_x
     call slab_transpose_y2z<<<grid, tBlock>>>(h_3,h_x)
-    
-    ! h_3_host = h_3
-    ! !-------------------------------------------------------------------------
-    ! ! compute p_hat (i.e h_z), dpdx_hat, dpdy_hat
-    ! ! x
+
+    !-------------------------------------------------------------------------
+    ! compute p_hat (i.e h_z), dpdx_hat, dpdy_hat
+    ! x
     call press_grad<<<grid_3d, tBlock_3d>>>(h_x,dpdx_hat,dpdy_hat)
     call cufftExec(plan(2),dpdx_hat,dpdx(:,:,2:nzb+1))
     call cufftExec(plan(2),dpdy_hat,dpdy(:,:,2:nzb+1))
@@ -210,32 +207,26 @@ attributes(device) SUBROUTINE mat_assemble(a1,b1,c1,ii,jj)
 END SUBROUTINE mat_assemble
 
 attributes(device) SUBROUTINE tridag(a,b,c,r,u,n)
+    ! Thomas algorithm for tridiag matrix
+    ! Reused from Numerical recipe
+    INTEGER*4 n,NMAX
+    real(fp) a(n),b(n),c(n),r(n),u(n)
+    PARAMETER (NMAX=500)
+    INTEGER*4 j
+    real(fp) bet,gam(NMAX)
 
-      INTEGER*4 n,NMAX
-      real(fp) a(n),b(n),c(n),r(n),u(n)
-      PARAMETER (NMAX=500)
-      INTEGER*4 j
-      real(fp) bet,gam(NMAX)
-
-    !   if(b(1).eq.0.)pause !'tridag: rewrite equations'
-      bet=b(1)
-      u(1)=r(1)/bet
-      do 11 j=2,n
+    bet=b(1)
+    u(1)=r(1)/bet
+    do 11 j=2,n
         gam(j)=c(j-1)/bet
         bet=b(j)-a(j)*gam(j)
-        ! TODO: HOW TO THROW ERROR IN DEVICE CODE
-        ! if(bet.eq.0.) then
-        !    print *, 'tridag failed at k=',j
-        !    print *,'a, b, c, gam, and bet=',a(j),b(j),c(j),gam(j),bet
-        !    pause
-        ! end if
         u(j)=(r(j)-a(j)*u(j-1))/bet
 11    continue
-      do 12 j=n-1,1,-1
+    do 12 j=n-1,1,-1
         u(j)=u(j)-gam(j+1)*u(j+1)
-12    continue
+12  continue
 
-      return
+    return
 
 END SUBROUTINE tridag
 
