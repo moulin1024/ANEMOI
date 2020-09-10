@@ -1,0 +1,104 @@
+subroutine update(u,me,nall)
+
+    implicit none
+    real(fp), dimension(nx,ny,nz2):: u
+
+    if(nprocs.gt.1)then
+
+        if (me==0) then
+
+            call mpi_sendrecv(u(1,1,nzb+1),nx*ny, mpi_real(fp),me+1,me+1,&
+                u(1,1,nzb+2),nx*ny, mpi_real(fp),me+1,me,nall,status2,ierr)
+
+        elseif (me<=nprocs-2) then
+
+            call mpi_sendrecv(u(1,1,2),nx*ny, mpi_real(fp),me-1,me-1,&
+                u(1,1,1),nx*ny, mpi_real(fp),me-1,me,nall,status2,ierr)
+
+            call mpi_sendrecv(u(1,1,nzb+1),nx*ny, mpi_real(fp),me+1,me+1,&
+                u(1,1,nzb+2),nx*ny, mpi_real(fp),me+1,me,nall,status2,ierr)
+
+        else
+
+            call mpi_sendrecv(u(1,1,2),nx*ny, mpi_real(fp),me-1,me-1,&
+                u(1,1,1),nx*ny, mpi_real(fp),me-1,me,nall,status2,ierr)
+
+        endif
+    endif
+
+end subroutine update
+
+!===============================================================================
+!===============================================================================
+
+subroutine update_uv(u,me,nall)
+
+    implicit none
+    real(fp), dimension(nx,ny,nz2):: u
+
+    if(nprocs.gt.1)then
+
+        if (me==0) then
+
+            call mpi_send(u(1,1,nzb+1),nx*ny, mpi_real(fp),me+1,me+1,nall,status2,ierr)
+
+        elseif (me<=nprocs-2) then
+
+            call mpi_sendrecv(u(1,1,nzb+1),nx*ny, mpi_real(fp),me+1,me+1,&
+                u(1,1,1),nx*ny, mpi_real(fp),me-1,me,nall,status2,ierr)
+
+        else
+
+            call mpi_recv(u(1,1,1),nx*ny, mpi_real(fp),me-1,me,nall,status2,ierr)
+
+        endif
+    endif
+
+end subroutine update_uv
+
+subroutine update_w(u,me,nall)
+
+    implicit none
+    real(fp), dimension(nx,ny,nz2):: u
+
+    if(nprocs.gt.1)then
+
+        if (me==0) then
+
+            call mpi_recv(u(1,1,nzb+2),nx*ny, mpi_real(fp),me+1,me,nall,status2,ierr)
+
+        elseif (me<=nprocs-2) then
+
+            call mpi_sendrecv(u(1,1,2),nx*ny, mpi_real(fp),me-1,me-1,&
+                u(1,1,nzb+2),nx*ny, mpi_real(fp),me+1,me,nall,status2,ierr)
+
+        else
+
+            call mpi_send(u(1,1,2),nx*ny, mpi_real(fp),me-1,me-1,nall,status2,ierr)
+
+        endif
+    endif
+
+end subroutine update_w
+
+subroutine update_top(u,me,nall)
+
+    implicit none
+    real(fp), dimension(nx,ny,nz2):: u
+
+    if(nprocs.gt.1)then
+
+        if (me==nprocs-2) then
+
+            call mpi_send(u(1,1,nzb+1),nx*ny, mpi_real(fp),me+1,me+1,&
+                nall,status2,ierr)
+
+        elseif (me==nprocs-1) then
+
+            call mpi_recv(u(1,1,1),nx*ny, mpi_real(fp),me-1,me,&
+                nall,status2,ierr)
+
+        endif
+    endif
+
+end subroutine update_top

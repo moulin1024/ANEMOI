@@ -1,0 +1,118 @@
+module derivative
+    use precision
+    use dimen
+    contains
+    !---------------------------------------------------------------------------
+    ! This module compute the derivative of the flow field
+    !---------------------------------------------------------------------------
+    ! contains subroutine:
+    ! - ddxy
+    !---------------------------------------------------------------------------
+
+subroutine ddxy(dfdi,f,axis,t,plan)
+    !---------------------------------------------------------------------------
+    ! declaration
+    !---------------------------------------------------------------------------
+    use cufft_m 
+    use cudafor
+    implicit none
+    ! Input: velocity field
+    real(fp), dimension(nx,ny,nz2),intent(inout),device :: f,dfdi
+    integer axis
+    complex(fp), dimension(:,:,:),allocatable,device :: f_hat,dfdi_hat
+    ! fft plan
+    type(c_ptr)  :: plan(2)
+    integer :: istat,k,t
+    ! Cuda variable
+    type(dim3) :: grid, tBlock
+    grid = dim3((nx/2)/16,ny/16,nzb/2)
+    tBlock = dim3(16,16,2)
+    save f_hat,dfdi_hat
+    !---------------------------------------------------------------------------
+    ! main code
+    !---------------------------------------------------------------------------
+    !---------------------------------------------------------------------------
+    ! init
+    if (t.eq.1) then
+        allocate(f_hat(nx/2+1,ny,nz2))
+        allocate(dfdi_hat(nx/2+1,ny,nz2))
+    endif
+
+    !---------------------------------------------------------------------------
+    ! Forward fft
+    call cufftExec(plan(1),f(:,:,2:nzb+1),f_hat(:,:,2:nzb+1))
+
+    !---------------------------------------------------------------------------
+    ! Computing x derivatives or y derivative
+    call spec_deriv_xy<<<grid, tBlock>>>(f_hat,dfdi_hat,axis)
+    
+    !---------------------------------------------------------------------------
+    ! Backward fft
+    call  cufftExec(plan(2),dfdi_hat(:,:,2:nzb+1),dfdi(:,:,2:nzb+1))
+end subroutine ddxy
+
+attributes(global) subroutine spec_deriv_xy(f_hat,dfdi_hat,axis)
+    implicit none
+    complex(fp), dimension(nx/2+1,ny,nz2),intent(inout) :: f_hat,dfdi_hat
+    integer,value :: axis
+    integer :: i,j,k,ii,jj
+    i = (blockIdx%x - 1) * blockDim%x + threadIdx%x;
+    j = (blockIdx%y - 1) * blockDim%y + threadIdx%y;
+    k = (blockIdx%z - 1) * blockDim%z + threadIdx%z;
+    k = k + 1
+
+    f_hat(i,j,k) = f_hat(i,j,k)*inxny
+    ! Shift wave number
+    ii = i - 1
+    jj = j - 1
+    if(jj.gt.nint(ny/2.)) jj=jj-ny
+    jj = jj*l_r
+    
+    !---------------------------------------------------------------------------
+    ! Compute spectral derivative
+    if (axis == 1) then         ! dfdx
+        dfdi_hat(i,j,k) = dcmplx(aimag(-f_hat(i,j,k)),dble(f_hat(i,j,k)))*ii
+    else if (axis == 2) then    ! dfdy
+        dfdi_hat(i,j,k) = dcmplx(aimag(-f_hat(i,j,k)),dble(f_hat(i,j,k)))*jj
+    end if
+
+    !---------------------------------------------------------------------------
+    ! Cut nyquist frequency 
+    ! Notice the special treatement at nx/2+1 th element.
+    ! (not covered by the block/grid configuration)
+    if (abs(jj) == nint(l_r*ny/2.))then
+        dfdi_hat(i,j,k) = dcmplx(0._fp)
+        dfdi_hat(nx/2+1,j,k) = dcmplx(0._fp)
+    else if (ii == (nx/2-1)) then ! We only launched nx/2 thread
+        dfdi_hat(nx/2+1,j,k) = dcmplx(0._fp)
+    end if
+end subroutine spec_deriv_xy
+
+attributes(global) subroutine ddz (dfdz,f,stagger_flag)
+    !---------------------------------------------------------------------------
+    ! declaration
+    !---------------------------------------------------------------------------
+    implicit none
+    real(fp), dimension(nx,ny,nz2), intent(out) :: dfdz
+    real(fp), dimension(nx,ny,nz2), intent(in) :: f
+    integer,value,intent(in) :: stagger_flag
+    integer :: i,j,k
+
+    i = (blockIdx%x - 1) * blockDim%x + threadIdx%x
+    j = (blockIdx%y - 1) * blockDim%y + threadIdx%y
+    k = (blockIdx%z - 1) * blockDim%z + threadIdx%z;
+    !---------------------------------------------------------------------------
+    ! main code
+    !---------------------------------------------------------------------------
+    if (k>1 .and. k<nz2) then
+        if (stagger_flag == 0) then ! uv node
+            dfdz(i,j,k)=(f(i,j,k)-f(i,j,k-1))*idz
+        else if (stagger_flag == 1) then ! w node
+            dfdz(i,j,k)=(f(i,j,k+1)-f(i,j,k))*idz
+        end if
+    end if
+end subroutine ddz
+
+end module derivative
+
+    
