@@ -27,7 +27,7 @@ from matplotlib import animation, rc
 ################################################################################
 # MAIN FONCTION
 ################################################################################
-def h5gen(PATH, case_name):
+def anime(PATH, case_name):
     '''
     DEF:    post-processing for wireles.
     INPUT:  - case_name
@@ -75,38 +75,38 @@ def h5gen(PATH, case_name):
     XX,YY = np.meshgrid(x,y,indexing='ij')
     YY2,ZZ = np.meshgrid(y,z,indexing='ij')
     u = result_4d['u_inst_c']
-    v = result_4d['v_inst_c']
-    w = result_4d['w_inst_c']
+    # v = result_4d['v_inst_c']
+    # w = result_4d['w_inst_c']
 
-    u2 = u*u - np.mean(u,axis=0)*np.mean(u,axis=0)
-    v2 = v*v - np.mean(v,axis=0)*np.mean(v,axis=0)
-    w2 = w*w - np.mean(w,axis=0)*np.mean(w,axis=0)
-    uw = u*w - np.mean(u,axis=0)*np.mean(w,axis=0)
+    # u2 = u*u - np.mean(u,axis=0)*np.mean(u,axis=0)
+    # v2 = v*v - np.mean(v,axis=0)*np.mean(v,axis=0)
+    # w2 = w*w - np.mean(w,axis=0)*np.mean(w,axis=0)
+    # uw = u*w - np.mean(u,axis=0)*np.mean(w,axis=0)
     
-    print(u.shape)
-    def rms_profile(x2):
-        x2_mean = np.sqrt(np.mean(np.mean(np.mean(x2,axis=0),axis=0),axis=0))/config['u_fric']
-        return x2_mean
+    # print(u.shape)
+    # def rms_profile(x2):
+    #     x2_mean = np.sqrt(np.mean(np.mean(np.mean(x2,axis=0),axis=0),axis=0))/config['u_fric']
+    #     return x2_mean
     
-    def vel_profile(x):
-        x_mean = np.mean(np.mean(np.mean(x,axis=0),axis=0),axis=0)/config['u_fric']
-        return x_mean
+    # def vel_profile(x):
+    #     x_mean = np.mean(np.mean(np.mean(x,axis=0),axis=0),axis=0)/config['u_fric']
+    #     return x_mean
     
-    u_profile = vel_profile(u)
-    v_profile = vel_profile(v)
-    w_profile = vel_profile(w)
+    # u_profile = vel_profile(u)
+    # v_profile = vel_profile(v)
+    # w_profile = vel_profile(w)
 
-    u2_profile = rms_profile(u2)
-    v2_profile = rms_profile(v2)
-    w2_profile = rms_profile(w2)
+    # u2_profile = rms_profile(u2)
+    # v2_profile = rms_profile(v2)
+    # w2_profile = rms_profile(w2)
 
-    # u_hori = np.sqrt(u**2 + v**2)
-    # velocity profile
-    figure(num=None, figsize=(12, 3), dpi=100, facecolor='w', edgecolor='k')
-    log_profle = 1.0/0.4*np.log((z/config['zo']))
-    # log_profle = 0.25/0.4*np.log((z/(config['zo'])))
-    plt.semilogx(z/config['lz'],u_profile,'o')
-    plt.semilogx(z/config['lz'],log_profle,'k--')
+    # # u_hori = np.sqrt(u**2 + v**2)
+    # # velocity profile
+    # figure(num=None, figsize=(12, 3), dpi=100, facecolor='w', edgecolor='k')
+    # log_profle = 1.0/0.4*np.log((z/config['zo']))
+    # # log_profle = 0.25/0.4*np.log((z/(config['zo'])))
+    # plt.semilogx(z/config['lz'],u_profile,'o')
+    # plt.semilogx(z/config['lz'],log_profle,'k--')
     # plt.subplot(141)
     # plt.plot(u_profile,z/config['lz'],label='sp')
     # plt.xlabel('$\overline{u}/u_*$')
@@ -130,7 +130,7 @@ def h5gen(PATH, case_name):
 
     # plt.tight_layout()
 
-    plt.savefig('profile.png')
+    # plt.savefig('profile.png')
     # np.save('u_sp',mean_profile)
 
 
@@ -159,12 +159,12 @@ def h5gen(PATH, case_name):
     def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
     #     zeniths = np.linspace(0, 0.5, 30)
     #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
-        values = v[i,:,16,:]#np.random.random((azimuths.size, zeniths.size))
-        ax[0].imshow(values.T,origin='lower',aspect=1)
+        values = u[i,:,16,:]#np.random.random((azimuths.size, zeniths.size))
+        ax[0].imshow(values.T,origin='lower',aspect=config['dz']/config['dx'])
         ax[0].set_xlabel('x')
         ax[0].set_ylabel('z')
-        values = u[i,:,:,10]#np.random.random((azimuths.size, zeniths.size))
-        ax[1].imshow(values.T,origin='lower',aspect=1)
+        values = u[i,16,:,:]#np.random.random((azimuths.size, zeniths.size))
+        ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
         ax[1].set_xlabel('y')
         ax[1].set_ylabel('z')
         print(i)

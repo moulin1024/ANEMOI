@@ -18,7 +18,7 @@ prec_case	= case_prec	# prec case name
 ########################################################################################################################
 # space (lx/z_i=2*pi, lx=2*pi*z_i, lx/ly=l_r, ly=2*pi*z_i/l_r)
 ########################################################################################################################
-dom_flag	= 0		# 0 = native, 1 = custom
+dom_flag	= 1		# 0 = native, 1 = custom
 
 # native
 l_z		= 1000.0	# physical height of dom
@@ -26,13 +26,13 @@ z_i		= 1000.0	# normalization height
 l_r		= 1		# ratio of streamwise to spanwise dimensions
 
 # custom
-lx		= 6.4		# length of dom in the streamwise dir
-ly		= 0.8		# length of dom in the spanwise dir
-lz		= 0.4		# length of dom in the wall-normal dir
+lx		= 2560		# length of dom in the streamwise dir
+ly		= 2560		# length of dom in the spanwise dir
+lz		= 630		# length of dom in the wall-normal dir
 
-nx		= 32		# number of grid points in the streamwise dir
-ny		= 32		# number of grid points in the spanwise dir
-nz		= 32		# number of grid points in the wall-normal dir
+nx		= 64		# number of grid points in the streamwise dir
+ny		= 64		# number of grid points in the spanwise dir
+nz		= 64		# number of grid points in the wall-normal dir
 
 ########################################################################################################################
 # time (dt=dtr*u_star/z_i, dtr=dt*z_i/u_star)
@@ -43,9 +43,9 @@ time_flag	= 1		# 0 = native, 1 = custom
 dt		= 0.001		# non-dim timestep (dt=dtr*u_star/z_i)
 
 # custom
-dtr		= 1.0		# dim. timestep (dt=dtr*u_star/z_i)
+dtr		= 0.2		# dim. timestep (dt=dtr*u_star/z_i)
 
-nsteps		= 40000		# number of timesteps
+nsteps		= 10000		# number of timesteps
 
 ########################################################################################################################
 # bc
@@ -112,10 +112,10 @@ ts_iend		= 32		# i end of ta_output if ts_mask
 ts_jstart	= 1		# j start of ta_output if ts_mask
 ts_jend		= 32		# j end of ta_output if ts_mask
 ts_kend		= 32		# k end of ta_output if ts_mask
-ts_tstart	= 39001		# t start of ts_output (ts_tstart-1 must be multiple of c_count)
+ts_tstart	= 9001		# t start of ts_output (ts_tstart-1 must be multiple of c_count)
 
 ########################################################################################################################
 # exec
 ########################################################################################################################
-job_np		= 32		# numer of processors (<= nz/2!, nz2=nz/nprocs+2)
+job_np		= 1		# numer of processors (<= nz/2!, nz2=nz/nprocs+2)
 job_time	= 01:00:00	# duration of job

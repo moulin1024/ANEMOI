@@ -99,8 +99,8 @@ def wireles_main():
     elif args.app == 'post2':
         from app_post2 import post as app
     
-    elif args.app == 'h5gen':
-        from app_h5gen import h5gen as app
+    elif args.app == 'anime':
+        from app_anime import anime as app
         
     else:
         print(' ERROR: no app named ' + args.app)

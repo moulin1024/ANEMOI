@@ -30,4 +30,9 @@ def debug(PATH, case_name):
     OUTPUT: - ()
     '''
     case_path = get_case_path(PATH, case_name)
-    os.system('sbatch --partition debug ' + os.path.join(case_path, 'src', case_name + '_src'))
+
+    os.chdir(os.path.join(case_path, 'src'))
+
+    os.system('make -j2')
+    os.system('make -j2')
+    os.system('mpirun -np 1 ./wireles_src')
