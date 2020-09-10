@@ -2,3 +2,4 @@
 *.o
 *.png
 *.DS_Store
+job/*
