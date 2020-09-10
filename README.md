@@ -22,9 +22,13 @@ WireLES2/
 └── src (CUDA Fortran code dir)
 ```
 ### How to run
-Run the following line in the termnal or add it in ~/.bashrc :
+Run the following line in the terminal first or add it in ~/.bashrc :
 ```bash
 alias wireles='python prc/wireles.py'
+```
+then you can run various of application with the line
+```bash
+wireles [applications name] [case name]'
 ```
 applications list:
 - create: create case with dummy default file
