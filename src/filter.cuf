@@ -13,7 +13,6 @@ module filter
         ! Input: velocity field
         real(fp), dimension(nx,ny,nz2),intent(inout),device :: f,dfdx, dfdy
         complex(fp), dimension(:,:,:),allocatable,device :: f_hat,dfdx_hat,dfdy_hat
-        complex(fp), dimension(nx,ny,nz2) :: f_hat_host
         ! fft plan
         type(c_ptr) :: plan(2)
         integer :: istat,k,t
@@ -37,15 +36,16 @@ module filter
         !---------------------------------------------------------------------------
         ! Forward fft
         call  cufftExec(plan(1),f(:,:,2:nzb+1),f_hat(:,:,2:nzb+1))
+        
         !---------------------------------------------------------------------------
-        ! Apply sharp spectral filter
+        ! ! Apply sharp spectral filter
         call filter_kernel<<<grid, tBlock>>>(f_hat,dfdx_hat,dfdy_hat)
-
-        !---------------------------------------------------------------------------
-        ! Backward fft
-        call  cufftExec(plan(2),f_hat(:,:,2:nzb+1),f(:,:,2:nzb+1)) 
+        ! !---------------------------------------------------------------------------
+        ! ! Backward fft
+        call  cufftExec(plan(2),f_hat(:,:,2:nzb+1),f(:,:,2:nzb+1))
         call  cufftExec(plan(2),dfdx_hat(:,:,2:nzb+1),dfdx(:,:,2:nzb+1)) 
-        call  cufftExec(plan(2),dfdy_hat(:,:,2:nzb+1),dfdy(:,:,2:nzb+1))  
+        call  cufftExec(plan(2),dfdy_hat(:,:,2:nzb+1),dfdy(:,:,2:nzb+1)) 
+        
     end subroutine ddxy_filter
 
     subroutine filter_2dsl(f_filtered,f,t,plan_2d)
@@ -185,16 +185,16 @@ module filter
         ! Shift wave number
         ii = i - 1
         jj = j - 1
-        if(jj.gt.int(ny/2)) jj = jj-ny
+        if(jj >= nint(ny/2.0)) jj = jj-ny
         jj = jj*l_r
 
         !---------------------------------------------------------------------------
         ! Apply sharp spectral cut-off
         ! filter x
-        if (ii >= floor(nx/(2.0*filter))) then
+        if (ii >= nint(nx/(2.0*filter))) then
             f_hat(i,j,k)=dcmplx(0._fp)
         ! filter y
-        elseif(abs(jj) >= floor(l_r*ny/(2.0*filter))) then
+        elseif(abs(jj) >= nint(l_r*ny/(2.0*filter))) then
             f_hat(i,j,k)=dcmplx(0._fp)
         end if
 

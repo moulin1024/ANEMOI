@@ -1,5 +1,7 @@
 *.pyc
 *.o
+*.mod
 *.png
 *.DS_Store
 job/*
+*.run
