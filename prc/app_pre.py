@@ -15,7 +15,7 @@ import os
 import fctlib
 import numpy as np
 from string import Template
-from scipy.interpolate import RegularGridInterpolator
+# from scipy.interpolate import RegularGridInterpolator
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -204,15 +204,15 @@ def substitute_keys(mydict, mytemplate_path, myfile_path):
         myfile_tmp = Template(myfile)
     fctlib.write_file(myfile, os.path.join(myfile_path))
 
-def post_interp(interp_path, case_path, config, var_name):
-    interp_config = fctlib.get_config(interp_path)
-    interp_u = fctlib.load_3d(var_name, interp_config['nx'],  interp_config['ny'],  interp_config['nz'],  os.path.join(interp_path, 'init_data'))
-    X, Y, Z = np.meshgrid(np.linspace(0,config['lx'],config['nx']), np.linspace(0,config['ly'],config['ny']), np.linspace(0,config['lz'],config['nz']), indexing='ij')
-    F = RegularGridInterpolator((np.linspace(0,interp_config['lx'],interp_config['nx']), np.linspace(0,interp_config['ly'],interp_config['ny']), np.linspace(0,interp_config['lz'],interp_config['nz'])), interp_u, method='linear')
-    warmup_u = F((X, Y, Z))
-    warmup_u = np.ravel(warmup_u, order='F')
+# def post_interp(interp_path, case_path, config, var_name):
+#     interp_config = fctlib.get_config(interp_path)
+#     interp_u = fctlib.load_3d(var_name, interp_config['nx'],  interp_config['ny'],  interp_config['nz'],  os.path.join(interp_path, 'init_data'))
+#     X, Y, Z = np.meshgrid(np.linspace(0,config['lx'],config['nx']), np.linspace(0,config['ly'],config['ny']), np.linspace(0,config['lz'],config['nz']), indexing='ij')
+#     F = RegularGridInterpolator((np.linspace(0,interp_config['lx'],interp_config['nx']), np.linspace(0,interp_config['ly'],interp_config['ny']), np.linspace(0,interp_config['lz'],interp_config['nz'])), interp_u, method='linear')
+#     warmup_u = F((X, Y, Z))
+#     warmup_u = np.ravel(warmup_u, order='F')
 
-    return warmup_u
+#     return warmup_u
 
 
 def post_prec(prec_path, config,var_name,i):
