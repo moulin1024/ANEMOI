@@ -16,10 +16,10 @@ import fctlib
 import numpy as np
 from string import Template
 # from scipy.interpolate import RegularGridInterpolator
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+# import matplotlib
+# matplotlib.use('Agg')
+# import matplotlib.pyplot as plt
+# from mpl_toolkits.mplot3d import Axes3D
 
 
 #################################################################################
