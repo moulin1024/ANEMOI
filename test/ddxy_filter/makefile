@@ -50,4 +50,4 @@ run:
 clean:
 	find . -type f -name '*.o' -delete
 	find . -type f -name '*.mod' -delete
-	find . -type f -name 'wireles' -delete
+	find . -type f -name '*.run' -delete

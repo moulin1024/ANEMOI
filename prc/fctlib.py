@@ -203,7 +203,7 @@ def get_config(case_path):
     config['turb_j'] = config['turb_j']
     config['turb_r'] = float(config['turb_r'])
     config['turb_z'] = float(config['turb_z'])
-    config['turb_w'] = float(config['turb_w'])
+    config['turb_w'] = config['turb_w']
     config['tow_r'] = float(config['tow_r'])
     config['tow_c'] = float(config['tow_c'])
     config['nac_r'] = float(config['nac_r'])
