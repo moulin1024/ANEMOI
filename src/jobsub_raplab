@@ -1,0 +1,11 @@
+#!/bin/bash
+#SBATCH --partition=batch
+#SBATCH --nodes=1 # Max is 1
+#SBATCH --ntasks=1 # Max is 5 (1/8 of 2x 20 Intel Broadwell CPUs)
+#SBATCH --cpus-per-task=1 # Max is 2 (hyper-threading is on)
+#SBATCH --gres=gpu:1 # Max is 1 (1 single V100)
+#SBATCH --time=01:00:00 # Max is 4 hours
+module purge > /dev/null 2>&1
+module load nvhpc/20.7
+
+mpirun -np 1 ./wireles_src
