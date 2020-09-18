@@ -21,13 +21,13 @@ PRECISION=-DDOUBLE
 # LIBS
 ################################################################################
 
-LIBS = -L/home/moulin/anaconda3/lib -lfftw3
+# LIBS = -L/home/moulin/anaconda3/lib -lfftw3
 # INC = #-I/opt/intel/compilers_and_libraries_2019.4.243/linux/mpi/intel64/include/
 ################################################################################
 # OBJ, PROG
 ################################################################################
 
-OBJ = cpu_timer.o precision.o dimen.o cufft_m.o pressure.o pressure_cpu.o\
+OBJ = cpu_timer.o precision.o dimen.o cufft_m.o pressure.o \
 	  main.o \
 
 PROG = wireles
@@ -39,7 +39,7 @@ build:
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../common/dimen.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/cufft_m.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/pressure.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c pressure_cpu.cuf
+	# $(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c pressure_cpu.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c main.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(OBJ) -o $(PROG).run $(LIBS)
 
