@@ -8,4 +8,4 @@
 module purge > /dev/null 2>&1
 module load nvhpc/20.7
 
-mpirun -np 1 ./wireles_src
+mpirun -np 1 ./wireles_src | tee out.${SLURM_JOBID}
