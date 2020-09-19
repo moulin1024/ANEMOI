@@ -48,4 +48,4 @@ def debug(PATH, case_name):
 
     os.system('make -j2')
     os.system('make -j2')
-    os.system('mpirun -np 1 ./wireles_src')
+    os.system('./wireles_src')

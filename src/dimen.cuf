@@ -1,7 +1,7 @@
 module dimen
     use precision
     implicit none
-    include 'mpif.h'
+    ! include 'mpif.h'
 
     !-------------------------------------------------------------------------------
     ! csts
@@ -136,7 +136,7 @@ module dimen
     ! exec
     !-------------------------------------------------------------------------------
     integer, parameter :: nzb=$nzb, nz2=$nz2, nprocs=$job_np
-    integer job_np, me, nall, ierr, status2(MPI_STATUS_SIZE)
+    integer job_np, me, nall, ierr!, status2(MPI_STATUS_SIZE)
 
     !-------------------------------------------------------------------------------
     ! derived

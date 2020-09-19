@@ -113,7 +113,9 @@ subroutine print_log(log_ustar,log_umax,u,v,w,ustar,t01,t,me,nall)
         !         cflz=max(cflz,cflz_)
         !     end do
         ! endif
-        t02=mpi_wtime()
+        ! t02=mpi_wtime()
+        ! t02 = cpu_time()
+        call cpu_time(t02)
         print "(i10, f10.1, f10.1, f10.4, e15.4, e15.4, f10.4, f10.4, f10.4)", &
         t, (t02-t01)*real(nsteps-t)/real(t), (t02-t01)*real(nsteps)/real(t),&
         log_ustar,ke,div,cflx,cfly,cflz
@@ -137,7 +139,7 @@ subroutine print_end(t01,me)
     !---------------------------------------------------------------------------
 
     if (me==0) then
-        print "(a10,a3,f10.1)",'wall_time', ' = ', mpi_wtime() -t01
+        ! print "(a10,a3,f10.1)",'wall_time', ' = ', cpu_time() - t01!mpi_wtime() -t01
         print "(a100)", '!-----------------------------------------------------&
         -----------------------------------------------'
     end if

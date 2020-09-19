@@ -87,18 +87,19 @@ program main
     !---------------------------------------------------------------------------
     ! init mpi
     !---------------------------------------------------------------------------
+    me = 0
+    nall = 0
+    ! call mpi_init( ierr )
+    ! call mpi_comm_rank( mpi_comm_world, me, ierr )
+    ! call mpi_comm_size( mpi_comm_world, job_np, ierr )
+    ! nall=mpi_comm_world
 
-    call mpi_init( ierr )
-    call mpi_comm_rank( mpi_comm_world, me, ierr )
-    call mpi_comm_size( mpi_comm_world, job_np, ierr )
-    nall=mpi_comm_world
+    if(me == 0) call cpu_time(t01)!t01=mpi_wtime()
 
-    if(me == 0) t01=mpi_wtime()
-
-    if (job_np /= nprocs) then
-        print *, 'error: job_np /= nprocs'
-        call exit()
-    endif
+    ! if (job_np /= nprocs) then
+    !     print *, 'error: job_np /= nprocs'
+    !     call exit()
+    ! endif
 
     !---------------------------------------------------------------------------
     ! print start (important for debug)
@@ -615,6 +616,6 @@ program main
     ! mpi finalize
     !---------------------------------------------------------------------------
 
-    999 call mpi_finalize(ierr)
+    ! 999 call mpi_finalize(ierr)
 
 end program main
