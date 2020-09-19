@@ -70,7 +70,7 @@
     istat = cudaEventSynchronize(stopEvent)
     istat = cudaEventElapsedTime(time, startEvent, stopEvent)
     
-    print *,'Speedup: ', time/Nt
+    print *,'Time ', time/Nt, ' ms'
 
 end program test_cufft
 
