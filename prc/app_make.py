@@ -48,5 +48,5 @@ def make(PATH, case_name):
         print('=========================================')
         os.environ["PRECISION"] = "-DDOUBLE"
     # Try to compile twice in case the first compiling falied due to dependency
-    os.system('make -j2 -C ' + str(os.path.join(case_path, 'src')))
-    os.system('make -j2 -C ' + str(os.path.join(case_path, 'src')))
+    os.system('make -j6 -C ' + str(os.path.join(case_path, 'src')))
+    #os.system('make -j2 -C ' + str(os.path.join(case_path, 'src')))

@@ -25,19 +25,34 @@ CUDA = -Mcuda -lcufft -ta=nvidia
 ################################################################################
 # OBJ, PROG
 ################################################################################
-
-OBJ = precision.o dimen.o cufft_m.o io.o filter.o derivative.o \
-	  wall.o convection.o sgs.o rhs.o turbine.o  pressure.o divergence.o \
-	  time.o main.o \
-
 PROG = wireles_src
 
-# --- compile ---
- %.o:%.cuf
-		$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $< -o $@
+DEP0  =   precision.o 
+DEP1  =   cufft_m.o dimen.o
+DEP2  =   convection.o derivative.o filter.o io.o pressure.o rhs.o time.o turbine.o
+DEP3  =   divergence.o
+DEP4  =   sgs.o wall.o
+DEPS  = $(DEP0) $(DEP1) $(DEP2) $(DEP3) $(DEP4) 
+OBJ   = $(DEPS) main.o
+
+
 # --- link ---
-$(PROG):$(OBJ)
+$(PROG):$(OBJ) main.o
 	$(FC) $(FFLAGS) $(CUDA) $(OBJ) -o $(PROG) $(INC) $(LIBS)
+
+# --- compile ---
+main.o: main.cuf $(DEPS)
+	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
+$(DEP0): %.o : %.cuf
+	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
+$(DEP1): %.o: %.cuf precision.o
+	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
+$(DEP2): %.o: %.cuf precision.o dimen.o
+	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
+$(DEP3): %.o: %.cuf precision.o dimen.o derivative.o
+	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
+$(DEP4): %.o: %.cuf precision.o dimen.o cufft_m.o filter.o
+	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
 
 # --- clean ---
 clean:

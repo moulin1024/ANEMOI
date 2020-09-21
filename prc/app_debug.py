@@ -46,6 +46,6 @@ def debug(PATH, case_name):
 
     os.chdir(os.path.join(case_path, 'src'))
 
-    os.system('make -j2')
-    os.system('make -j2')
+    os.system('make -j6')
+    #os.system('make -j2')
     os.system('./wireles_src')
