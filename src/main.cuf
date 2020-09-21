@@ -66,6 +66,7 @@ program main
     integer istat
     !---------------------------------------------------------------------------
     ! cuda variable
+    REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
     type(dim3) :: grid, tBlock, grid1,tBlock1,grid_2d,tBlock_2d
     grid = dim3(nx/16,ny/16,nz2/2)
     tBlock = dim3(16,16,2)
@@ -223,13 +224,13 @@ program main
     ! init fft 
     ! Watch out for the difference of row-first and column first indexing between fortran and cufft
     if (fp==singlePrecision) then
-        call cufftPlanMany(plan_batch(1),2,(/ny,nx/),(/ny,nx/),1,nx*ny,(/ny,nx/2+1/),1,(nx/2+1)*ny,cufft_R2C,nzb) 
-        call cufftPlanMany(plan_batch(2),2,(/ny,nx/),(/ny,nx/2+1/),1,(nx/2+1)*ny,(/ny,nx/),1,nx*ny,cufft_C2R,nzb)
+        call cufftPlanMany(plan_batch(1),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_R2C,nzb) 
+        call cufftPlanMany(plan_batch(2),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_C2R,nzb)
         call cufftPlan2d(plan_2d(1),ny,nx,CUFFT_R2C)
         call cufftPlan2d(plan_2d(2),ny,nx,CUFFT_C2R)
     else 
-        call cufftPlanMany(plan_batch(1),2,(/ny,nx/),(/ny,nx/),1,nx*ny,(/ny,nx/2+1/),1,(nx/2+1)*ny,cufft_D2Z,nzb) 
-        call cufftPlanMany(plan_batch(2),2,(/ny,nx/),(/ny,nx/2+1/),1,(nx/2+1)*ny,(/ny,nx/),1,nx*ny,cufft_Z2D,nzb)
+        call cufftPlanMany(plan_batch(1),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_D2Z,nzb) 
+        call cufftPlanMany(plan_batch(2),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_Z2D,nzb)
         call cufftPlan2d(plan_2d(1),ny,nx,CUFFT_D2Z)
         call cufftPlan2d(plan_2d(2),ny,nx,CUFFT_Z2D)
     end if
@@ -258,6 +259,26 @@ program main
         call ddxy_filter(u,dudx,dudy,t,plan_batch)
         call ddxy_filter(v,dvdx,dvdy,t,plan_batch)
         call ddxy_filter(w,dwdx,dwdy,t,plan_batch)
+
+        if (mod(t,c_count*10)==0) then
+            u_host = u 
+            v_host = v 
+            w_host = w 
+            fx_host = fx
+            fy_host = fy
+            fz_host = fz
+
+            ustar_host = ustar 
+            call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
+            if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
+            if (log_umax>100) exit
+
+            if (ts_flag > 0 .and. t >= ts_tstart) then 
+                print *,'Write instant field:'
+                call write_ts1(u_host,v_host,w_host,me)
+            end if
+        end if
+
         !-----------------------------------------------------------------------
         ! bc top uv
         if (me==nprocs-1) then
@@ -422,24 +443,24 @@ program main
         !-----------------------------------------------------------------------
         !-----------------------------------------------------------------------
         ! print log
-        if (mod(t,c_count*10)==0) then
-            u_host = u 
-            v_host = v 
-            w_host = w 
-            fx_host = fx
-            fy_host = fy
-            fz_host = fz
+        ! if (mod(t,c_count*10)==0) then
+        !     u_host = u 
+        !     v_host = v 
+        !     w_host = w 
+        !     fx_host = fx
+        !     fy_host = fy
+        !     fz_host = fz
 
-            ustar_host = ustar 
-            call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
-            if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
-            if (log_umax>100) exit
+        !     ustar_host = ustar 
+        !     call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
+        !     if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
+        !     if (log_umax>100) exit
 
-            if (ts_flag > 0 .and. t >= ts_tstart) then 
-                print *,'Write instant field:'
-                call write_ts1(u_host,v_host,w_host,me)
-            end if
-        end if
+        !     if (ts_flag > 0 .and. t >= ts_tstart) then 
+        !         print *,'Write instant field:'
+        !         call write_ts1(u_host,v_host,w_host,me)
+        !     end if
+        ! end if
 
 
         ! !-----------------------------------------------------------------------
