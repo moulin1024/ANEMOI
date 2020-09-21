@@ -48,6 +48,32 @@ module filter
         
     end subroutine ddxy_filter
 
+    subroutine filter_3d(f_hat,filterRadius,plan,t,flag)
+        use, intrinsic :: iso_c_binding 
+        use cufft_m 
+        use cudafor
+        implicit none
+        real(fp), dimension(nx,ny,nz2),intent(inout),device :: f_hat
+        integer,intent(in) :: t,flag
+        real(fp),intent(in),value :: filterRadius
+        REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
+        type(c_ptr) :: plan(2)
+        complex(fp),dimension(:,:,:),allocatable,device :: f_hat_ft
+        type(dim3) :: grid_fft, tBlock_fft
+        tBlock_fft = dim3(16,16,2)
+        grid_fft = dim3((nx/2)/16,ny/16,nzb/2)
+
+        save f_hat_ft
+
+        if(t == 1 .and. flag == 0) then
+            allocate(f_hat_ft(nx/2+1,ny,nzb))
+        end if
+        call cufftExec(plan(1),f_hat(:,:,2:nzb+1),f_hat_ft)
+        call test_filter_kernel<<<grid_fft,tBlock_fft>>>(f_hat_ft,filterRadius)
+        call cufftExec(plan(2),f_hat_ft,f_hat(:,:,2:nzb+1))
+
+    end subroutine filter_3d
+
     subroutine filter_2dsl(f_filtered,f,t,plan_2d)
 
         !---------------------------------------------------------------------------

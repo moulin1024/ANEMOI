@@ -22,7 +22,7 @@ module sgs
                               dudx,dudy,dudz,&
                               dvdx,dvdy,dvdz,&
                               dwdx,dwdy,dwdz, &
-                              LM_old,MM_old,QN_old,NN_old,cs2, &
+                              LM_old,MM_old,QN_old,NN_old,cs2,plan, &
                               t,device_id,nall)
 
         !---------------------------------------------------------------------------
@@ -42,6 +42,7 @@ module sgs
         real(fp),dimension(:,:,:),allocatable,device :: u_lag,v_lag,w_lag
         real(fp),dimension(:,:),allocatable,device :: txzp,tyzp
         ! Cuda variable
+        type(c_ptr) :: plan(2)
         type(dim3) :: grid, tBlock
         tBlock = dim3(16,16,2)
         grid = dim3(nx/16,ny/16,nzb/2)
@@ -90,12 +91,11 @@ module sgs
             w_lag = 0.
         end if
         ! Compute lagarangian velocity with 0
-        ! TODO: CHECK IF it is necessary or not
         call get_u_lag<<<grid,tblock>>>(u_lag,v_lag,w_lag,u,v,w)
         
         if (mod(t-1,cs_count).eq.0) then
 
-            call optim_sd(Cs2,u,v,w,u_lag,v_lag,w_lag,Sij,LM_old,MM_old,QN_old,NN_old,t,me,nall)
+            call optim_sd(Cs2,u,v,w,u_lag,v_lag,w_lag,Sij,LM_old,MM_old,QN_old,NN_old,plan,t,me,nall)
 
             u_lag = 0.
             v_lag = 0.
@@ -150,21 +150,21 @@ module sgs
 
     end subroutine subgrid_stress
 
-    subroutine optim_sd (Cs2,u,v,w,u_lag,v_lag,w_lag,Sij,LM_old,MM_old,QN_old,NN_old,t,device_id,nall)
+    subroutine optim_sd (Cs2,u,v,w,u_lag,v_lag,w_lag,Sij,LM_old,MM_old,QN_old,NN_old,plan,t,device_id,nall)
 
         !---------------------------------------------------------------------------
         ! declaration
         !---------------------------------------------------------------------------
         implicit none
-        integer*4 i,j,k,t,kend,kk,istat,device_id,flag,nall
-        real(fp),dimension(nx,ny,nz2),intent(inout),device  :: cs2
-        real(fp),dimension(nx,ny,nz2),intent(in),device     :: u,v,w,u_lag,v_lag,w_lag
-        ! 11,12,13,22,23,33
-        real(fp),dimension(nx,ny,nz2,6),intent(in),device   :: Sij
+        integer*4 i,j,k,ii,t,kend,kk,istat,device_id,flag,nall
+        real(fp),dimension(nx,ny,nz2),intent(inout),device :: cs2
+        real(fp),dimension(nx,ny,nz2),intent(in),device    :: u,v,w,u_lag,v_lag,w_lag
+        ! Strain tensor: 11,12,13,22,23,33
+        real(fp),dimension(nx,ny,nz2,6),intent(in),device  :: Sij
         ! LM,MM,QN,NN
-        real(fp),dimension(nx,ny,nz2),intent(inout),device   :: LM_old,MM_old,QN_old,NN_old
+        real(fp),dimension(nx,ny,nz2),intent(inout),device :: LM_old,MM_old,QN_old,NN_old
         real(fp),dimension(:,:,:),allocatable,device :: LM,MM,QN,NN
-        real(fp),dimension(:,:,:,:),allocatable,device :: SSij,uu,u_
+        real(fp),dimension(:,:,:,:),allocatable,device :: Sij_hat,SSij_hat,uu_hat,u_hat
         ! Cuda variable
         type(dim3) :: grid, tBlock
         tBlock = dim3(16,16,2)
@@ -172,7 +172,7 @@ module sgs
         ! FFT plans
         type(c_ptr) plan(2)
 
-        save plan,LM,MM,QN,NN,SSij,uu,u_
+        save LM,MM,QN,NN,Sij_hat,SSij_hat,uu_hat,u_hat
 
         !---------------------------------------------------------------------------
         ! main code
@@ -182,16 +182,18 @@ module sgs
             allocate(MM(nx,ny,nz2))
             allocate(QN(nx,ny,nz2))
             allocate(NN(nx,ny,nz2))
-            allocate(SSij(nx,ny,nz2,6))
-            allocate(uu(nx,ny,nz2,6))
-            allocate(u_(nx,ny,nz2,3))
+
+            allocate(Sij_hat(nx,ny,nz2,6))
+            allocate(SSij_hat(nx,ny,nz2,6))
+            allocate(uu_hat(nx,ny,nz2,6))
+            allocate(u_hat(nx,ny,nz2,3))
         end if
 
-        call get_uu<<<grid,tBlock>>>(uu,u_,u,v,w)
-        call get_SSij<<<grid,tBlock>>>(SSij,Sij)
-        
-        call get_LMQN(LM,MM,u_,uu,Sij,SSij,tf1,t,1)
-        call get_LMQN(QN,NN,u_,uu,Sij,SSij,tf2,t,0)
+        call get_uu<<<grid,tBlock>>>(uu_hat,u_hat,u,v,w)
+        call get_SSij<<<grid,tBlock>>>(SSij_hat,Sij_hat,Sij)       
+
+        call get_LMQN(LM,MM,u_hat,uu_hat,Sij_hat,SSij_hat,tf1,plan,t)
+        call get_LMQN(QN,NN,u_hat,uu_hat,Sij_hat,SSij_hat,tf2,plan,t)
 
         if (t.eq.1 .and. resub_flag == 0 .and. sim_flag < 2) then
             call load_LMQN_old<<<grid,tBlock>>>(LM,MM,LM_old,MM_old,0)
@@ -203,7 +205,7 @@ module sgs
         ! call update(MM_old,me,nall)
         ! call update(QN_old,me,nall)
         ! call update(NN_old,me,nall)
-
+ 
         if (me==0) then
             !$cuf kernel do(2) <<<*,*>>>
             do j=1,ny
@@ -254,11 +256,11 @@ module sgs
 
     end subroutine optim_sd
 
-    attributes(global) subroutine get_uu(uu,u_,u,v,w)
+    attributes(global) subroutine get_uu(uu_hat,u_hat,u,v,w)
         implicit none 
         real(fp),dimension(nx,ny,nz2),intent(in) :: u,v,w
-        real(fp),dimension(nx,ny,nz2,6),intent(out) :: uu
-        real(fp),dimension(nx,ny,nz2,3),intent(out) :: u_
+        real(fp),dimension(nx,ny,nz2,6),intent(out) :: uu_hat
+        real(fp),dimension(nx,ny,nz2,3),intent(out) :: u_hat
         integer i,j,k,ii,jj,kk
         i = (blockIdx%x - 1)* blockDim%x + threadIdx%x;
         j = (blockIdx%y - 1)* blockDim%y + threadIdx%y;
@@ -266,24 +268,24 @@ module sgs
 
         k = k + 1   ! k = 2,nzb+1
 
-        u_(i,j,k,1) = u(i,j,k)
-        u_(i,j,k,2) = v(i,j,k)
-        u_(i,j,k,3) = (w(i,j,k)+w(i,j,k+1))/2.d0
+        u_hat(i,j,k,1) = u(i,j,k)
+        u_hat(i,j,k,2) = v(i,j,k)
+        u_hat(i,j,k,3) = (w(i,j,k)+w(i,j,k+1))/2.d0
 
         ! loop through upper triangle
         kk = 1
         do ii = 1,3
             do jj = ii,3
-                uu(i,j,k,kk) = u_(i,j,k,ii)*u_(i,j,k,jj)
+                uu_hat(i,j,k,kk) = u_hat(i,j,k,ii)*u_hat(i,j,k,jj)
                 kk = kk + 1
             end do
         end do
     end subroutine get_uu
 
-    attributes(global) subroutine get_SSij(SSij,Sij)
+    attributes(global) subroutine get_SSij(SSij_hat,Sij_hat,Sij)
         implicit none
         real(fp),dimension(nx,ny,nz2,6),intent(in) :: Sij
-        real(fp),dimension(nx,ny,nz2,6),intent(out) :: SSij
+        real(fp),dimension(nx,ny,nz2,6),intent(out) :: SSij_hat,Sij_hat
         real(fp),dimension(6) :: a
         real(fp) :: S
         integer i,j,k,ii
@@ -296,7 +298,8 @@ module sgs
 
         S = sqrt(2.d0*S)
         do ii = 1,6 
-            SSij(i,j,k,ii) = S*Sij(i,j,k,ii)
+            Sij_hat(i,j,k,ii) = Sij(i,j,k,ii)
+            SSij_hat(i,j,k,ii) = S*Sij(i,j,k,ii)
         end do
     end subroutine get_SSij
 
@@ -376,19 +379,19 @@ module sgs
 
     end subroutine get_cs2
 
-    subroutine get_LMQN(LM,MM,u_,uu,Sij,SSij,tf,t,flag)
+    subroutine get_LMQN(LM,MM,u_hat,uu_hat,Sij_hat,SSij_hat,tf,plan,t)
         implicit none
         real(fp),dimension(nx,ny,nz2),intent(out),device:: LM,MM
-        real(fp),dimension(nx,ny,nz2,6),intent(in),device :: uu,SSij,Sij
-        real(fp),dimension(nx,ny,nz2,3),intent(in),device :: u_
+        real(fp),dimension(nx,ny,nz2,6),intent(inout),device :: uu_hat,SSij_hat,Sij_hat
+        real(fp),dimension(nx,ny,nz2,3),intent(inout),device :: u_hat
         real(fp),intent(in) :: tf
-        integer,intent(in) :: t,flag
+        integer,intent(in) :: t
+        integer :: flag
+        
         integer fft_flag,istat
         integer :: ii
-        type(c_ptr) :: plan(2)
+        type(c_ptr),intent(in) :: plan(2)
         complex(fp),dimension(:,:,:),allocatable,device :: f_hat_ft
-        real(fp),dimension(:,:,:),allocatable,device :: f_hat
-        real(fp),dimension(:,:,:,:),allocatable,device :: Sij_hat,SSij_hat,uu_hat,u_hat
 
         real(fp),dimension(nx,ny,nz2) :: xx
         type(dim3) :: grid, tBlock, grid_fft, tBlock_fft
@@ -398,45 +401,18 @@ module sgs
         tBlock_fft = dim3(16,16,2)
         grid_fft = dim3((nx/2)/16,ny/16,nzb/2)
 
-        save plan,Sij_hat,SSij_hat,uu_hat,u_hat,f_hat_ft
-
-        if(t == 1 .and. flag == 1) then
-            if (fp==singlePrecision) then
-                call cufftPlanMany(plan(1),2,(/ny,nx/),(/ny,nx/),1,nx*ny,(/ny,nx/2+1/),1,(nx/2+1)*ny,cufft_R2C,nzb) 
-                call cufftPlanMany(plan(2),2,(/ny,nx/),(/ny,nx/2+1/),1,(nx/2+1)*ny,(/ny,nx/),1,nx*ny,cufft_C2R,nzb)
-            else 
-                call cufftPlanMany(plan(1),2,(/ny,nx/),(/ny,nx/),1,nx*ny,(/ny,nx/2+1/),1,(nx/2+1)*ny,cufft_D2Z,nzb) 
-                call cufftPlanMany(plan(2),2,(/ny,nx/),(/ny,nx/2+1/),1,(nx/2+1)*ny,(/ny,nx/),1,nx*ny,cufft_Z2D,nzb)
-            end if
-
-            allocate(Sij_hat(nx,ny,nz2,6))
-            allocate(SSij_hat(nx,ny,nz2,6))
-            allocate(uu_hat(nx,ny,nz2,6))
-            allocate(u_hat(nx,ny,nz2,3))
-            allocate(f_hat_ft(nx/2+1,ny,nzb))
-        end if
-
+        flag = 0
         do ii = 1,3
-            ! filter u
-            call cufftExec(plan(1),u_(:,:,2:nzb+1,ii),f_hat_ft)
-            call test_filter_kernel<<<grid_fft,tBlock_fft>>>(f_hat_ft,tf)
-            call cufftExec(plan(2),f_hat_ft,u_hat(:,:,2:nzb+1,ii))
+            if (ii > 1) flag = 1
+            Call filter_3d(u_hat(:,:,:,ii),tf,plan,t,flag)
+        end do
+            
+        do ii = 1,6
+            Call filter_3d(uu_hat(:,:,:,ii),tf,plan,t,1)
+            Call filter_3d(Sij_hat(:,:,:,ii),tf,plan,t,1)
+            Call filter_3d(SSij_hat(:,:,:,ii),tf,plan,t,1)
         end do
 
-        do ii = 1,6
-            ! filter uu
-            call cufftExec(plan(1),uu(:,:,2:nzb+1,ii),f_hat_ft)
-            call test_filter_kernel<<<grid_fft,tBlock_fft>>>(f_hat_ft,tf)
-            call cufftExec(plan(2),f_hat_ft,uu_hat(:,:,2:nzb+1,ii))
-            ! filter Sij
-            call cufftExec(plan(1),Sij(:,:,2:nzb+1,ii),f_hat_ft)
-            call test_filter_kernel<<<grid_fft,tBlock_fft>>>(f_hat_ft,tf)
-            call cufftExec(plan(2),f_hat_ft,Sij_hat(:,:,2:nzb+1,ii))
-            ! filter SSij
-            call cufftExec(plan(1),SSij(:,:,2:nzb+1,ii),f_hat_ft)
-            call test_filter_kernel<<<grid_fft,tBlock_fft>>>(f_hat_ft,tf)
-            call cufftExec(plan(2),f_hat_ft,SSij_hat(:,:,2:nzb+1,ii))
-        end do
         ! Compute LM,MM or QN,NN
         call LMQN_kernel<<<grid,tBlock>>>(LM,MM,uu_hat,u_hat,SSij_hat,Sij_hat,tf)
 

@@ -288,10 +288,10 @@ program main
         ! compute convec
         !-----------------------------------------------------------------------
         call convec<<<grid,tBlock>>>(cx,cy,cz,&
-                                         u,v,w,&
-                                         dudy,dudz,&
-                                         dvdx,dvdz,&
-                                         dwdx,dwdy )
+                                     u,v,w,&
+                                     dudy,dudz,&
+                                     dvdx,dvdz,&
+                                     dwdx,dwdy )
         
         !-----------------------------------------------------------------------
         ! compute sgs: LASD model
@@ -302,7 +302,7 @@ program main
                                 dudx,dudy,dudz,&
                                 dvdx,dvdy,dvdz,&
                                 dwdx,dwdy,dwdz, &
-                                LM_old,MM_old,QN_old,NN_old,cs2,&
+                                LM_old,MM_old,QN_old,NN_old,cs2,plan_batch,&
                                 t,me,nall)
         end if
         !-----------------------------------------------------------------------
