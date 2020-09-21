@@ -26,9 +26,9 @@ z_i		= 1000.0	# normalization height
 l_r		= 1		# ratio of streamwise to spanwise dimensions
 
 # custom
-lx		= 2560		# length of dom in the streamwise dir
-ly		= 2560		# length of dom in the spanwise dir
-lz		= 630		# length of dom in the wall-normal dir
+lx		= 5120		# length of dom in the streamwise dir
+ly		= 5120		# length of dom in the spanwise dir
+lz		= 1270		# length of dom in the wall-normal dir
 
 nx		= 64		# number of grid points in the streamwise dir
 ny		= 64		# number of grid points in the spanwise dir
@@ -43,7 +43,7 @@ time_flag	= 1		# 0 = native, 1 = custom
 dt		= 0.001		# non-dim timestep (dt=dtr*u_star/z_i)
 
 # custom
-dtr		= 0.2		# dim. timestep (dt=dtr*u_star/z_i)
+dtr		= 0.1		# dim. timestep (dt=dtr*u_star/z_i)
 
 nsteps		= 10000		# number of timesteps
 
@@ -59,7 +59,7 @@ u_fric		= 0.45		# sqrt wall shear = sqrt(tau_0)
 model		= 3		# 1 = smag, 2 = la-dyn, 3 = lasd
 fgr		= 1.5		# ratio of filter to grid
 tfr		= 2.0		# ratio of test filter to grid filter
-cs_count	= 3		# frequency of sgs coefficients update
+cs_count	= 10		# frequency of sgs coefficients update
 
 ########################################################################################################################
 # turbine
