@@ -27,7 +27,7 @@ LIBS = -L/home/moulin/anaconda3/lib -lfftw3
 # OBJ, PROG
 ################################################################################
 
-OBJ = nvtx.o cpu_timer.o precision.o dimen.o cufft_m.o filter.o derivative.o ddxy_filter_cpu.o\
+OBJ = cpu_timer.o precision.o dimen.o cufft_m.o\
 	  main.o \
 
 PROG = wireles
@@ -35,13 +35,9 @@ all: build run
 # --- compile ---
 build:
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/precision.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../common/nvtx.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../common/cpu_timer.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../common/dimen.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/cufft_m.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/derivative.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/filter.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ddxy_filter_cpu.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c main.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(OBJ) -o $(PROG).run $(LIBS)
 

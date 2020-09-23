@@ -1,36 +1,26 @@
  program test_cufft
-    use nvtx
     use, intrinsic :: iso_c_binding 
     ! use filter
     use cufft_m
     use cudafor
     use cpu_timer
     use dimen
-    use precision
-    use filter
-    use filter_cpu
     implicit none
 
-    real(fp),dimension(nx,ny,nz2) :: u_host,dudx_host,dudy_host
-    real(fp),dimension(nx,ny,nz2) :: v_host,dvdx_host,dvdy_host
-    real(fp),dimension(nx,ny,nz2) :: w_host,dwdx_host,dwdy_host
-    real(fp),dimension(nx,ny,nz2),device :: u,dudx,dudy
-    real(fp),dimension(nx,ny,nz2),device :: v,dvdx,dvdy
-    real(fp),dimension(nx,ny,nz2),device :: w,dwdx,dwdy
+    real(fp),dimension(nx,ny,nz2) :: u_host,v_host,w_host
+    real(fp),dimension(nx,ny,nz2),device :: u,v,w
 
     complex(fp), dimension(nx/2+1,ny,nz2),device :: u_hat,v_hat,w_hat
-    complex(fp), dimension(nx/2+1,ny,nz2) :: u_hat_host
+    complex(fp), dimension(nx/2+1,ny,nz2) :: u_hat_host,v_hat_host,w_hat_host
 
-    real(fp),dimension(nx,ny,nz2*3) :: U_i_host,dudx_vec_host,dudy_vec_host
-    real(fp),dimension(nx,ny,nz2*3),device :: U_i,dudx_vec,dudy_vec
-    complex(fp), dimension(nx/2+1,ny,nz2*3),device :: U_i_hat
-    complex(fp), dimension(nx/2+1,ny,nz2*3) :: U_i_hat_host
+    real(fp),dimension(nx,ny,nz2,3) :: U_i_host
+    real(fp),dimension(nx,ny,nz2,3),device :: U_i
+    complex(fp), dimension(nx/2+1,ny,nz2,3),device :: U_i_hat
+    complex(fp), dimension(nx/2+1,ny,nz2,3) :: U_i_hat_host
     
-    
-    real(fp),dimension(nx,ny,nz2) :: u_filtered,dudx_filtered,dudy_filtered
     integer,parameter :: nt = 1000   
     integer istat,i,j,k,t
-    type(c_ptr) plan_batch(2),plan_batch_uvw(2)
+    type(c_ptr) plan_batch(2),plan_batch_uvw(2),plan_batch_advance_layout(2)
     REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
 
 
@@ -48,10 +38,6 @@
     call random_number(w_host)
     w = w_host
 
-    call random_number(U_i_host)
-
-    U_i = U_i_host
-
     !---------------------------------------------------------------------------
     ! GPU code
     !---------------------------------------------------------------------------
@@ -61,52 +47,42 @@
     istat = cudaEventCreate(stopEvent)
 
     ! Create fft plan
+        
+    !---------------------------------------------------------------------------
+    ! Base line: 3 batch fft for u,v,w
+    !---------------------------------------------------------------------------
+
     call cufftPlanMany(plan_batch(1),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_D2Z,nz2) 
     call cufftPlanMany(plan_batch(2),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_Z2D,nz2)
 
-    call cufftPlanMany(plan_batch_uvw(1),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_D2Z,nz2*3) 
-    call cufftPlanMany(plan_batch_uvw(2),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_Z2D,nz2*3)
-        
-    call ddxy_filter(u,dudx,dudy,1,plan_batch)
-    call ddxy_filter(v,dvdx,dvdy,1,plan_batch)
-    call ddxy_filter(w,dwdx,dwdy,1,plan_batch)
-
     istat = cudaEventRecord(startEvent, 0)
 
-    U_i(:,:,1:nz2) = u
-    U_i(:,:,nz2+1:nz2*2) = v
-    U_i(:,:,2*nz2+1:nz2*3) = w
-
-    do t = 2,Nt+1
-
+    do t = 1,Nt
         call cufftExec(plan_batch(1),u,u_hat)
-        ! call cufftExec(plan_batch(2),u_hat,u)
-
         call cufftExec(plan_batch(1),v,v_hat)
-        ! call cufftExec(plan_batch(2),v_hat,v)
-
         call cufftExec(plan_batch(1),w,w_hat)
-        ! call cufftExec(plan_batch(2),w_hat,w)
-
-        ! call ddxy_filter(u,dudx,dudy,t,plan_batch)
-        ! call ddxy_filter(v,dvdx,dvdy,t,plan_batch)
-        ! call ddxy_filter(w,dwdx,dwdy,t,plan_batch)
     end do   
     istat = cudaEventRecord(stopEvent, 0)
     istat = cudaEventSynchronize(stopEvent)
     istat = cudaEventElapsedTime(time, startEvent, stopEvent)
 
     u_hat_host = u_hat
+    v_hat_host = v_hat
+    w_hat_host = w_hat
+
+    !---------------------------------------------------------------------------
+    ! Stack the u,v,w in the 4th dimentsion and do 1 batch FFT (adv mem layout)
+    !---------------------------------------------------------------------------
+    call cufftPlanMany(plan_batch(1),2,(/ny,nx/),(/ny,nx/),1,nx*ny,(/ny,nx/2+1/),1,(nx/2+1)*ny,cufft_D2Z,nz2*3) 
+    call cufftPlanMany(plan_batch(2),2,(/ny,nx/),(/ny,nx/),1,nx*ny,(/ny,nx/2+1/),1,(nx/2+1)*ny,cufft_D2Z,nz2*3)
+
+    U_i(:,:,:,1) = u
+    U_i(:,:,:,2) = v
+    U_i(:,:,:,3) = w
 
     istat = cudaEventRecord(startEvent, 0)
-    do t = 2,Nt+1
-
-        call cufftExec(plan_batch_uvw(1),U_i,U_i_hat)
-        ! call cufftExec(plan_batch_uvw(2),U_i_hat,U_i)
-
-        ! call ddxy_filter(u,dudx,dudy,t,plan_batch)
-        ! call ddxy_filter(v,dvdx,dvdy,t,plan_batch)
-        ! call ddxy_filter(w,dwdx,dwdy,t,plan_batch)
+    do t = 1,Nt
+        call cufftExec(plan_batch(1),U_i,U_i_hat)
     end do   
     istat = cudaEventRecord(stopEvent, 0)
     istat = cudaEventSynchronize(stopEvent)
@@ -114,8 +90,10 @@
 
     U_i_hat_host = U_i_hat
 
-
-    print *,U_i_hat_host(10,10,10) - u_hat_host(10,10,10)
+    print *,maxval(abs(U_i_hat_host(:,:,:,1) - u_hat_host))
+    print *,maxval(abs(U_i_hat_host(:,:,:,2) - v_hat_host))
+    print *,maxval(abs(U_i_hat_host(:,:,:,3) - w_hat_host))
+    
 
     call cufftDestroy(plan_batch(1))
     call cufftDestroy(plan_batch(2))   
@@ -123,26 +101,7 @@
     call cufftDestroy(plan_batch_uvw(1))
     call cufftDestroy(plan_batch_uvw(2))   
 
-    u_filtered = u 
-    dudx_filtered = dudx
-
-    WRITE (*,*) 'GPU time: ', time/time1, ' ms'
-    ! !---------------------------------------------------------------------------
-    ! ! cpu code
-    ! !---------------------------------------------------------------------------
-    ! call ddxy_filter_cpu(u_host,dudx_host,dudy_host,0)
-    ! call get_walltime(wctime1)
-    ! ! CALL CPU_TIME ( time_begin ) 
-    ! do t = 1,Nt
-    !     call ddxy_filter_cpu(u_host,dudx_host,dudy_host,1)
-    ! end do
-    ! call get_walltime(wctime2)
-
-    ! max_error = maxval(abs(dudx_host(:,:,2:nzb+1)-dudx_filtered(:,:,2:nzb+1)))
-    ! print *,'Max error',max_error
-    
-    ! time_cpu = (wctime2 - wctime1)
-    ! WRITE (*,*) 'GPU Speedup: ', time_cpu/time*1000 
+    WRITE (*,*) '3 component batch ffts/1 stacked batch fft ', time/time1
    
 end program test_cufft
 
