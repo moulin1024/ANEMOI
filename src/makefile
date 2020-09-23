@@ -16,6 +16,11 @@ CUDA = -Mcuda -lcufft -ta=nvidia
 # prof
 # -pg
 
+# NVTX uncomment next line to add nvtx markers. Make sure that CUDA_HOME is available in your env.
+USE_NVTX = 1
+
+
+
 ################################################################################
 # LIBS
 ################################################################################
@@ -32,8 +37,17 @@ DEP1  =   cufft_m.o dimen.o
 DEP2  =   convection.o derivative.o filter.o io.o pressure.o rhs.o time.o turbine.o
 DEP3  =   divergence.o
 DEP4  =   sgs.o wall.o
+
+
+
+ifdef USE_NVTX
+	FFLAGS += -DUSE_NVTX -lnvToolsExt -L$(CUDA_HOME)/lib64/
+	DEP0   += nvtx.o
+endif
+
 DEPS  = $(DEP0) $(DEP1) $(DEP2) $(DEP3) $(DEP4) 
 OBJ   = $(DEPS) main.o
+
 
 
 # --- link ---
