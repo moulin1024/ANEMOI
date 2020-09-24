@@ -164,6 +164,8 @@ module cufft_m
        end subroutine cufftPlan2d
     end interface cufftPlan2d
 
+    contains
+
     subroutine get_batchfft_plan(plan,dim)
       use dimen
       use iso_c_binding
