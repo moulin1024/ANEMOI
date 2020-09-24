@@ -31,7 +31,7 @@ DEP0  =   precision.o
 DEP1  =   cufft_m.o dimen.o
 DEP2  =   convection.o derivative.o filter.o io.o pressure.o rhs.o time.o turbine.o
 DEP3  =   divergence.o
-DEP4  =   sgs.o wall.o
+DEP4  =   wall.o
 DEPS  = $(DEP0) $(DEP1) $(DEP2) $(DEP3) $(DEP4) 
 OBJ   = $(DEPS) main.o
 

@@ -163,6 +163,39 @@ module cufft_m
          integer(c_int),value:: nx, ny, type
        end subroutine cufftPlan2d
     end interface cufftPlan2d
+
+    contains 
+
+    subroutine get_batchfft_plan(plan,dim)
+        use dimen
+        use iso_c_binding
+        implicit none
+
+        type(c_ptr),intent(inout) :: plan(2)
+        integer,intent(in) :: dim
+
+        if (fp==singlePrecision) then
+            call cufftPlanMany(plan(1),2,(/ny,nx/),(/ny,nx/),1,nx*ny,(/ny,nx/2+1/),1,(nx/2+1)*ny,cufft_R2C,nz2*dim) 
+            call cufftPlanMany(plan(2),2,(/ny,nx/),(/ny,nx/2+1/),1,(nx/2+1)*ny,(/ny,nx/),1,nx*ny,cufft_C2R,nz2*dim)
+        else 
+            call cufftPlanMany(plan(1),2,(/ny,nx/),(/ny,nx/),1,nx*ny,(/ny,nx/2+1/),1,(nx/2+1)*ny,cufft_D2Z,nz2*dim) 
+            call cufftPlanMany(plan(2),2,(/ny,nx/),(/ny,nx/2+1/),1,(nx/2+1)*ny,(/ny,nx/),1,nx*ny,cufft_Z2D,nz2*dim)
+        end if
+   end subroutine get_batchfft_plan
+
+    subroutine get_2dfft_plan(plan)
+        use dimen
+        use iso_c_binding
+        implicit none
+        type(c_ptr),intent(inout) :: plan(2)
+        if (fp==singlePrecision) then
+            call cufftPlan2d(plan(1),ny,nx,CUFFT_R2C)
+            call cufftPlan2d(plan(2),ny,nx,CUFFT_C2R)
+        else 
+            call cufftPlan2d(plan(1),ny,nx,CUFFT_D2Z)
+            call cufftPlan2d(plan(2),ny,nx,CUFFT_Z2D)
+        end if
+    end subroutine get_2dfft_plan
   end module cufft_m
   
   

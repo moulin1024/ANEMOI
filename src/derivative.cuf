@@ -23,10 +23,7 @@ subroutine ddxy(dfdi,f,axis,t,plan)
     ! fft plan
     type(c_ptr)  :: plan(2)
     integer :: istat,k,t
-    ! Cuda variable
-    type(dim3) :: grid, tBlock
-    grid = dim3(int((nx/2+1)/32)+1,ny,nzb)
-    tBlock = dim3(32,1,1)
+
     save f_hat,dfdi_hat
     !---------------------------------------------------------------------------
     ! main code
@@ -34,24 +31,27 @@ subroutine ddxy(dfdi,f,axis,t,plan)
     !---------------------------------------------------------------------------
     ! init
     if (t.eq.1) then
-        allocate(f_hat(nx/2+1,ny,nzb))
-        allocate(dfdi_hat(nx/2+1,ny,nzb))
+        allocate(f_hat(nx/2+1,ny,nz2,3))
+        allocate(dfdi_hat(nx/2+1,ny,nz2,3))
     endif
 
     !---------------------------------------------------------------------------
     ! Forward fft
-    call cufftExec(plan(1),f(:,:,2:nzb+1),f_hat)
+    call cufftExec(plan(1),f,f_hat)
 
     !---------------------------------------------------------------------------
     ! Computing x derivatives or y derivative
-    call spec_deriv_xy<<<grid, tBlock>>>(f_hat,dfdi_hat,axis)
-    
+    if (axis == 1) then         ! dfdx
+        call spec_deriv_x<<<grid, tBlock>>>(f_hat,dfdi_hat)
+    else if (axis == 2) then    ! dfdy
+        call spec_deriv_y<<<grid, tBlock>>>(f_hat,dfdi_hat)
+    end if
     !---------------------------------------------------------------------------
     ! Backward fft
     call  cufftExec(plan(2),dfdi_hat,dfdi(:,:,2:nzb+1))
 end subroutine ddxy
 
-attributes(global) subroutine spec_deriv_xy(f_hat,dfdi_hat,axis)
+attributes(global) subroutine spec_deriv_x(f_hat,dfdi_hat,axis)
     implicit none
     complex(fp), dimension(nx/2+1,ny,nzb),intent(inout) :: f_hat,dfdi_hat
     integer,value :: axis
@@ -86,30 +86,50 @@ attributes(global) subroutine spec_deriv_xy(f_hat,dfdi_hat,axis)
         
 end subroutine spec_deriv_xy
 
-attributes(global) subroutine ddz (dfdz,f,stagger_flag)
+attributes(global) subroutine ddz_uv (dfdz,f)
     !---------------------------------------------------------------------------
     ! declaration
     !---------------------------------------------------------------------------
     implicit none
-    real(fp), dimension(nx,ny,nz2), intent(out) :: dfdz
-    real(fp), dimension(nx,ny,nz2), intent(in) :: f
-    integer,value,intent(in) :: stagger_flag
+    real(fp), dimension(nx,ny,nz2,3), intent(out) :: dfdz
+    real(fp), dimension(nx,ny,nz2,3), intent(in) :: f
     integer :: i,j,k
 
     i = (blockIdx%x - 1) * blockDim%x + threadIdx%x
     j = (blockIdx%y - 1) * blockDim%y + threadIdx%y
-    k = (blockIdx%z - 1) * blockDim%z + threadIdx%z;
+    k = (blockIdx%z - 1) * blockDim%z + threadIdx%z
     !---------------------------------------------------------------------------
     ! main code
     !---------------------------------------------------------------------------
     if (k>1 .and. k<nz2) then
-        if (stagger_flag == 0) then ! uv node
-            dfdz(i,j,k)=(f(i,j,k)-f(i,j,k-1))*idz
-        else if (stagger_flag == 1) then ! w node
-            dfdz(i,j,k)=(f(i,j,k+1)-f(i,j,k))*idz
-        end if
+            dfdz(i,j,k,1)=(f(i,j,k,1)-f(i,j,k-1,1))*idz
+            dfdz(i,j,k,2)=(f(i,j,k,2)-f(i,j,k-1,2))*idz
+            dfdz(i,j,k,3)=(f(i,j,k+1,3)-f(i,j,k,3))*idz
     end if
-end subroutine ddz
+end subroutine ddz_uv
+
+attributes(global) subroutine ddz_w (dfdz,f)
+    !---------------------------------------------------------------------------
+    ! declaration
+    !---------------------------------------------------------------------------
+    implicit none
+    real(fp), dimension(nx,ny,nz2,3), intent(out) :: dfdz
+    real(fp), dimension(nx,ny,nz2,3), intent(in) :: f
+    integer :: i,j,k
+
+    i = (blockIdx%x - 1) * blockDim%x + threadIdx%x
+    j = (blockIdx%y - 1) * blockDim%y + threadIdx%y
+    k = (blockIdx%z - 1) * blockDim%z + threadIdx%z
+    !---------------------------------------------------------------------------
+    ! main code
+    !---------------------------------------------------------------------------
+    if (k>1 .and. k<nz2) then
+
+            dfdz(i,j,k,1)=(f(i,j,k+1,1)-f(i,j,k,1))*idz
+            dfdz(i,j,k,2)=(f(i,j,k+1,2)-f(i,j,k,2))*idz
+            dfdz(i,j,k,3)=(f(i,j,k,3)-f(i,j,k-1,3))*idz
+    end if
+end subroutine ddz_w
 
 end module derivative
 

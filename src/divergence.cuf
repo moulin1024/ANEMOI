@@ -3,7 +3,8 @@ use precision
 use dimen
 contains
 
-subroutine divstress(divt,tx,ty,tz,stagger_flag,t,plan)
+subroutine divstress(div_tau_vec,tau,plan)
+    ! divtx,txx,txy,txz
 
     !---------------------------------------------------------------------------
     ! declaration
@@ -11,9 +12,10 @@ subroutine divstress(divt,tx,ty,tz,stagger_flag,t,plan)
     use cudafor
     use derivative
     implicit none
-    integer :: i,j,k,t,stagger_flag
-    real(fp),dimension(nx,ny,nz2),intent(inout),device:: divt
-    real(fp),dimension(nx,ny,nz2),intent(inout),device:: tx,ty,tz
+    integer :: i,j,k
+    real(fp),dimension(nx,ny,nz2,3),intent(out),device:: div_tau_vec
+    real(fp),dimension(nx,ny,nz2,6),intent(in),device:: tau
+    real(fp),dimension(:,:,:,:),allocatable,device:: tau_vec
     real(fp),dimension(:,:,:),allocatable,device:: tdx,tdy,tdz
     
     real(fp),dimension(nx,ny,nz2):: tdx_host,tdy_host,tdz_host
@@ -23,22 +25,35 @@ subroutine divstress(divt,tx,ty,tz,stagger_flag,t,plan)
     grid = dim3(nx/16,ny/16,nz2/2)
     tBlock = dim3(16,16,2)
 
-    save tdx,tdy,tdz
+    integer stat_flag = 1
+    save tau_vec,tdx,tdy,tdz
     !---------------------------------------------------------------------------
     ! main code
     !---------------------------------------------------------------------------
-    if (t==1) then
-        allocate(tdx(nx,ny,nz2))
-        allocate(tdy(nx,ny,nz2))
-        allocate(tdz(nx,ny,nz2))
-    end if
+    if (stat_flag /= 0) then
+        allocate(tdx(nx,ny,nz2,3),STAT=stat_flag)
+        allocate(tdy(nx,ny,nz2,3),STAT=stat_flag)
+        allocate(tdz(nx,ny,nz2,3),STAT=stat_flag)
+        allocate(tau_vec(nx,ny,nz2,3),STAT=stat_flag)
+    end if 
     !---------------------------------------------------------------------------
     ! stress gradients
-    call ddxy(tdx,tx,1,t,plan)
-    call ddxy(tdy,ty,2,t,plan)
-    call ddz<<<grid, tBlock>>>(tdz,tz,stagger_flag)
+    ! txx,tyx,tzx
+    tau_vec = tau(:,:,:,1:3)
+    call ddxy(tdx,tau_vec,1,plan)
+    ! txy,tyy,tzy
+    tau_vec(:,:,:,1) = tau(:,:,:,2)
+    tau_vec(:,:,:,2) = tau(:,:,:,4)
+    tau_vec(:,:,:,3) = tau(:,:,:,5)
+    call ddxy(tdy,tau_vec,2,plan)
+
+    tau_vec(:,:,:,1) = tau(:,:,:,3)
+    tau_vec(:,:,:,2) = tau(:,:,:,5)
+    tau_vec(:,:,:,3) = tau(:,:,:,6)
+    call ddz_w<<<grid, tBlock>>>(tdz,tau_vec)
     !---------------------------------------------------------------------------
     ! stress divergence
+    
     call div_sum<<<grid, tBlock>>>(divt,tdx,tdy,tdz)
     ! stop
 end subroutine divstress
