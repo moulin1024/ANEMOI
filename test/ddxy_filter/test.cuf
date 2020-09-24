@@ -1,0 +1,90 @@
+ program test_cufft
+    use, intrinsic :: iso_c_binding 
+    ! use filter
+    use cufft_m
+    use cudafor
+    use cpu_timer
+    use dimen
+    use precision
+    use filter
+    use filter_cpu
+    implicit none
+
+    real(fp),dimension(nx,ny,nz2) :: u_host1,dudx_host1,dudy_host1
+    real(fp),dimension(nx,ny,nz2) :: v_host1,dvdx_host1,dvdy_host1
+    real(fp),dimension(nx,ny,nz2) :: w_host1,dwdx_host1,dwdy_host1
+
+    real(fp),dimension(nx,ny,nz2) :: u_host2,dudx_host2,dudy_host2
+    real(fp),dimension(nx,ny,nz2) :: v_host2,dvdx_host2,dvdy_host2
+    real(fp),dimension(nx,ny,nz2) :: w_host2,dwdx_host2,dwdy_host2
+
+    real(fp),dimension(nx,ny,nz2),device :: u,dudx,dudy
+    real(fp),dimension(nx,ny,nz2),device :: v,dvdx,dvdy
+    real(fp),dimension(nx,ny,nz2),device :: w,dwdx,dwdy
+    
+    integer,parameter :: nt = 1000   
+    integer istat,i,j,k,t
+    type(c_ptr) plan_batch(2)
+
+    type (cudaEvent) :: startEvent, stopEvent
+    real :: time,time_cpu,max_error
+    real(fp) :: wctime1,wctime2
+    ! include 'dimen.h'
+
+    call random_number(u_host1)
+    call random_number(v_host1)
+    call random_number(w_host1)
+
+    u = u_host1
+    v = v_host1
+    w = w_host1
+
+    !---------------------------------------------------------------------------
+    ! GPU code
+    !---------------------------------------------------------------------------
+
+    ! Create cuda runtime event
+    istat = cudaEventCreate(startEvent)
+    istat = cudaEventCreate(stopEvent)
+
+    ! Create fft plan
+    call get_batchfft_plan(plan_batch,1)
+
+    call ddxy_filter(u,dudx,dudy,plan_batch)
+    istat = cudaEventRecord(startEvent, 0)
+    do t = 1,Nt
+        call ddxy_filter(u,dudx,dudy,plan_batch)
+        call ddxy_filter(v,dvdx,dvdy,plan_batch)
+        call ddxy_filter(w,dwdx,dwdy,plan_batch)
+    end do   
+    istat = cudaEventRecord(stopEvent, 0)
+    istat = cudaEventSynchronize(stopEvent)
+    istat = cudaEventElapsedTime(time, startEvent, stopEvent)
+
+    call cufftDestroy(plan_batch(1))
+    call cufftDestroy(plan_batch(2))   
+
+    ! u_filtered = u 
+    dudx_host2 = dudx
+
+    WRITE (*,*) 'GPU time: ', time/nt, ' ms'
+    ! !---------------------------------------------------------------------------
+    ! ! cpu code
+    ! !---------------------------------------------------------------------------
+    call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,0)
+    call get_walltime(wctime1)
+    do t = 1,Nt
+        call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,1)
+        call ddxy_filter_cpu(v_host1,dvdx_host1,dvdy_host1,1)
+        call ddxy_filter_cpu(w_host1,dwdx_host1,dwdy_host1,1)
+    end do
+    call get_walltime(wctime2)
+
+    max_error = maxval(abs(dudx_host1(:,:,2:nzb+1)-dudx_host2(:,:,2:nzb+1)))
+    print *,'Max error',max_error
+    
+    time_cpu = (wctime2 - wctime1)
+    WRITE (*,*) 'GPU/CPU Speedup: ', time_cpu/time*1000 
+   
+end program test_cufft
+

@@ -1,5 +1,6 @@
 module dimen
     use precision
+    use cudafor
     implicit none
     ! include 'mpif.h'
 
@@ -159,5 +160,12 @@ module dimen
     integer, parameter :: block_size = nsteps/cs_count
     integer, parameter :: batch_size = c_count/cs_count 
     integer, parameter :: inflow_size = inflow_nx*ny*nz2
+
+    ! Cuda kernal block config
+    type(dim3),parameter :: grid_fft= dim3(int((nx/2+1)/32)+1,ny,nzb)
+    type(dim3),parameter :: tBlock_fft= dim3(32,1,1)
+
+    type(dim3),parameter :: grid_flow = dim3(nx/32,ny/32,nzb)
+    type(dim3),parameter :: tBlock_flow = dim3(32,32,1)
         
 end module dimen

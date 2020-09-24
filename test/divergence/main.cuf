@@ -14,7 +14,7 @@
 
     real(fp),dimension(nx,ny,nz2) :: txx_host,txy_host,txz_host,tyy_host,tyz_host,tzz_host 
     real(fp),dimension(nx,ny,nz2),device :: divtx,divty,divtz,txx,txy,txz,tyy,tyz,tzz 
-    integer,parameter :: nt = 5000  
+    integer,parameter :: nt = 10000  
     integer istat,i,j,k,t
     type(c_ptr) plan_batch(2)
     REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
