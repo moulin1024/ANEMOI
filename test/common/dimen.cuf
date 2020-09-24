@@ -147,6 +147,14 @@ module dimen
     real(fp), parameter :: inxny=1.0/(nx*ny), iny=1.0/ny
     real(fp), parameter :: pres_force =(u_s/u_scale)**2/(l_z/z_i)
 
+        ! Predefined box cutoff
+    integer, dimension(nx/2+1), parameter :: freqx = [(idx1, idx1=0,nx/2-1),0]
+    integer, dimension(ny), parameter :: freqy = [(idx2*l_r, idx2=0,ny/2-1),0,((idx2-ny)*l_r, idx2=ny/2+1,ny-1)]
+    integer, parameter :: fcx = nint(nx/2/fgr)
+    integer, parameter :: fcy = nint(ny/2/fgr)
+    integer, dimension(nx/2+1), parameter :: windx = [(1, idx1=0,fcx-1),(0,idx1=fcx,nx/2)]
+    integer, dimension(ny), parameter :: windy = [(1, idx2=0,fcy-1),(0, idx2=fcy,ny-fcy),(1,idx2=ny-fcy+1,ny-1)]
+
     ! Inflow
     integer, parameter :: block_size = nsteps/cs_count
     integer, parameter :: batch_size = c_count/cs_count 

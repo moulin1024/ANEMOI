@@ -13,7 +13,7 @@
     real(fp),dimension(nx,ny,nz2) :: u_host,dudx_host,dudy_host
     real(fp),dimension(nx,ny,nz2),device :: u,dudx,dudy
     real(fp),dimension(nx,ny,nz2) :: u_filtered,dudx_filtered,dudy_filtered
-    integer,parameter :: nt = 100   
+    integer,parameter :: nt = 10000   
     integer istat,i,j,k,t
     type(c_ptr) plan_batch(2)
     REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
@@ -39,8 +39,8 @@
     call cufftPlanMany(plan_batch(1),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_D2Z,nzb) 
     call cufftPlanMany(plan_batch(2),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_Z2D,nzb)
         
-    istat = cudaEventRecord(startEvent, 0)
     call ddxy_filter(u,dudx,dudy,1,plan_batch)
+    istat = cudaEventRecord(startEvent, 0)
     do t = 2,Nt+1
         call ddxy_filter(u,dudx,dudy,t,plan_batch)
     end do   

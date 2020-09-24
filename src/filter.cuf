@@ -132,31 +132,15 @@ module filter
 
         if (i <= nx/2+1) then
             !---------------------------------------------------------------------------
-            ! Scale back the fft
-            f_hat(i,j,k) = f_hat(i,j,k)*inxny
-            
-            !---------------------------------------------------------------------------
-            ! Preparing sharp spectral cut-off
-            ! Shift wave number
-            ii = i - 1
-            jj = j - 1
-            if (jj > int(ny/2)) then
-                jj = jj-ny
-            end if
-            jj = jj*l_r
-            
-            !---------------------------------------------------------------------------
-            ! Apply sharp spectral cut-off
-            call spec_box_cutoff(f_hat,fgr,i,j,k)
+            ! Scale back the fft and apply box spectral cut-off
+            f_hat(i,j,k) = f_hat(i,j,k)*inxny*windx(i)*windy(j)
 
             !---------------------------------------------------------------------------
-            ! Apply sharp spectral cut-off
+            ! Formulate derivatives in the spectral space
             ! dfdx_hat
-            dfdx_hat(i,j,k) = dcmplx(aimag(f_hat(i,j,k))*(-1.0), &
-                dble(f_hat(i,j,k)))*ii
+            dfdx_hat(i,j,k) = dcmplx(aimag(f_hat(i,j,k))*(-1.0),dble(f_hat(i,j,k)))*freqx(i)
             ! dfdy_hat
-            dfdy_hat(i,j,k) = dcmplx(aimag(f_hat(i,j,k))*(-1.0), &
-                dble(f_hat(i,j,k)))*jj
+            dfdy_hat(i,j,k) = dcmplx(aimag(f_hat(i,j,k))*(-1.0),dble(f_hat(i,j,k)))*freqy(j)
         end if
 
     end subroutine ddxy_filter_kernel
