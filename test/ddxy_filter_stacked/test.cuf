@@ -7,7 +7,7 @@
     use dimen
     use precision
     use filter
-    use filter_cpu
+    ! use filter_cpu
     implicit none
 
     real(fp),dimension(nx,ny,nz2,3) :: u_host,dudx_host,dudy_host
