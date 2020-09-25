@@ -7,7 +7,7 @@
     use dimen
     use precision
     use filter
-    use filter_cpu
+    ! use filter_cpu
     implicit none
 
     real(fp),dimension(nx,ny,nz2) :: u_host1,dudx_host1,dudy_host1
@@ -71,20 +71,20 @@
     ! !---------------------------------------------------------------------------
     ! ! cpu code
     ! !---------------------------------------------------------------------------
-    call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,0)
-    call get_walltime(wctime1)
-    do t = 1,Nt
-        call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,1)
-        call ddxy_filter_cpu(v_host1,dvdx_host1,dvdy_host1,1)
-        call ddxy_filter_cpu(w_host1,dwdx_host1,dwdy_host1,1)
-    end do
-    call get_walltime(wctime2)
+    ! call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,0)
+    ! call get_walltime(wctime1)
+    ! do t = 1,Nt
+    !     call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,1)
+    !     call ddxy_filter_cpu(v_host1,dvdx_host1,dvdy_host1,1)
+    !     call ddxy_filter_cpu(w_host1,dwdx_host1,dwdy_host1,1)
+    ! end do
+    ! call get_walltime(wctime2)
 
-    max_error = maxval(abs(dudx_host1(:,:,2:nzb+1)-dudx_host2(:,:,2:nzb+1)))
-    print *,'Max error',max_error
+    ! max_error = maxval(abs(dudx_host1(:,:,2:nzb+1)-dudx_host2(:,:,2:nzb+1)))
+    ! print *,'Max error',max_error
     
-    time_cpu = (wctime2 - wctime1)
-    WRITE (*,*) 'GPU/CPU Speedup: ', time_cpu/time*1000 
+    ! time_cpu = (wctime2 - wctime1)
+    ! WRITE (*,*) 'GPU/CPU Speedup: ', time_cpu/time*1000 
    
 end program test_cufft
 

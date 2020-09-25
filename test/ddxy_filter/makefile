@@ -16,7 +16,7 @@ PRECISION=-DDOUBLE
 # OBJ, PROG
 ################################################################################
 
-OBJ = cpu_timer.o precision.o dimen.o cufft_m.o filter.o \#ddxy_filter_cpu.o\
+OBJ = cpu_timer.o precision.o dimen.o cufft_m.o filter.o \
 	  test.o \
 
 PROG = wireles
