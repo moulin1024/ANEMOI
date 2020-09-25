@@ -256,9 +256,9 @@ program main
         !-----------------------------------------------------------------------
         !-----------------------------------------------------------------------
         ! spectral deriv (and filter)
-        call ddxy_filter(u,dudx,dudy,t,plan_batch)
-        call ddxy_filter(v,dvdx,dvdy,t,plan_batch)
-        call ddxy_filter(w,dwdx,dwdy,t,plan_batch)
+        call ddxy_filter(u,dudx,dudy,plan_batch)
+        call ddxy_filter(v,dvdx,dvdy,plan_batch)
+        call ddxy_filter(w,dwdx,dwdy,plan_batch)
 
         if (mod(t,c_count*10)==0) then
             u_host = u 
