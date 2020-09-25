@@ -26,7 +26,7 @@
 #define COMPLEX_SIGNAL_SIZE (INPUT_SIGNAL_SIZE/2 + 1)
 
 #define BLOCK_SIZE 128
-#define REPEAT 100
+#define REPEAT 1000
 
 // Regular kernels
 __global__ void init(double * arr, int n)
@@ -59,7 +59,7 @@ __global__ void post(double * arr, int n)
 // Device callbacks
 __device__ double CB_init(void * dataIn, size_t offset, void * callerInfo, void * sharedPtr)
 {
-  return  cos( ((double)offset) / ((double)INPUT_SIGNAL_SIZE) * 10.0f * 3.141592f );
+  return cos( ((double)offset) / ((double)INPUT_SIGNAL_SIZE) * 10.0f * 3.141592f );
 }
 
 __device__ void CB_work(void * dataOut, size_t offset, cufftDoubleComplex element, void * callerInfo, void * sharedPtr)
