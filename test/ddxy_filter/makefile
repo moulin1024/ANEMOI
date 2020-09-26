@@ -16,7 +16,7 @@ PRECISION=-DDOUBLE
 # OBJ, PROG
 ################################################################################
 
-OBJ = cpu_timer.o nvtx.o precision.o dimen.o cufft_m.o filter.o \
+OBJ = cpu_timer.o precision.o dimen.o cufft_m.o filter.o \
 	  test.o \
 
 PROG = wireles
@@ -24,7 +24,6 @@ all: build run
 # --- compile ---
 build:
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/precision.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/nvtx.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../common/cpu_timer.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../common/dimen.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/cufft_m.cuf
