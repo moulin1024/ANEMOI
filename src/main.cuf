@@ -16,6 +16,10 @@ program main
     use convection
     use sgs
     use time
+#ifdef USE_NVTX
+    use nvtx 
+#endif
+
     implicit none
     !---------------------------------------------------------------------------
     ! iterator
@@ -84,7 +88,9 @@ program main
     !===========================================================================
     ! init
     !===========================================================================
-
+#ifdef USE_NVTX
+    call nvtxStartRange("init")
+#endif
     !---------------------------------------------------------------------------
     ! init mpi
     !---------------------------------------------------------------------------
@@ -238,19 +244,28 @@ program main
     ! copy cpu data to gpu memory
 
     device_id = me
-
+#ifdef USE_NVTX    
+    call nvtxEndRange
+#endif
     !===========================================================================
     ! start time loop
     !===========================================================================
-
+#ifdef USE_NVTX
+    call nvtxStartRange("start time loop")
+#endif
     do t=1,nsteps
         !-----------------------------------------------------------------------
         ! save previous time's right-hand-sides for adams-bashforth
         !-----------------------------------------------------------------------
+#ifdef USE_NVTX
+        call nvtxStartRange("save prv time",1)
+#endif
         rhsx_f  = rhsx 
         rhsy_f  = rhsy 
         rhsz_f  = rhsz 
-
+#ifdef USE_NVTX    
+    call nvtxEndRange
+#endif
         !-----------------------------------------------------------------------
         ! derivatives
         !-----------------------------------------------------------------------
@@ -295,12 +310,16 @@ program main
         call ddz<<<grid, tBlock>>>(dudz,u,0)    ! cell centre
         call ddz<<<grid, tBlock>>>(dvdz,v,0)    ! cell centre
         call ddz<<<grid, tBlock>>>(dwdz,w,1)    ! staggered
-
+#ifdef USE_NVTX
+        call nvtxEndRange
+        call nvtxStartRange("wall",3)
+#endif
         !-----------------------------------------------------------------------
         ! wall
         !-----------------------------------------------------------------------
         ! we need to hide this wall modif to the other processor because
         ! dudz, dvdz change location (from w node to uv nodes) --> no update
+
         if (me==0) then
             call wall_stress(txz,tyz,dudz,dvdz,ustar,m,u,v,zo,t,plan_2d)
         end if
@@ -336,7 +355,10 @@ program main
                end do
              end do
          end if
-        
+ #ifdef USE_NVTX
+        call nvtxEndRange
+        call nvtxStartRange("Divergence",4)
+#endif       
         !-----------------------------------------------------------------------
         ! Divergence
         !-----------------------------------------------------------------------
@@ -396,7 +418,10 @@ program main
                 end do
             end do
         end if
-
+ #ifdef USE_NVTX
+        call nvtxEndRange
+        call nvtxStartRange("pressure correction",5)
+#endif
         !-----------------------------------------------------------------------
         ! pressure correction
         !-----------------------------------------------------------------------
@@ -542,9 +567,13 @@ program main
         ! !     endif
 
         ! ! endif
-
+#ifdef USE_NVTX
+         call nvtxEndRange
+#endif
   enddo
-
+#ifdef USE_NVTX
+    call nvtxEndRange
+#endif
  ! ===============================================================================
  ! end time loop
  !===============================================================================
