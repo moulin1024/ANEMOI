@@ -167,5 +167,6 @@ module dimen
 
     type(dim3),parameter :: grid_flow = dim3(nx/32,ny/32,nzb)
     type(dim3),parameter :: tBlock_flow = dim3(32,32,1)
+
         
 end module dimen

@@ -13,7 +13,7 @@
     real(fp),dimension(nx,ny,nz2,3) :: u_host,dudx_host,dudy_host
     real(fp),dimension(nx,ny,nz2,3),device :: u,dudx,dudy
     real(fp),dimension(nx,ny,nz2) :: u_filtered,dudx_filtered,dudy_filtered
-    integer,parameter :: nt = 100
+    integer,parameter :: nt = 1000
     integer istat,i,j,k,t
     type(c_ptr) plan_batch(2)
     REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
