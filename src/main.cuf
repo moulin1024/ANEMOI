@@ -271,6 +271,9 @@ program main
         !-----------------------------------------------------------------------
         !-----------------------------------------------------------------------
         ! spectral deriv (and filter)
+#ifdef USE_NVTX
+        call nvtxStartRange("deriv and filter",1)
+#endif
         call ddxy_filter(u,dudx,dudy,plan_batch)
         call ddxy_filter(v,dvdx,dvdy,plan_batch)
         call ddxy_filter(w,dwdx,dwdy,plan_batch)
@@ -327,6 +330,10 @@ program main
         !-----------------------------------------------------------------------
         ! compute convec
         !-----------------------------------------------------------------------
+#ifdef USE_NVTX
+        call nvtxEndRange
+        call nvtxStartRange("Convection",3)
+#endif
         call convec<<<grid,tBlock>>>(cx,cy,cz,&
                                      u,v,w,&
                                      dudy,dudz,&
@@ -336,6 +343,10 @@ program main
         !-----------------------------------------------------------------------
         ! compute sgs: LASD model
         !-----------------------------------------------------------------------
+#ifdef USE_NVTX
+        call nvtxEndRange
+        call nvtxStartRange("SGS",3)
+#endif
         if (model == 3) then
             call subgrid_stress(txx,txy,txz,tyy,tyz,tzz,&
                                 u,v,w,&
@@ -369,6 +380,10 @@ program main
         !-----------------------------------------------------------------------
         ! assemble matrix
         !-----------------------------------------------------------------------
+#ifdef USE_NVTX
+        call nvtxEndRange
+        call nvtxStartRange("RHS and timestepping",4)
+#endif       
         !-----------------------------------------------------------------------
         ! rhs0
         call rhs_assemble<<<grid, tBlock>>>(rhsx,cx,divtx )
@@ -462,7 +477,9 @@ program main
         call velo_corr<<<grid, tBlock>>>(u,dpdx )
         call velo_corr<<<grid, tBlock>>>(v,dpdy )
         call velo_corr<<<grid, tBlock>>>(w,dpdz )
-
+#ifdef USE_NVTX
+        call nvtxEndRange
+#endif
         !-----------------------------------------------------------------------
         ! io
         !-----------------------------------------------------------------------
@@ -567,9 +584,7 @@ program main
         ! !     endif
 
         ! ! endif
-#ifdef USE_NVTX
-         call nvtxEndRange
-#endif
+
   enddo
 #ifdef USE_NVTX
     call nvtxEndRange
