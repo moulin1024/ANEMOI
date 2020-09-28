@@ -2,7 +2,7 @@
 # FC
 ################################################################################
 
-FC = pgf90
+FC = mpif90
 
 ################################################################################
 # FFLAGS
@@ -34,7 +34,7 @@ PROG = wireles_src
 
 DEP0  =   precision.o 
 DEP1  =   cufft_m.o dimen.o
-DEP2  =   convection.o derivative.o filter.o io.o pressure.o rhs.o time.o turbine.o
+DEP2  =   update.o convection.o derivative.o filter.o io.o pressure.o rhs.o time.o turbine.o
 DEP3  =   divergence.o
 DEP4  =   sgs.o wall.o
 

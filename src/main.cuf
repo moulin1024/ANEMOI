@@ -2,7 +2,8 @@ program main
     use iso_c_binding
     use cudafor
     use cufft_m
-
+    use mpi
+    use update_m
     use precision
     use dimen
     use io
@@ -96,17 +97,17 @@ program main
     !---------------------------------------------------------------------------
     me = 0
     nall = 0
-    ! call mpi_init( ierr )
-    ! call mpi_comm_rank( mpi_comm_world, me, ierr )
-    ! call mpi_comm_size( mpi_comm_world, job_np, ierr )
-    ! nall=mpi_comm_world
+    call mpi_init( ierr )
+    call mpi_comm_rank( mpi_comm_world, me, ierr )
+    call mpi_comm_size( mpi_comm_world, job_np, ierr )
+    nall=mpi_comm_world
 
-    if(me == 0) call cpu_time(t01)!t01=mpi_wtime()
+    if(me == 0) t01=mpi_wtime()
 
-    ! if (job_np /= nprocs) then
-    !     print *, 'error: job_np /= nprocs'
-    !     call exit()
-    ! endif
+    if (job_np /= nprocs) then
+        print *, 'error: job_np /= nprocs'
+        call exit()
+    endif
 
     !---------------------------------------------------------------------------
     ! print start (important for debug)
@@ -132,9 +133,9 @@ program main
         w_host(:,:,nzb+1)=0._fp
     end if
 
-    ! call update_uv(u,me,nall)
-    ! call update_uv(v,me,nall)
-    ! call update_w(w,me,nall)
+    call update_uv(u,me,nall)
+    call update_uv(v,me,nall)
+    call update_w (w,me,nall)
 
     ! bc top (part2)
     if (me==nprocs-1) then
@@ -317,169 +318,169 @@ program main
         call nvtxEndRange
         call nvtxStartRange("wall",3)
 #endif
-        !-----------------------------------------------------------------------
-        ! wall
-        !-----------------------------------------------------------------------
-        ! we need to hide this wall modif to the other processor because
-        ! dudz, dvdz change location (from w node to uv nodes) --> no update
+!         !-----------------------------------------------------------------------
+!         ! wall
+!         !-----------------------------------------------------------------------
+!         ! we need to hide this wall modif to the other processor because
+!         ! dudz, dvdz change location (from w node to uv nodes) --> no update
 
-        if (me==0) then
-            call wall_stress(txz,tyz,dudz,dvdz,ustar,m,u,v,zo,t,plan_2d)
-        end if
+!         if (me==0) then
+!             call wall_stress(txz,tyz,dudz,dvdz,ustar,m,u,v,zo,t,plan_2d)
+!         end if
 
-        !-----------------------------------------------------------------------
-        ! compute convec
-        !-----------------------------------------------------------------------
-#ifdef USE_NVTX
-        call nvtxEndRange
-        call nvtxStartRange("Convection",3)
-#endif
-        call convec<<<grid,tBlock>>>(cx,cy,cz,&
-                                     u,v,w,&
-                                     dudy,dudz,&
-                                     dvdx,dvdz,&
-                                     dwdx,dwdy )
+!         !-----------------------------------------------------------------------
+!         ! compute convec
+!         !-----------------------------------------------------------------------
+! #ifdef USE_NVTX
+!         call nvtxEndRange
+!         call nvtxStartRange("Convection",3)
+! #endif
+!         call convec<<<grid,tBlock>>>(cx,cy,cz,&
+!                                      u,v,w,&
+!                                      dudy,dudz,&
+!                                      dvdx,dvdz,&
+!                                      dwdx,dwdy )
         
-        !-----------------------------------------------------------------------
-        ! compute sgs: LASD model
-        !-----------------------------------------------------------------------
-#ifdef USE_NVTX
-        call nvtxEndRange
-        call nvtxStartRange("SGS",3)
-#endif
-        if (model == 3) then
-            call subgrid_stress(txx,txy,txz,tyy,tyz,tzz,&
-                                u,v,w,&
-                                dudx,dudy,dudz,&
-                                dvdx,dvdy,dvdz,&
-                                dwdx,dwdy,dwdz, &
-                                LM_old,MM_old,QN_old,NN_old,cs2,plan_batch,&
-                                t,me,nall)
-        end if
-        !-----------------------------------------------------------------------
-        ! top bc
-         if (me==nprocs-1) then
-            !$cuf kernel do <<<*,*>>>
-             do j=1,ny
-               do i=1,nx
-                 tzz (i,j,nzb+1)=tzz (i,j,nzb)
-               end do
-             end do
-         end if
- #ifdef USE_NVTX
-        call nvtxEndRange
-        call nvtxStartRange("Divergence",4)
-#endif       
-        !-----------------------------------------------------------------------
-        ! Divergence
-        !-----------------------------------------------------------------------
-        call divstress(divtx,txx,txy,txz,1,t,plan_batch)    ! w node
-        call divstress(divty,txy,tyy,tyz,1,t,plan_batch)    ! w node
-        call divstress(divtz,txz,tyz,tzz,0,t,plan_batch)    ! uv node
+!         !-----------------------------------------------------------------------
+!         ! compute sgs: LASD model
+!         !-----------------------------------------------------------------------
+! #ifdef USE_NVTX
+!         call nvtxEndRange
+!         call nvtxStartRange("SGS",3)
+! #endif
+!         if (model == 3) then
+!             call subgrid_stress(txx,txy,txz,tyy,tyz,tzz,&
+!                                 u,v,w,&
+!                                 dudx,dudy,dudz,&
+!                                 dvdx,dvdy,dvdz,&
+!                                 dwdx,dwdy,dwdz, &
+!                                 LM_old,MM_old,QN_old,NN_old,cs2,plan_batch,&
+!                                 t,me,nall)
+!         end if
+!         !-----------------------------------------------------------------------
+!         ! top bc
+!          if (me==nprocs-1) then
+!             !$cuf kernel do <<<*,*>>>
+!              do j=1,ny
+!                do i=1,nx
+!                  tzz (i,j,nzb+1)=tzz (i,j,nzb)
+!                end do
+!              end do
+!          end if
+!  #ifdef USE_NVTX
+!         call nvtxEndRange
+!         call nvtxStartRange("Divergence",4)
+! #endif       
+!         !-----------------------------------------------------------------------
+!         ! Divergence
+!         !-----------------------------------------------------------------------
+!         call divstress(divtx,txx,txy,txz,1,t,plan_batch)    ! w node
+!         call divstress(divty,txy,tyy,tyz,1,t,plan_batch)    ! w node
+!         call divstress(divtz,txz,tyz,tzz,0,t,plan_batch)    ! uv node
 
-        !-----------------------------------------------------------------------
-        ! assemble matrix
-        !-----------------------------------------------------------------------
-#ifdef USE_NVTX
-        call nvtxEndRange
-        call nvtxStartRange("RHS and timestepping",4)
-#endif       
-        !-----------------------------------------------------------------------
-        ! rhs0
-        call rhs_assemble<<<grid, tBlock>>>(rhsx,cx,divtx )
-        call rhs_assemble<<<grid, tBlock>>>(rhsy,cy,divty )
-        call rhs_assemble<<<grid, tBlock>>>(rhsz,cz,divtz )
-        !-----------------------------------------------------------------------
-        ! applying forcing to the rhs
-        ! applying pressure gradient (not needed fror)
-        if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx)
+!         !-----------------------------------------------------------------------
+!         ! assemble matrix
+!         !-----------------------------------------------------------------------
+! #ifdef USE_NVTX
+!         call nvtxEndRange
+!         call nvtxStartRange("RHS and timestepping",4)
+! #endif       
+!         !-----------------------------------------------------------------------
+!         ! rhs0
+!         call rhs_assemble<<<grid, tBlock>>>(rhsx,cx,divtx )
+!         call rhs_assemble<<<grid, tBlock>>>(rhsy,cy,divty )
+!         call rhs_assemble<<<grid, tBlock>>>(rhsz,cz,divtz )
+!         !-----------------------------------------------------------------------
+!         ! applying forcing to the rhs
+!         ! applying pressure gradient (not needed fror)
+!         if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx)
         
-        ! if (turb_flag == 1) then
-        !     if (device_id == 0) then
-        !         call turbine_force(fx,fy,fz,u,v,w,alpha_cl_cd,t)
-        !         ! applying forcing to the rhs
-        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
-        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
-        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
-        !     end if
-        ! end if
-        !-----------------------------------------------------------------------
-        ! Time stepping
-        !-----------------------------------------------------------------------        
-        if (t == 1 .and. sim_flag < 2) then
-            call timestepping<<<grid,tBlock>>>(u,rhsx,rhsx_f,1)
-            call timestepping<<<grid,tBlock>>>(v,rhsy,rhsy_f,1)
-            call timestepping<<<grid,tBlock>>>(w,rhsz,rhsz_f,1)
-        else
-            call timestepping<<<grid,tBlock>>>(u,rhsx,rhsx_f,0)
-            call timestepping<<<grid,tBlock>>>(v,rhsy,rhsy_f,0)
-            call timestepping<<<grid,tBlock>>>(w,rhsz,rhsz_f,0)
-        end if
-        ! bc bot w
-        if (me==0) then
-         !$cuf kernel do <<<*,*>>>
-            do j=1,ny
-                do i=1,nx
-                    w (i,j,2)=0._fp
-                end do
-            end do
-        end if
-        ! bc top w
-        if (me==nprocs-1) then
-         !$cuf kernel do <<<*,*>>>
-            do j=1,ny
-                do i=1,nx
-                    w (i,j,nzb+1)=0._fp
-                end do
-            end do
-        end if
- #ifdef USE_NVTX
-        call nvtxEndRange
-        call nvtxStartRange("pressure correction",5)
-#endif
-        !-----------------------------------------------------------------------
-        ! pressure correction
-        !-----------------------------------------------------------------------
-        !-----------------------------------------------------------------------
-        ! get div
-        call ddxy(dudx,u,1,t,plan_batch)
-        call ddxy(dvdy,v,2,t,plan_batch)
-        call ddz<<<grid, tBlock>>>(dwdz,w,1)
-        call div_p<<<grid, tBlock>>>(rhs_p,dudx,dvdy,dwdz)
-        !-----------------------------------------------------------------------
-        ! get pressure grandients (and press)
-        call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan_batch)
-! !         ! call update_uv(p,me,nall)
-        call ddz<<<grid, tBlock>>>(dpdz,p,0)
+!         ! if (turb_flag == 1) then
+!         !     if (device_id == 0) then
+!         !         call turbine_force(fx,fy,fz,u,v,w,alpha_cl_cd,t)
+!         !         ! applying forcing to the rhs
+!         !         call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
+!         !         call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
+!         !         call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
+!         !     end if
+!         ! end if
+!         !-----------------------------------------------------------------------
+!         ! Time stepping
+!         !-----------------------------------------------------------------------        
+!         if (t == 1 .and. sim_flag < 2) then
+!             call timestepping<<<grid,tBlock>>>(u,rhsx,rhsx_f,1)
+!             call timestepping<<<grid,tBlock>>>(v,rhsy,rhsy_f,1)
+!             call timestepping<<<grid,tBlock>>>(w,rhsz,rhsz_f,1)
+!         else
+!             call timestepping<<<grid,tBlock>>>(u,rhsx,rhsx_f,0)
+!             call timestepping<<<grid,tBlock>>>(v,rhsy,rhsy_f,0)
+!             call timestepping<<<grid,tBlock>>>(w,rhsz,rhsz_f,0)
+!         end if
+!         ! bc bot w
+!         if (me==0) then
+!          !$cuf kernel do <<<*,*>>>
+!             do j=1,ny
+!                 do i=1,nx
+!                     w (i,j,2)=0._fp
+!                 end do
+!             end do
+!         end if
+!         ! bc top w
+!         if (me==nprocs-1) then
+!          !$cuf kernel do <<<*,*>>>
+!             do j=1,ny
+!                 do i=1,nx
+!                     w (i,j,nzb+1)=0._fp
+!                 end do
+!             end do
+!         end if
+!  #ifdef USE_NVTX
+!         call nvtxEndRange
+!         call nvtxStartRange("pressure correction",5)
+! #endif
+!         !-----------------------------------------------------------------------
+!         ! pressure correction
+!         !-----------------------------------------------------------------------
+!         !-----------------------------------------------------------------------
+!         ! get div
+!         call ddxy(dudx,u,1,t,plan_batch)
+!         call ddxy(dvdy,v,2,t,plan_batch)
+!         call ddz<<<grid, tBlock>>>(dwdz,w,1)
+!         call div_p<<<grid, tBlock>>>(rhs_p,dudx,dvdy,dwdz)
+!         !-----------------------------------------------------------------------
+!         ! get pressure grandients (and press)
+!         call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan_batch)
+! ! !         ! call update_uv(p,me,nall)
+!         call ddz<<<grid, tBlock>>>(dpdz,p,0)
         
-        ! bc bot dpdz
-        if (me==0) then
-        !$cuf kernel do <<<*,*>>>
-            do j=1,ny
-                do i=1,nx
-                    dpdz (i,j,2) = 0.0_fp
-                end do
-            end do
-        end if
+!         ! bc bot dpdz
+!         if (me==0) then
+!         !$cuf kernel do <<<*,*>>>
+!             do j=1,ny
+!                 do i=1,nx
+!                     dpdz (i,j,2) = 0.0_fp
+!                 end do
+!             end do
+!         end if
 
-        ! bc top dpdz
-        if (me==nprocs-1) then
-        !$cuf kernel do <<<*,*>>>
-            do j=1,ny
-                do i=1,nx
-                    dpdz (i,j,nzb+1) = 0.0_fp
-                end do
-            end do
-        end if
+!         ! bc top dpdz
+!         if (me==nprocs-1) then
+!         !$cuf kernel do <<<*,*>>>
+!             do j=1,ny
+!                 do i=1,nx
+!                     dpdz (i,j,nzb+1) = 0.0_fp
+!                 end do
+!             end do
+!         end if
 
-        !----------------------------------------------------------------------
-        ! correct velocity
-        call velo_corr<<<grid, tBlock>>>(u,dpdx )
-        call velo_corr<<<grid, tBlock>>>(v,dpdy )
-        call velo_corr<<<grid, tBlock>>>(w,dpdz )
-#ifdef USE_NVTX
-        call nvtxEndRange
-#endif
+!         !----------------------------------------------------------------------
+!         ! correct velocity
+!         call velo_corr<<<grid, tBlock>>>(u,dpdx )
+!         call velo_corr<<<grid, tBlock>>>(v,dpdy )
+!         call velo_corr<<<grid, tBlock>>>(w,dpdz )
+! #ifdef USE_NVTX
+!         call nvtxEndRange
+! #endif
         !-----------------------------------------------------------------------
         ! io
         !-----------------------------------------------------------------------
@@ -681,6 +682,6 @@ program main
     ! mpi finalize
     !---------------------------------------------------------------------------
 
-    ! 999 call mpi_finalize(ierr)
+    999 call mpi_finalize(ierr)
 
 end program main

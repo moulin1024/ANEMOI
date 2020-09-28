@@ -88,34 +88,59 @@ subroutine print_log(log_ustar,log_umax,u,v,w,ustar,t01,t,me,nall)
 
     if (me>0) then
 
-        ! call mpi_send(log_umax,1, mpi_real(fp),0,me,nall,ierr )
-        ! call mpi_send(ke,1, mpi_real(fp),0,me,nall,ierr )
-        ! call mpi_send(div,1, mpi_real(fp),0,me,nall,ierr )
-        ! call mpi_send(cflx,1, mpi_real(fp),0,me,nall,ierr )
-        ! call mpi_send(cfly,1, mpi_real(fp),0,me,nall,ierr )
-        ! call mpi_send(cflz,1, mpi_real(fp),0,me,nall,ierr )
+        if (fp==singlePrecision) then 
+            call mpi_send(log_umax,1, mpi_real,0,me,nall,ierr )
+            call mpi_send(ke,1, mpi_real,0,me,nall,ierr )
+            call mpi_send(div,1, mpi_real,0,me,nall,ierr )
+            call mpi_send(cflx,1, mpi_real,0,me,nall,ierr )
+            call mpi_send(cfly,1, mpi_real,0,me,nall,ierr )
+            call mpi_send(cflz,1, mpi_real,0,me,nall,ierr )
+        else
+            call mpi_send(log_umax,1, mpi_double_precision,0,me,nall,ierr )
+            call mpi_send(ke,1,     mpi_double_precision,0,me,nall,ierr )
+            call mpi_send(div,1,    mpi_double_precision,0,me,nall,ierr )
+            call mpi_send(cflx,1,   mpi_double_precision,0,me,nall,ierr )
+            call mpi_send(cfly,1,   mpi_double_precision,0,me,nall,ierr )
+            call mpi_send(cflz,1,   mpi_double_precision,0,me,nall,ierr )
+        end if 
     else
 
         log_ustar = sum(ustar)*inxny
-        ! if (nprocs > 1)then
-        !     do i=1,nprocs-1
-        !         call mpi_recv(umax_,1, mpi_real(fp),i,i,nall,status2,ierr )
-        !         call mpi_recv(ke_,1, mpi_real(fp),i,i,nall,status2,ierr )
-        !         call mpi_recv(div_,1, mpi_real(fp),i,i,nall,status2,ierr )
-        !         call mpi_recv(cflx_,1, mpi_real(fp),i,i,nall,status2,ierr )
-        !         call mpi_recv(cfly_,1, mpi_real(fp),i,i,nall,status2,ierr )
-        !         call mpi_recv(cflz_,1, mpi_real(fp),i,i,nall,status2,ierr )
-        !         log_umax = max(log_umax,umax_)
-        !         ke = max(ke,ke_)
-        !         div=max(div,div_)
-        !         cflx=max(cflx,cflx_)
-        !         cfly=max(cfly,cfly_)
-        !         cflz=max(cflz,cflz_)
-        !     end do
-        ! endif
-        ! t02=mpi_wtime()
-        ! t02 = cpu_time()
-        call cpu_time(t02)
+        if (nprocs > 1)then
+            
+            if (fp==singlePrecision) then 
+                do i=1,nprocs-1
+                    call mpi_recv(umax_,1, mpi_real,i,i,nall,status2,ierr )
+                    call mpi_recv(ke_,1, mpi_real,i,i,nall,status2,ierr )
+                    call mpi_recv(div_,1, mpi_real,i,i,nall,status2,ierr )
+                    call mpi_recv(cflx_,1, mpi_real,i,i,nall,status2,ierr )
+                    call mpi_recv(cfly_,1, mpi_real,i,i,nall,status2,ierr )
+                    call mpi_recv(cflz_,1, mpi_real,i,i,nall,status2,ierr )
+                    log_umax = max(log_umax,umax_)
+                    ke = max(ke,ke_)
+                    div=max(div,div_)
+                    cflx=max(cflx,cflx_)
+                    cfly=max(cfly,cfly_)
+                    cflz=max(cflz,cflz_)
+                end do
+            else
+                do i=1,nprocs-1
+                    call mpi_recv(umax_,1,mpi_double_precision,i,i,nall,status2,ierr )
+                    call mpi_recv(ke_,1,  mpi_double_precision,i,i,nall,status2,ierr )
+                    call mpi_recv(div_,1, mpi_double_precision,i,i,nall,status2,ierr )
+                    call mpi_recv(cflx_,1,mpi_double_precision,i,i,nall,status2,ierr )
+                    call mpi_recv(cfly_,1,mpi_double_precision,i,i,nall,status2,ierr )
+                    call mpi_recv(cflz_,1,mpi_double_precision,i,i,nall,status2,ierr )
+                    log_umax = max(log_umax,umax_)
+                    ke = max(ke,ke_)
+                    div=max(div,div_)
+                    cflx=max(cflx,cflx_)
+                    cfly=max(cfly,cfly_)
+                    cflz=max(cflz,cflz_)
+                end do
+            end if
+        endif
+        t02=mpi_wtime()
         print "(i10, f10.1, f10.1, f10.4, e15.4, e15.4, f10.4, f10.4, f10.4)", &
         t, (t02-t01)*real(nsteps-t)/real(t), (t02-t01)*real(nsteps)/real(t),&
         log_ustar,ke,div,cflx,cfly,cflz
@@ -139,7 +164,7 @@ subroutine print_end(t01,me)
     !---------------------------------------------------------------------------
 
     if (me==0) then
-        ! print "(a10,a3,f10.1)",'wall_time', ' = ', cpu_time() - t01!mpi_wtime() -t01
+        print "(a10,a3,f10.1)",'wall_time', ' = ', mpi_wtime() -t01
         print "(a100)", '!-----------------------------------------------------&
         -----------------------------------------------'
     end if
@@ -186,15 +211,20 @@ subroutine load_variable(m,filename,me,nall)
             end do
         end do
         do ii=1,nprocs-1
-            ! call mpi_send(q(1,1,nzb*ii+1),(nzb)*nx*ny, &
-            ! mpi_real(fp),ii,79+ii,nall,ierr)
+            if (fp==singlePrecision) then 
+                call mpi_send(q(1,1,nzb*ii+1),(nzb)*nx*ny,mpi_real,ii,79+ii,nall,ierr)
+            else
+                call mpi_send(q(1,1,nzb*ii+1),(nzb)*nx*ny,mpi_double_precision,ii,79+ii,nall,ierr)
+            end if
         end do
         deallocate(q)
 
     else
-
-        ! call mpi_recv(m(1,1,2),(nzb)*nx*ny, &
-        ! mpi_real(fp),0,79+me,nall,status2,ierr)
+        if (fp==singlePrecision) then 
+            call mpi_recv(m(1,1,2),(nzb)*nx*ny,mpi_real,0,79+me,nall,status2,ierr)
+        else
+            call mpi_recv(m(1,1,2),(nzb)*nx*ny,mpi_double_precision,0,79+me,nall,status2,ierr)
+        end if
 
     end if
 
@@ -228,8 +258,11 @@ subroutine save_variable(m,filename,me,nall)
             end do
         end do
         do ii=1,nprocs-1
-            ! call mpi_recv(q(1,1,nzb*ii+1),(nzb)*nx*ny, &
-            ! mpi_real(fp),ii,79+ii,nall,status2,ierr)
+            if (fp==singlePrecision) then 
+                call mpi_recv(q(1,1,nzb*ii+1),(nzb)*nx*ny,mpi_real,ii,79+ii,nall,status2,ierr)
+            else
+                call mpi_recv(q(1,1,nzb*ii+1),(nzb)*nx*ny,mpi_double_precision,ii,79+ii,nall,status2,ierr)
+            end if
         end do
         open (unit=99,file=filename,status='unknown', form='unformatted', access='stream')
         write (99) q
@@ -237,9 +270,11 @@ subroutine save_variable(m,filename,me,nall)
         deallocate(q)
 
     else
-
-        ! call mpi_send(m(1,1,2),(nzb)*nx*ny,mpi_real(fp), &
-        ! 0,79+me,nall,ierr )
+        if (fp==singlePrecision) then 
+            call mpi_send(m(1,1,2),(nzb)*nx*ny,mpi_real,0,79+me,nall,ierr )
+        else
+            call mpi_send(m(1,1,2),(nzb)*nx*ny,mpi_double_precision,0,79+me,nall,ierr )
+        end if
 
     end if
 
