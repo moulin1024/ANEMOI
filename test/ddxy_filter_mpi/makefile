@@ -2,21 +2,21 @@
 # FC
 ################################################################################
 
-FC = pgf90
+FC = mpif90
 
 ################################################################################
 # FFLAGS
 ################################################################################
 
-FFLAGS = -O3 -Mpreprocess -mcmodel=medium
-CUDA = -Mcuda -lcufft -ta=nvidia
+FFLAGS = -O3 -Mpreprocess -mcmodel=medium #-lfftw3
+CUDA = -Mcuda -lcufft -ta=nvidia 
 PRECISION=-DDOUBLE
 
 ################################################################################
 # OBJ, PROG
 ################################################################################
 
-OBJ = cpu_timer.o precision.o dimen.o cufft_m.o filter_stacked.o \
+OBJ = cpu_timer.o precision.o dimen.o cufft_m.o filter.o update.o \
 	  test.o \
 
 PROG = wireles
@@ -25,15 +25,16 @@ all: build run
 build:
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/precision.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../common/cpu_timer.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../common/dimen.cuf
+	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c dimen.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/cufft_m.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c filter_stacked.cuf
+	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/filter.cuf
+	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/update.cuf
 	# $(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../cpu_benchmark/ddxy_filter_cpu.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c test.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(OBJ) -o $(PROG).run
+	$(FC) $(FFLAGS) $(CUDA) $(OBJ) -o $(PROG).run $(LIBS)
 
 run:
-	./wireles.run
+	mpirun -np 2 ./wireles.run
 		
 
 clean:
