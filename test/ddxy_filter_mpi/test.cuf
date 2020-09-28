@@ -1,4 +1,4 @@
- program test_cufft
+program test_cufft
     use, intrinsic :: iso_c_binding 
     ! use filter
     use cufft_m
@@ -60,7 +60,6 @@
     !---------------------------------------------------------------------------
     ! GPU code
     !---------------------------------------------------------------------------
-
 
     ! Create cuda runtime event
     istat = cudaEventCreate(startEvent)
