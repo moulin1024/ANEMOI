@@ -5,6 +5,7 @@ module sgs
     use iso_c_binding
     use cufft_m
     use filter
+    use update_m
 
     real(fp), parameter :: const = 2.d0*(delta**2)
     real(fp), parameter :: tf1=fgr*tfr
@@ -85,10 +86,11 @@ module sgs
         !   lasd
         ! Initialize cs with Smagorinsky coefficient and lagarangian velocity with 0
         if (t.eq.1) then
-            cs2 = co**2
+            cs2 = co**2   ! Move it to 
             u_lag = 0.
             v_lag = 0.
             w_lag = 0.
+            call update_uv(cs2,me,nall)
         end if
         ! Compute lagarangian velocity with 0
         call get_u_lag<<<grid,tblock>>>(u_lag,v_lag,w_lag,u,v,w)
@@ -103,7 +105,7 @@ module sgs
 
         end if
         
-        ! call update_uv(cs2,me,nall)
+        call update_uv(cs2,me,nall)
 
         !---------------------------------------------------------------------------
         ! 2. get Tau
@@ -201,10 +203,10 @@ module sgs
         end if
 
         ! ! must be updated top and bot for intep3d
-        ! call update(LM_old,me,nall)
-        ! call update(MM_old,me,nall)
-        ! call update(QN_old,me,nall)
-        ! call update(NN_old,me,nall)
+        call update(LM_old,me,nall)
+        call update(MM_old,me,nall)
+        call update(QN_old,me,nall)
+        call update(NN_old,me,nall)
  
         if (me==0) then
             !$cuf kernel do(2) <<<*,*>>>

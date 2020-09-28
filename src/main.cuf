@@ -35,7 +35,7 @@ program main
 
     real(fp),dimension(nx,ny,nz2) :: fx_host,fy_host,fz_host
     real(fp),dimension(nx,ny),device :: zo,ustar,m 
-    real(fp),dimension(nx,ny,nz2),device  :: u,v,w,p,&       ! Velocity & pressure   
+    real(fp),dimension(:,:,:),allocatable,device  :: u,v,w,p,&       ! Velocity & pressure   
                                              cx,cy,cz,&          ! Convection term      
                                              txx,txy,txz,&       ! Stress term
                                              tyy,tyz,tzz,&       
@@ -86,6 +86,14 @@ program main
     real(fp) :: d_avg_debug
     integer :: device_id
 
+    integer :: localRank
+    character(len=10) :: rankStr
+
+    ! MPI_Comm loc_comm
+    ! MPI_COMM_SPLIT_TYPE(COMM, SPLIT_TYPE, KEY, INFO, NEWCOMM, IERROR)
+
+    ! MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL, &loc_comm)
+
     !===========================================================================
     ! init
     !===========================================================================
@@ -97,6 +105,11 @@ program main
     !---------------------------------------------------------------------------
     me = 0
     nall = 0
+
+    call GET_ENVIRONMENT_VARIABLE ('OMPI_COMM_WORLD_LOCAL_RANK',rankStr)
+    read (rankStr,'(i10)') localRank
+    istat = cudaSetDevice (localRank)
+
     call mpi_init( ierr )
     call mpi_comm_rank( mpi_comm_world, me, ierr )
     call mpi_comm_size( mpi_comm_world, job_np, ierr )
@@ -115,6 +128,25 @@ program main
 
     call print_start(me)
 
+    allocate(u(nx,ny,nz2),&
+             v(nx,ny,nz2),&
+             w(nx,ny,nz2),&
+             p(nx,ny,nz2),&       ! Velocity & pressure   
+             cx(nx,ny,nz2),&
+             cy(nx,ny,nz2),&
+             cz(nx,ny,nz2),&          ! Convection term      
+            txx(nx,ny,nz2),txy(nx,ny,nz2),txz(nx,ny,nz2),&       ! Stress term
+    tyy(nx,ny,nz2),tyz(nx,ny,nz2),tzz(nx,ny,nz2),&       
+    divtx(nx,ny,nz2),divty(nx,ny,nz2),divtz(nx,ny,nz2),& ! Divergence term
+    rhsx(nx,ny,nz2),rhsy(nx,ny,nz2),rhsz(nx,ny,nz2),&    ! right hand side term        
+    rhsx_f(nx,ny,nz2),rhsy_f(nx,ny,nz2),rhsz_f(nx,ny,nz2),&
+    dudx(nx,ny,nz2),dudy(nx,ny,nz2),dudz(nx,ny,nz2),&    ! Velocity gradient
+    dvdx(nx,ny,nz2),dvdy(nx,ny,nz2),dvdz(nx,ny,nz2),&
+    dwdx(nx,ny,nz2),dwdy(nx,ny,nz2),dwdz(nx,ny,nz2),&    
+    dpdx(nx,ny,nz2),dpdy(nx,ny,nz2),dpdz(nx,ny,nz2),&    ! Pressure gradient
+    rhs_p(nx,ny,nz2),&               ! Poisson eq rhs
+    lm_old(nx,ny,nz2),mm_old(nx,ny,nz2),&
+    qn_old(nx,ny,nz2),nn_old(nx,ny,nz2),cs2(nx,ny,nz2))
     !---------------------------------------------------------------------------
     ! load variables
     !---------------------------------------------------------------------------
@@ -133,9 +165,9 @@ program main
         w_host(:,:,nzb+1)=0._fp
     end if
 
-    call update_uv(u,me,nall)
-    call update_uv(v,me,nall)
-    call update_w (w,me,nall)
+    call update_uv_cpu(u_host,me,nall)
+    call update_uv_cpu(v_host,me,nall)
+    call update_w_cpu (w_host,me,nall)
 
     ! bc top (part2)
     if (me==nprocs-1) then
@@ -207,7 +239,7 @@ program main
     !     end if
     ! end if
 
-    print *, 'init ta outputs complete'
+    ! print *, 'init ta outputs complete'
 
     !---------------------------------------------------------------------------
     ! init ts outputs
@@ -279,6 +311,10 @@ program main
         call ddxy_filter(v,dvdx,dvdy,plan_batch)
         call ddxy_filter(w,dwdx,dwdy,plan_batch)
 
+        call update_uv(u,me,nall)
+        call update_uv(v,me,nall)
+        call update_w (w,me,nall)
+
         if (mod(t,c_count*10)==0) then
             u_host = u 
             v_host = v 
@@ -292,10 +328,10 @@ program main
             if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
             if (log_umax>100) exit
 
-            if (ts_flag > 0 .and. t >= ts_tstart) then 
-                print *,'Write instant field:'
-                call write_ts1(u_host,v_host,w_host,me)
-            end if
+            ! if (ts_flag > 0 .and. t >= ts_tstart) then 
+            !     print *,'Write instant field:'
+            !     call write_ts1(u_host,v_host,w_host,me)
+            ! end if
         end if
 
         !-----------------------------------------------------------------------
@@ -309,178 +345,189 @@ program main
                 end do
             end do
         endif
-        !-----------------------------------------------------------------------
+        ! -----------------------------------------------------------------------
         ! spatial deriv
         call ddz<<<grid, tBlock>>>(dudz,u,0)    ! cell centre
         call ddz<<<grid, tBlock>>>(dvdz,v,0)    ! cell centre
         call ddz<<<grid, tBlock>>>(dwdz,w,1)    ! staggered
+
+        call update_uv(dudx,me,nall)
+        call update_uv(dudy,me,nall)
+        call update_w(dudz,me,nall)
+        call update_uv(dvdx,me,nall)
+        call update_uv(dvdy,me,nall)
+        call update_w(dvdz,me,nall)
+        call update_w(dwdx,me,nall)
+        call update_w(dwdy,me,nall)
+        call update_uv(dwdz,me,nall)
+        
 #ifdef USE_NVTX
         call nvtxEndRange
         call nvtxStartRange("wall",3)
 #endif
-!         !-----------------------------------------------------------------------
-!         ! wall
-!         !-----------------------------------------------------------------------
-!         ! we need to hide this wall modif to the other processor because
-!         ! dudz, dvdz change location (from w node to uv nodes) --> no update
+        !-----------------------------------------------------------------------
+        ! wall
+        !-----------------------------------------------------------------------
+        ! we need to hide this wall modif to the other processor because
+        ! dudz, dvdz change location (from w node to uv nodes) --> no update
 
-!         if (me==0) then
-!             call wall_stress(txz,tyz,dudz,dvdz,ustar,m,u,v,zo,t,plan_2d)
-!         end if
+        if (me==0) then
+            call wall_stress(txz,tyz,dudz,dvdz,ustar,m,u,v,zo,t,plan_2d)
+        end if
 
-!         !-----------------------------------------------------------------------
-!         ! compute convec
-!         !-----------------------------------------------------------------------
-! #ifdef USE_NVTX
-!         call nvtxEndRange
-!         call nvtxStartRange("Convection",3)
-! #endif
-!         call convec<<<grid,tBlock>>>(cx,cy,cz,&
-!                                      u,v,w,&
-!                                      dudy,dudz,&
-!                                      dvdx,dvdz,&
-!                                      dwdx,dwdy )
+        !-----------------------------------------------------------------------
+        ! compute convec
+        !-----------------------------------------------------------------------
+#ifdef USE_NVTX
+        call nvtxEndRange
+        call nvtxStartRange("Convection",3)
+#endif
+        call convec<<<grid,tBlock>>>(cx,cy,cz,&
+                                     u,v,w,&
+                                     dudy,dudz,&
+                                     dvdx,dvdz,&
+                                     dwdx,dwdy )
         
-!         !-----------------------------------------------------------------------
-!         ! compute sgs: LASD model
-!         !-----------------------------------------------------------------------
-! #ifdef USE_NVTX
-!         call nvtxEndRange
-!         call nvtxStartRange("SGS",3)
-! #endif
-!         if (model == 3) then
-!             call subgrid_stress(txx,txy,txz,tyy,tyz,tzz,&
-!                                 u,v,w,&
-!                                 dudx,dudy,dudz,&
-!                                 dvdx,dvdy,dvdz,&
-!                                 dwdx,dwdy,dwdz, &
-!                                 LM_old,MM_old,QN_old,NN_old,cs2,plan_batch,&
-!                                 t,me,nall)
-!         end if
-!         !-----------------------------------------------------------------------
-!         ! top bc
-!          if (me==nprocs-1) then
-!             !$cuf kernel do <<<*,*>>>
-!              do j=1,ny
-!                do i=1,nx
-!                  tzz (i,j,nzb+1)=tzz (i,j,nzb)
-!                end do
-!              end do
-!          end if
-!  #ifdef USE_NVTX
-!         call nvtxEndRange
-!         call nvtxStartRange("Divergence",4)
-! #endif       
-!         !-----------------------------------------------------------------------
-!         ! Divergence
-!         !-----------------------------------------------------------------------
-!         call divstress(divtx,txx,txy,txz,1,t,plan_batch)    ! w node
-!         call divstress(divty,txy,tyy,tyz,1,t,plan_batch)    ! w node
-!         call divstress(divtz,txz,tyz,tzz,0,t,plan_batch)    ! uv node
+        !-----------------------------------------------------------------------
+        ! compute sgs: LASD model
+        !-----------------------------------------------------------------------
+#ifdef USE_NVTX
+        call nvtxEndRange
+        call nvtxStartRange("SGS",3)
+#endif
+        if (model == 3) then
+            call subgrid_stress(txx,txy,txz,tyy,tyz,tzz,&
+                                u,v,w,&
+                                dudx,dudy,dudz,&
+                                dvdx,dvdy,dvdz,&
+                                dwdx,dwdy,dwdz, &
+                                LM_old,MM_old,QN_old,NN_old,cs2,plan_batch,&
+                                t,me,nall)
+        end if
+        !-----------------------------------------------------------------------
+        ! top bc
+         if (me==nprocs-1) then
+            !$cuf kernel do <<<*,*>>>
+             do j=1,ny
+               do i=1,nx
+                 tzz (i,j,nzb+1)=tzz (i,j,nzb)
+               end do
+             end do
+         end if
+ #ifdef USE_NVTX
+        call nvtxEndRange
+        call nvtxStartRange("Divergence",4)
+#endif       
+        !-----------------------------------------------------------------------
+        ! Divergence
+        !-----------------------------------------------------------------------
+        call divstress(divtx,txx,txy,txz,1,t,plan_batch)    ! w node
+        call divstress(divty,txy,tyy,tyz,1,t,plan_batch)    ! w node
+        call divstress(divtz,txz,tyz,tzz,0,t,plan_batch)    ! uv node
 
-!         !-----------------------------------------------------------------------
-!         ! assemble matrix
-!         !-----------------------------------------------------------------------
-! #ifdef USE_NVTX
-!         call nvtxEndRange
-!         call nvtxStartRange("RHS and timestepping",4)
-! #endif       
-!         !-----------------------------------------------------------------------
-!         ! rhs0
-!         call rhs_assemble<<<grid, tBlock>>>(rhsx,cx,divtx )
-!         call rhs_assemble<<<grid, tBlock>>>(rhsy,cy,divty )
-!         call rhs_assemble<<<grid, tBlock>>>(rhsz,cz,divtz )
-!         !-----------------------------------------------------------------------
-!         ! applying forcing to the rhs
-!         ! applying pressure gradient (not needed fror)
-!         if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx)
+        !-----------------------------------------------------------------------
+        ! assemble matrix
+        !-----------------------------------------------------------------------
+#ifdef USE_NVTX
+        call nvtxEndRange
+        call nvtxStartRange("RHS and timestepping",4)
+#endif       
+        !-----------------------------------------------------------------------
+        ! rhs0
+        call rhs_assemble<<<grid, tBlock>>>(rhsx,cx,divtx )
+        call rhs_assemble<<<grid, tBlock>>>(rhsy,cy,divty )
+        call rhs_assemble<<<grid, tBlock>>>(rhsz,cz,divtz )
+        !-----------------------------------------------------------------------
+        ! applying forcing to the rhs
+        ! applying pressure gradient (not needed fror)
+        if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx)
         
-!         ! if (turb_flag == 1) then
-!         !     if (device_id == 0) then
-!         !         call turbine_force(fx,fy,fz,u,v,w,alpha_cl_cd,t)
-!         !         ! applying forcing to the rhs
-!         !         call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
-!         !         call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
-!         !         call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
-!         !     end if
-!         ! end if
-!         !-----------------------------------------------------------------------
-!         ! Time stepping
-!         !-----------------------------------------------------------------------        
-!         if (t == 1 .and. sim_flag < 2) then
-!             call timestepping<<<grid,tBlock>>>(u,rhsx,rhsx_f,1)
-!             call timestepping<<<grid,tBlock>>>(v,rhsy,rhsy_f,1)
-!             call timestepping<<<grid,tBlock>>>(w,rhsz,rhsz_f,1)
-!         else
-!             call timestepping<<<grid,tBlock>>>(u,rhsx,rhsx_f,0)
-!             call timestepping<<<grid,tBlock>>>(v,rhsy,rhsy_f,0)
-!             call timestepping<<<grid,tBlock>>>(w,rhsz,rhsz_f,0)
-!         end if
-!         ! bc bot w
-!         if (me==0) then
-!          !$cuf kernel do <<<*,*>>>
-!             do j=1,ny
-!                 do i=1,nx
-!                     w (i,j,2)=0._fp
-!                 end do
-!             end do
-!         end if
-!         ! bc top w
-!         if (me==nprocs-1) then
-!          !$cuf kernel do <<<*,*>>>
-!             do j=1,ny
-!                 do i=1,nx
-!                     w (i,j,nzb+1)=0._fp
-!                 end do
-!             end do
-!         end if
-!  #ifdef USE_NVTX
-!         call nvtxEndRange
-!         call nvtxStartRange("pressure correction",5)
-! #endif
-!         !-----------------------------------------------------------------------
-!         ! pressure correction
-!         !-----------------------------------------------------------------------
-!         !-----------------------------------------------------------------------
-!         ! get div
-!         call ddxy(dudx,u,1,t,plan_batch)
-!         call ddxy(dvdy,v,2,t,plan_batch)
-!         call ddz<<<grid, tBlock>>>(dwdz,w,1)
-!         call div_p<<<grid, tBlock>>>(rhs_p,dudx,dvdy,dwdz)
-!         !-----------------------------------------------------------------------
-!         ! get pressure grandients (and press)
-!         call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan_batch)
-! ! !         ! call update_uv(p,me,nall)
-!         call ddz<<<grid, tBlock>>>(dpdz,p,0)
+        ! if (turb_flag == 1) then
+        !     if (device_id == 0) then
+        !         call turbine_force(fx,fy,fz,u,v,w,alpha_cl_cd,t)
+        !         ! applying forcing to the rhs
+        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
+        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
+        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
+        !     end if
+        ! end if
+        !-----------------------------------------------------------------------
+        ! Time stepping
+        !-----------------------------------------------------------------------        
+        if (t == 1 .and. sim_flag < 2) then
+            call timestepping<<<grid,tBlock>>>(u,rhsx,rhsx_f,1)
+            call timestepping<<<grid,tBlock>>>(v,rhsy,rhsy_f,1)
+            call timestepping<<<grid,tBlock>>>(w,rhsz,rhsz_f,1)
+        else
+            call timestepping<<<grid,tBlock>>>(u,rhsx,rhsx_f,0)
+            call timestepping<<<grid,tBlock>>>(v,rhsy,rhsy_f,0)
+            call timestepping<<<grid,tBlock>>>(w,rhsz,rhsz_f,0)
+        end if
+        ! bc bot w
+        if (me==0) then
+         !$cuf kernel do <<<*,*>>>
+            do j=1,ny
+                do i=1,nx
+                    w (i,j,2)=0._fp
+                end do
+            end do
+        end if
+        ! bc top w
+        if (me==nprocs-1) then
+         !$cuf kernel do <<<*,*>>>
+            do j=1,ny
+                do i=1,nx
+                    w (i,j,nzb+1)=0._fp
+                end do
+            end do
+        end if
+ #ifdef USE_NVTX
+        call nvtxEndRange
+        call nvtxStartRange("pressure correction",5)
+#endif
+        !-----------------------------------------------------------------------
+        ! pressure correction
+        !-----------------------------------------------------------------------
+        !-----------------------------------------------------------------------
+        ! get div
+        call ddxy(dudx,u,1,t,plan_batch)
+        call ddxy(dvdy,v,2,t,plan_batch)
+        call ddz<<<grid, tBlock>>>(dwdz,w,1)
+        call div_p<<<grid, tBlock>>>(rhs_p,dudx,dvdy,dwdz)
+        !-----------------------------------------------------------------------
+        ! get pressure grandients (and press)
+        call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan_batch)
+! !         ! call update_uv(p,me,nall)
+        call ddz<<<grid, tBlock>>>(dpdz,p,0)
         
-!         ! bc bot dpdz
-!         if (me==0) then
-!         !$cuf kernel do <<<*,*>>>
-!             do j=1,ny
-!                 do i=1,nx
-!                     dpdz (i,j,2) = 0.0_fp
-!                 end do
-!             end do
-!         end if
+        ! bc bot dpdz
+        if (me==0) then
+        !$cuf kernel do <<<*,*>>>
+            do j=1,ny
+                do i=1,nx
+                    dpdz (i,j,2) = 0.0_fp
+                end do
+            end do
+        end if
 
-!         ! bc top dpdz
-!         if (me==nprocs-1) then
-!         !$cuf kernel do <<<*,*>>>
-!             do j=1,ny
-!                 do i=1,nx
-!                     dpdz (i,j,nzb+1) = 0.0_fp
-!                 end do
-!             end do
-!         end if
+        ! bc top dpdz
+        if (me==nprocs-1) then
+        !$cuf kernel do <<<*,*>>>
+            do j=1,ny
+                do i=1,nx
+                    dpdz (i,j,nzb+1) = 0.0_fp
+                end do
+            end do
+        end if
 
-!         !----------------------------------------------------------------------
-!         ! correct velocity
-!         call velo_corr<<<grid, tBlock>>>(u,dpdx )
-!         call velo_corr<<<grid, tBlock>>>(v,dpdy )
-!         call velo_corr<<<grid, tBlock>>>(w,dpdz )
-! #ifdef USE_NVTX
-!         call nvtxEndRange
-! #endif
+        !----------------------------------------------------------------------
+        ! correct velocity
+        call velo_corr<<<grid, tBlock>>>(u,dpdx )
+        call velo_corr<<<grid, tBlock>>>(v,dpdy )
+        call velo_corr<<<grid, tBlock>>>(w,dpdz )
+#ifdef USE_NVTX
+        call nvtxEndRange
+#endif
         !-----------------------------------------------------------------------
         ! io
         !-----------------------------------------------------------------------
@@ -509,16 +556,16 @@ program main
         ! !-----------------------------------------------------------------------
         ! ! write inflow
 
-        if (sim_flag == 2) then
-            call write_inflow(u,v,w,t)
-        end if
+        ! if (sim_flag == 2) then
+        !     call write_inflow(u,v,w,t)
+        ! end if
 
-        ! !-----------------------------------------------------------------------
-        ! ! read (and force) inflow
+        ! ! !-----------------------------------------------------------------------
+        ! ! ! read (and force) inflow
 
-        if (sim_flag == 3) then
-            call read_inflow(u,v,w,t)
-        end if
+        ! if (sim_flag == 3) then
+        !     call read_inflow(u,v,w,t)
+        ! end if
         ! if (sim_flag > 2 .and. mod(t,2)== 0) then
         !    call read_inflow_m(u,v,w,me)
         ! end if
@@ -625,13 +672,13 @@ program main
     ! ! close and recompose ts outputs
     ! !---------------------------------------------------------------------------
 
-    if (ts_flag > 0) then
-       if (ts_flag==1) then
-           call close_ts1(me)
-        !    call close_ts2(me)
-           call recompose_ts1(me)
-       end if
-    end if
+    ! if (ts_flag > 0) then
+    !    if (ts_flag==1) then
+    !        call close_ts1(me)
+    !     !    call close_ts2(me)
+    !        call recompose_ts1(me)
+    !    end if
+    ! end if
 
     !---------------------------------------------------------------------------
     ! close turb
@@ -641,46 +688,46 @@ program main
     !---------------------------------------------------------------------------
     ! save variables
     !---------------------------------------------------------------------------
-    u_host = u
-    v_host = v
-    w_host = w
-    lm_old_host = lm_old
-    mm_old_host = mm_old
-    qn_old_host = qn_old
-    nn_old_host = nn_old
-    rhsx_host = rhsx
-    rhsy_host = rhsy
-    rhsz_host = rhsz
+    ! u_host = u
+    ! v_host = v
+    ! w_host = w
+    ! lm_old_host = lm_old
+    ! mm_old_host = mm_old
+    ! qn_old_host = qn_old
+    ! nn_old_host = nn_old
+    ! rhsx_host = rhsx
+    ! rhsy_host = rhsy
+    ! rhsz_host = rhsz
 
-    call save_variable(u_host,'input/u.bin',me,nall)
-    call save_variable(v_host,'input/v.bin',me,nall)
-    call save_variable(w_host,'input/w.bin',me,nall)
-    call save_variable(lm_old_host,'input/lm_old.bin',me,nall)
-    call save_variable(mm_old_host,'input/mm_old.bin',me,nall)
-    call save_variable(qn_old_host,'input/qn_old.bin',me,nall)
-    call save_variable(nn_old_host,'input/nn_old.bin',me,nall)
-    call save_variable(rhsx_host,'input/rhsx.bin',me,nall)
-    call save_variable(rhsy_host,'input/rhsy.bin',me,nall)
-    call save_variable(rhsz_host,'input/rhsz.bin',me,nall)
+    ! call save_variable(u_host,'input/u.bin',me,nall)
+    ! call save_variable(v_host,'input/v.bin',me,nall)
+    ! call save_variable(w_host,'input/w.bin',me,nall)
+    ! call save_variable(lm_old_host,'input/lm_old.bin',me,nall)
+    ! call save_variable(mm_old_host,'input/mm_old.bin',me,nall)
+    ! call save_variable(qn_old_host,'input/qn_old.bin',me,nall)
+    ! call save_variable(nn_old_host,'input/nn_old.bin',me,nall)
+    ! call save_variable(rhsx_host,'input/rhsx.bin',me,nall)
+    ! call save_variable(rhsy_host,'input/rhsy.bin',me,nall)
+    ! call save_variable(rhsz_host,'input/rhsz.bin',me,nall)
 
-    !---------------------------------------------------------------------------
-    ! save warmup data for precursor and main
-    !---------------------------------------------------------------------------
+    ! !---------------------------------------------------------------------------
+    ! ! save warmup data for precursor and main
+    ! !---------------------------------------------------------------------------
 
-    if (me == 0 .and. sim_flag < 2) then
-       if (resub_flag == 0 ) call system('mkdir ../init_data')
-       call system('cp input/* ../init_data')
-    end if
+    ! if (me == 0 .and. sim_flag < 2) then
+    !    if (resub_flag == 0 ) call system('mkdir ../init_data')
+    !    call system('cp input/* ../init_data')
+    ! end if
 
-    !---------------------------------------------------------------------------
-    ! print end
-    !---------------------------------------------------------------------------
+    ! !---------------------------------------------------------------------------
+    ! ! print end
+    ! !---------------------------------------------------------------------------
 
-    call print_end(t01,me)
+    ! call print_end(t01,me)
 
-    !---------------------------------------------------------------------------
-    ! mpi finalize
-    !---------------------------------------------------------------------------
+    ! !---------------------------------------------------------------------------
+    ! ! mpi finalize
+    ! !---------------------------------------------------------------------------
 
     999 call mpi_finalize(ierr)
 

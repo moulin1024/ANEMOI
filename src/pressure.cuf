@@ -74,16 +74,19 @@ subroutine pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan)
     ! redistribute the  mpi
     ! Notice: In a single processor (GPU) it is simply doing h_x = h_3
         call slab_transpose_z2y<<<grid1, tBlock1>>>(h_x,h_3)
-    ! ! call mpi_alltoall(h_3(1,1,1),lsize,mpi_double_complex(fp), &
-    ! !     h_2(1,1,1),lsize,mpi_double_complex(fp),nall,ierr)
+    call mpi_alltoall(h_3(1,1,1),lsize,mpi_complex, &
+        h_2(1,1,1),lsize,mpi_complex,nall,ierr)
     
     !---------------------------------------------------------------------------
     ! solve tri-diag matrix
-        call solve_tridiag<<<grid, tBlock>>>(h_3,me)
+        call solve_tridiag<<<grid, tBlock>>>(h_2,me)
     !-------------------------------------------------------------------------
     ! redistribute mpi
     ! Notice: In a single processor (GPU) it is simply doing h_3 = h_x
     ! h_3 = h_x
+        call mpi_alltoall(h_2(1,1,1),lsize,mpi_complex, &
+            h_3(1,1,1),lsize,mpi_complex,nall,ierr)
+
         call slab_transpose_y2z<<<grid, tBlock>>>(h_3,h_x)
 
     ! end if
