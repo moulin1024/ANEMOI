@@ -135,18 +135,19 @@ program main
              cx(nx,ny,nz2),&
              cy(nx,ny,nz2),&
              cz(nx,ny,nz2),&          ! Convection term      
-            txx(nx,ny,nz2),txy(nx,ny,nz2),txz(nx,ny,nz2),&       ! Stress term
-    tyy(nx,ny,nz2),tyz(nx,ny,nz2),tzz(nx,ny,nz2),&       
-    divtx(nx,ny,nz2),divty(nx,ny,nz2),divtz(nx,ny,nz2),& ! Divergence term
-    rhsx(nx,ny,nz2),rhsy(nx,ny,nz2),rhsz(nx,ny,nz2),&    ! right hand side term        
-    rhsx_f(nx,ny,nz2),rhsy_f(nx,ny,nz2),rhsz_f(nx,ny,nz2),&
-    dudx(nx,ny,nz2),dudy(nx,ny,nz2),dudz(nx,ny,nz2),&    ! Velocity gradient
-    dvdx(nx,ny,nz2),dvdy(nx,ny,nz2),dvdz(nx,ny,nz2),&
-    dwdx(nx,ny,nz2),dwdy(nx,ny,nz2),dwdz(nx,ny,nz2),&    
-    dpdx(nx,ny,nz2),dpdy(nx,ny,nz2),dpdz(nx,ny,nz2),&    ! Pressure gradient
-    rhs_p(nx,ny,nz2),&               ! Poisson eq rhs
-    lm_old(nx,ny,nz2),mm_old(nx,ny,nz2),&
-    qn_old(nx,ny,nz2),nn_old(nx,ny,nz2),cs2(nx,ny,nz2))
+             txx(nx,ny,nz2),txy(nx,ny,nz2),&
+             txz(nx,ny,nz2),&       ! Stress term
+             tyy(nx,ny,nz2),tyz(nx,ny,nz2),tzz(nx,ny,nz2),&       
+             divtx(nx,ny,nz2),divty(nx,ny,nz2),divtz(nx,ny,nz2),& ! Divergence term
+             rhsx(nx,ny,nz2),rhsy(nx,ny,nz2),rhsz(nx,ny,nz2),&    ! right hand side term        
+             rhsx_f(nx,ny,nz2),rhsy_f(nx,ny,nz2),rhsz_f(nx,ny,nz2),&
+             dudx(nx,ny,nz2),dudy(nx,ny,nz2),dudz(nx,ny,nz2),&    ! Velocity gradient
+             dvdx(nx,ny,nz2),dvdy(nx,ny,nz2),dvdz(nx,ny,nz2),&
+             dwdx(nx,ny,nz2),dwdy(nx,ny,nz2),dwdz(nx,ny,nz2),&    
+             dpdx(nx,ny,nz2),dpdy(nx,ny,nz2),dpdz(nx,ny,nz2),&    ! Pressure gradient
+             rhs_p(nx,ny,nz2),&               ! Poisson eq rhs
+             lm_old(nx,ny,nz2),mm_old(nx,ny,nz2),&
+             qn_old(nx,ny,nz2),nn_old(nx,ny,nz2),cs2(nx,ny,nz2))
     !---------------------------------------------------------------------------
     ! load variables
     !---------------------------------------------------------------------------
@@ -165,6 +166,7 @@ program main
         w_host(:,:,nzb+1)=0._fp
     end if
 
+    ! TODO: DO THIS ON GPU
     call update_uv_cpu(u_host,me,nall)
     call update_uv_cpu(v_host,me,nall)
     call update_w_cpu (w_host,me,nall)
@@ -338,10 +340,10 @@ program main
             if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
             if (log_umax>100) exit
 
-            ! if (ts_flag > 0 .and. t >= ts_tstart) then 
-            !     print *,'Write instant field:'
-            !     call write_ts1(u_host,v_host,w_host,me)
-            ! end if
+            if (ts_flag > 0 .and. t >= ts_tstart) then 
+                print *,'Write instant field:'
+                call write_ts1(u_host,v_host,w_host,me)
+            end if
         end if
 
         !-----------------------------------------------------------------------
@@ -536,9 +538,9 @@ program main
         call velo_corr<<<grid, tBlock>>>(u,dpdx )
         call velo_corr<<<grid, tBlock>>>(v,dpdy )
         call velo_corr<<<grid, tBlock>>>(w,dpdz )
-! #ifdef USE_NVTX
-!         call nvtxEndRange
-! #endif
+#ifdef USE_NVTX
+        call nvtxEndRange
+#endif
         !-----------------------------------------------------------------------
         ! io
         !-----------------------------------------------------------------------
@@ -683,13 +685,13 @@ program main
     ! ! close and recompose ts outputs
     ! !---------------------------------------------------------------------------
 
-    ! if (ts_flag > 0) then
-    !    if (ts_flag==1) then
-    !        call close_ts1(me)
-    !     !    call close_ts2(me)
-    !        call recompose_ts1(me)
-    !    end if
-    ! end if
+    if (ts_flag > 0) then
+       if (ts_flag==1) then
+           call close_ts1(me)
+        !    call close_ts2(me)
+           call recompose_ts1(me)
+       end if
+    end if
 
     !---------------------------------------------------------------------------
     ! close turb
@@ -699,42 +701,42 @@ program main
     !---------------------------------------------------------------------------
     ! save variables
     !---------------------------------------------------------------------------
-    ! u_host = u
-    ! v_host = v
-    ! w_host = w
-    ! lm_old_host = lm_old
-    ! mm_old_host = mm_old
-    ! qn_old_host = qn_old
-    ! nn_old_host = nn_old
-    ! rhsx_host = rhsx
-    ! rhsy_host = rhsy
-    ! rhsz_host = rhsz
+    u_host = u
+    v_host = v
+    w_host = w
+    lm_old_host = lm_old
+    mm_old_host = mm_old
+    qn_old_host = qn_old
+    nn_old_host = nn_old
+    rhsx_host = rhsx
+    rhsy_host = rhsy
+    rhsz_host = rhsz
 
-    ! call save_variable(u_host,'input/u.bin',me,nall)
-    ! call save_variable(v_host,'input/v.bin',me,nall)
-    ! call save_variable(w_host,'input/w.bin',me,nall)
-    ! call save_variable(lm_old_host,'input/lm_old.bin',me,nall)
-    ! call save_variable(mm_old_host,'input/mm_old.bin',me,nall)
-    ! call save_variable(qn_old_host,'input/qn_old.bin',me,nall)
-    ! call save_variable(nn_old_host,'input/nn_old.bin',me,nall)
-    ! call save_variable(rhsx_host,'input/rhsx.bin',me,nall)
-    ! call save_variable(rhsy_host,'input/rhsy.bin',me,nall)
-    ! call save_variable(rhsz_host,'input/rhsz.bin',me,nall)
+    call save_variable(u_host,'input/u.bin',me,nall)
+    call save_variable(v_host,'input/v.bin',me,nall)
+    call save_variable(w_host,'input/w.bin',me,nall)
+    call save_variable(lm_old_host,'input/lm_old.bin',me,nall)
+    call save_variable(mm_old_host,'input/mm_old.bin',me,nall)
+    call save_variable(qn_old_host,'input/qn_old.bin',me,nall)
+    call save_variable(nn_old_host,'input/nn_old.bin',me,nall)
+    call save_variable(rhsx_host,'input/rhsx.bin',me,nall)
+    call save_variable(rhsy_host,'input/rhsy.bin',me,nall)
+    call save_variable(rhsz_host,'input/rhsz.bin',me,nall)
 
     ! !---------------------------------------------------------------------------
     ! ! save warmup data for precursor and main
     ! !---------------------------------------------------------------------------
 
-    ! if (me == 0 .and. sim_flag < 2) then
-    !    if (resub_flag == 0 ) call system('mkdir ../init_data')
-    !    call system('cp input/* ../init_data')
-    ! end if
+    if (me == 0 .and. sim_flag < 2) then
+       if (resub_flag == 0 ) call system('mkdir ../init_data')
+       call system('cp input/* ../init_data')
+    end if
 
     ! !---------------------------------------------------------------------------
     ! ! print end
     ! !---------------------------------------------------------------------------
 
-    ! call print_end(t01,me)
+    call print_end(t01,me)
 
     ! !---------------------------------------------------------------------------
     ! ! mpi finalize
