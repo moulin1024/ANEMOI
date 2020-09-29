@@ -6,7 +6,7 @@
     use cudafor
     use precision
     use mpi
-    use press_cpu
+    ! use press_cpu
     use dimen
     implicit none
 
@@ -72,15 +72,15 @@
     ! istat = cudaEventSynchronize(stopEvent)
     ! istat = cudaEventElapsedTime(time, startEvent, stopEvent)
     
-    dpdx_host1 = dpdx
+    ! dpdx_host1 = dpdx
     ! print *,dpdx_host1(10,10,10)
 
     ! print *,'Time ', time/Nt, ' ms'
 
-    call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,0)
+    ! call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,0)
 
-    call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,1)
-    print *,maxval(dpdx_host(:,:,2:nzb+1)-dpdx_host1(:,:,2:nzb+1))
+    ! call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,1)
+    ! print *,maxval(dpdx_host(:,:,2:nzb+1)-dpdx_host1(:,:,2:nzb+1))
 
 
     call MPI_finalize(ierr)
