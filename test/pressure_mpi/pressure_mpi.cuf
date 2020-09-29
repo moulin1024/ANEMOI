@@ -6,7 +6,7 @@ use dimen
 integer npsx,npsy,ni,nj,lsize
 parameter(npsx=1, npsy=nz/(nz2-2))
 parameter(ni=(nx/2+1)/npsx, nj=ny/npsy)
-parameter(lsize=ni*nj*nzb)
+parameter(lsize=(nx/2+1)*nj*nzb)
 contains
 
 subroutine pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan)
@@ -22,11 +22,11 @@ subroutine pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan)
     real(fp),dimension(nx,ny,nz2),intent(in),device:: rhs_p
     real(fp),dimension(nx,ny,nz2),intent(inout),device:: p,dpdx,dpdy
     real(fp),dimension(nx,ny,nz2),device:: p_test
-    real(fp),dimension(nx,ny,nz2) :: p_host
+    real(fp),dimension(nx,ny,nz2) :: p_host,dpdx_host
     complex(fp), dimension(:,:,:),allocatable,device:: h_x,h_2,h_3
-    complex(fp), dimension(nx/2+1,ny,nzb) :: h_x_host
+    complex(fp), dimension(nx/2+1,ny,nzb) :: h_x_host,dpdx_hat_host
     complex(fp), dimension(:,:,:),allocatable,device:: dpdx_hat,dpdy_hat
-    complex(fp), dimension(ni,nj,nz) :: h_2_host,h_3_host
+    complex(fp), dimension(nx/2+1,nj,nz) :: h_2_host,h_3_host
 
     integer i_global,j_global
     integer i,j,k,ii,jj,size,istat
@@ -34,10 +34,10 @@ subroutine pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan)
    
     ! Cuda variable
     type(dim3) :: grid, tBlock, grid1,tBlock1, grid_3d,tBlock_3d
-    grid= dim3(int((nx/2+1)/32)+1,nj,1)
+    grid= dim3(int((nx/2+1)/32)+1,ny,1)
     tBlock= dim3(32,1,1)
     tBlock1 = dim3(32,1,1)
-    grid1 = dim3(int((nx/2+1)/32)+1,ny,1) ! Notice the difference between nj and ny
+    grid1 = dim3(int((nx/2+1)/32)+1,nj,1) ! Notice the difference between nj and ny
 
     tBlock_3d = dim3(32,1,1)
     grid_3d = dim3(int((nx/2+1)/32)+1,ny,nzb) ! Notice the difference between nzb and nz2
@@ -56,14 +56,12 @@ subroutine pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan)
         allocate(h_x(nx/2+1,ny,nzb))
         allocate(dpdx_hat(nx/2+1,ny,nzb))
         allocate(dpdy_hat(nx/2+1,ny,nzb))
-        allocate(h_2(ni,nj,nz))
-        allocate(h_3(ni,nj,nz))
+        allocate(h_2(nx/2+1,nj,nz))
+        allocate(h_3(nx/2+1,nj,nz))
     endif
-
     !---------------------------------------------------------------------------
     ! compute forward fft interior
     call cufftExec(plan(1),rhs_p(:,:,2:nzb+1),h_x)
-
 
     ! if (nzb + 2 == nz2 ) then
     !     !---------------------------------------------------------------------------
@@ -73,30 +71,45 @@ subroutine pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan)
     !---------------------------------------------------------------------------
     ! redistribute the  mpi
     ! Notice: In a single processor (GPU) it is simply doing h_x = h_3
-        call slab_transpose_z2y<<<grid1, tBlock1>>>(h_x,h_2)
+
+        ! h_x_host = h_x
+        ! print *,me,h_x_host(13:20,17,19)*inxny
+
+        call slab_transpose_z2y<<<grid1, tBlock1>>>(h_x,h_3)
     
         call mpi_alltoall(h_3(1,1,1),lsize,mpi_double_complex, &
         h_2(1,1,1),lsize,mpi_double_complex,nall,ierr)
+
+
     
     !---------------------------------------------------------------------------
     ! solve tri-diag matrix
-        call solve_tridiag<<<grid, tBlock>>>(h_2,me)
+        call solve_tridiag<<<grid1, tBlock1>>>(h_2,me)
+
+
     !-------------------------------------------------------------------------
     ! redistribute mpi
     ! Notice: In a single processor (GPU) it is simply doing h_3 = h_x
     ! h_3 = h_x
         call mpi_alltoall(h_2(1,1,1),lsize,mpi_double_complex, &
             h_3(1,1,1),lsize,mpi_double_complex,nall,ierr)
-
-        call slab_transpose_y2z<<<grid, tBlock>>>(h_3,h_x)
+        call slab_transpose_y2z<<<grid1, tBlock1>>>(h_3,h_x)
 
     ! end if
-
     !-------------------------------------------------------------------------
     ! compute p_hat (i.e h_z), dpdx_hat, dpdy_hat
     ! x
+
+ 
     call press_grad<<<grid_3d, tBlock_3d>>>(h_x,dpdx_hat,dpdy_hat)
+
+
+    ! h_x_host = h_x
+    ! print *,me,h_x_host(13,17,19)
+
     call cufftExec(plan(2),dpdx_hat,dpdx(:,:,2:nzb+1))
+    ! dpdx_host = dpdx
+    ! print *,me,dpdx_host(13,17,19)
     call cufftExec(plan(2),dpdy_hat,dpdy(:,:,2:nzb+1))
     call cufftExec(plan(2),h_x,p(:,:,2:nzb+1))
 end subroutine pressure_poisson
@@ -105,7 +118,7 @@ attributes(global) subroutine slab_transpose_z2y(h_x,h_3)
     ! Transpose z slab to y slab
     implicit none
     complex(fp), dimension(nx/2+1,ny,nzb),intent(in) :: h_x
-    complex(fp), dimension(ni,nj,nz),intent(inout) :: h_3
+    complex(fp), dimension(nx/2+1,nj,nz),intent(inout) :: h_3
     integer :: i,j,k,i_block,j_block
 
     i = (blockIdx%x - 1) * blockDim%x + threadIdx%x;
@@ -122,7 +135,7 @@ attributes(global) subroutine slab_transpose_y2z(h_3,h_x)
     ! Transpose y slab to z slab
     implicit none
     complex(fp), dimension(nx/2+1,ny,nzb),intent(inout) :: h_x
-    complex(fp), dimension(ni,nj,nz),intent(in) :: h_3
+    complex(fp), dimension(nx/2+1,nj,nz),intent(in) :: h_3
     integer :: i,j,k,i_block,j_block
 
     i = (blockIdx%x - 1) * blockDim%x + threadIdx%x;
@@ -138,7 +151,7 @@ end subroutine
 attributes(global) subroutine solve_tridiag(h_2,device_id)
     ! Solve tridiag system
     implicit none
-    complex(fp), dimension(ni,nj,nz),intent(inout) :: h_2
+    complex(fp), dimension(nx/2+1,nj,nz),intent(inout) :: h_2
     real(fp),dimension(nz+1) :: rhs_col,a1,b1,c1,p_colr,p_coli
     integer :: i,j,k,i_global,j_global,ii,jj
     integer,value,intent(in) :: device_id
@@ -239,7 +252,7 @@ attributes(global) subroutine press_grad(f_hat,dfdx_hat,dfdy_hat)
     integer :: i,j,k,ii,jj
     i = (blockIdx%x - 1) * blockDim%x + threadIdx%x;
     j = (blockIdx%y - 1) * blockDim%y + threadIdx%y;
-    k = (blockIdx%z - 1) * blockDim%z + threadIdx%z;
+    k = (blockIdx%z - 1) * blockDim%z + threadIdx%z  !+ 1 !(Watch out! no + 1 here!)
     if (i <= nx/2+1) then
         ! ! Shift wave number
         ii = i - 1
@@ -247,6 +260,9 @@ attributes(global) subroutine press_grad(f_hat,dfdx_hat,dfdy_hat)
         if(jj.gt.nint(ny/2.)) jj=jj-ny
         jj=jj*l_r
 
+        if (abs(jj) >= nint(l_r*ny/2.0).or. ii >= nint(nx/2.0)) then
+            f_hat(i,j,k)=dcmplx(0._fp)
+        end if
         !  ! dfdx_hat
         dfdx_hat(i,j,k)=dcmplx(aimag(f_hat(i,j,k))*(-1.0), &
             real(f_hat(i,j,k)))*ii
@@ -254,9 +270,6 @@ attributes(global) subroutine press_grad(f_hat,dfdx_hat,dfdy_hat)
         dfdy_hat(i,j,k)=dcmplx(aimag(f_hat(i,j,k))*(-1.0), &
             real(f_hat(i,j,k)))*jj
 
-        if (j == ny/2+1 .or. i == nx/2+1) then
-            dfdy_hat(i,j,k)=dcmplx(0._fp)
-        end if
     end if
 end subroutine press_grad
 

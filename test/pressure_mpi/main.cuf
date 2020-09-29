@@ -6,6 +6,7 @@
     use cudafor
     use precision
     use mpi
+    use press_cpu
     use dimen
     implicit none
 
@@ -14,7 +15,7 @@
     real(fp),dimension(nx,ny,nz2):: rhs_p_host,dpdx_host,dpdy_host,p_host
     real(fp),dimension(nx,ny,nz2):: rhs_p_host1,dpdx_host1,dpdy_host1,p_host1
     real(fp),dimension(:,:,:),device, allocatable :: rhs_p,dpdx,dpdy,p
-    integer t
+    integer t,i
     integer Nt
 
     type(c_ptr) plan_batch(2)
@@ -36,10 +37,10 @@
     call mpi_comm_size( mpi_comm_world, job_np, ierr )
     nall=mpi_comm_world
 
+    print *,me,localRank
     t = 1
     Nt = 100
-    me = 0
-    nall = 0
+
     Print *, 'Check subroutine: press_stag.cuf'
     ! batch fft plan
 
@@ -60,20 +61,27 @@
     rhs_p = rhs_p_host
     
     ! Initial variable
+    call MPI_BARRIER(nall, ierr)
     call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,1,plan_batch)
     ! Time profiling
-    istat = cudaEventRecord(startEvent, 0)
-    do t = 2,Nt+1
-        call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,2,plan_batch)
-    end do 
-    istat = cudaEventRecord(stopEvent, 0)
-    istat = cudaEventSynchronize(stopEvent)
-    istat = cudaEventElapsedTime(time, startEvent, stopEvent)
+    ! istat = cudaEventRecord(startEvent, 0)
+    ! do t = 2,Nt+1
+    !     call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,2,plan_batch)
+    ! end do 
+    ! istat = cudaEventRecord(stopEvent, 0)
+    ! istat = cudaEventSynchronize(stopEvent)
+    ! istat = cudaEventElapsedTime(time, startEvent, stopEvent)
     
-    dpdx_host = dpdx
+    dpdx_host1 = dpdx
+    ! print *,dpdx_host1(10,10,10)
 
-    print *,dpdx_host(10,10,10)
-    print *,'Time ', time/Nt, ' ms'
+    ! print *,'Time ', time/Nt, ' ms'
+
+    call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,0)
+
+    call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,1)
+    print *,maxval(dpdx_host(:,:,2:nzb+1)-dpdx_host1(:,:,2:nzb+1))
+
 
     call MPI_finalize(ierr)
 

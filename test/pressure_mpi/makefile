@@ -8,7 +8,7 @@ FC = mpif90
 # FFLAGS
 ################################################################################
 
-FFLAGS = -O3 -Mpreprocess -mcmodel=medium
+FFLAGS = -O3 -Mpreprocess -mcmodel=medium -lfftw3
 CUDA = -Mcuda -lcufft -ta=nvidia
 PRECISION=-DDOUBLE
 # debug
@@ -27,7 +27,7 @@ PRECISION=-DDOUBLE
 # OBJ, PROG
 ################################################################################
 
-OBJ = cpu_timer.o precision.o dimen.o cufft_m.o pressure.o \
+OBJ = cpu_timer.o precision.o dimen.o cufft_m.o pressure_mpi.o press.o\
 	  main.o \
 
 PROG = wireles
@@ -39,12 +39,12 @@ build:
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c dimen.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/cufft_m.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c pressure_mpi.cuf
-	# $(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c pressure_cpu.cuf
+	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c press.f90
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c main.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(OBJ) -o $(PROG).run $(LIBS)
 
 run:
-	mpirun -np 2 ./wireles.run
+	mpirun -np 1 ./wireles.run
 		
 
 clean:
