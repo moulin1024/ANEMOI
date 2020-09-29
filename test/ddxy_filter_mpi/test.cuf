@@ -79,9 +79,9 @@ program test_cufft
         call ddxy_filter(v,dvdx,dvdy,plan_batch)
         call ddxy_filter(w,dwdx,dwdy,plan_batch)
 
-        call update_uv_gpu(u,me,nall)
-        call update_uv_gpu(v,me,nall)
-        call update_w_gpu (w,me,nall)
+        call update_uv(u,me,nall)
+        call update_uv(v,me,nall)
+        call update_w (w,me,nall)
 
     end do   
     istat = cudaEventRecord(stopEvent, 0)
