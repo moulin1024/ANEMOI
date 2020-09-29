@@ -308,12 +308,22 @@ program main
         call nvtxStartRange("deriv and filter",1)
 #endif
         call ddxy_filter(u,dudx,dudy,plan_batch)
-        call ddxy_filter(v,dvdx,dvdy,plan_batch)
-        call ddxy_filter(w,dwdx,dwdy,plan_batch)
 
         call update_uv(u,me,nall)
+        call update_uv(dudx,me,nall)
+        call update_uv(dudy,me,nall)
+
+        call ddxy_filter(v,dvdx,dvdy,plan_batch)
+
         call update_uv(v,me,nall)
-        call update_w (w,me,nall)
+        call update_uv(dvdx,me,nall)
+        call update_uv(dvdy,me,nall)
+
+        call ddxy_filter(w,dwdx,dwdy,plan_batch)
+
+        call update_w(dwdx,me,nall)
+        call update_w(dwdy,me,nall)
+        call update_w(w,me,nall)
 
         if (mod(t,c_count*10)==0) then
             u_host = u 
@@ -348,17 +358,12 @@ program main
         ! -----------------------------------------------------------------------
         ! spatial deriv
         call ddz<<<grid, tBlock>>>(dudz,u,0)    ! cell centre
-        call ddz<<<grid, tBlock>>>(dvdz,v,0)    ! cell centre
-        call ddz<<<grid, tBlock>>>(dwdz,w,1)    ! staggered
-
-        call update_uv(dudx,me,nall)
-        call update_uv(dudy,me,nall)
         call update_w(dudz,me,nall)
-        call update_uv(dvdx,me,nall)
-        call update_uv(dvdy,me,nall)
+
+        call ddz<<<grid, tBlock>>>(dvdz,v,0)    ! cell centre
         call update_w(dvdz,me,nall)
-        call update_w(dwdx,me,nall)
-        call update_w(dwdy,me,nall)
+        
+        call ddz<<<grid, tBlock>>>(dwdz,w,1)    ! staggered
         call update_uv(dwdz,me,nall)
         
 #ifdef USE_NVTX
@@ -403,6 +408,10 @@ program main
                                 dwdx,dwdy,dwdz, &
                                 LM_old,MM_old,QN_old,NN_old,cs2,plan_batch,&
                                 t,me,nall)
+
+            call update_w(txz,me,nall)
+            call update_w(tyz,me,nall)
+            call update_uv(tzz,me,nall)
         end if
         !-----------------------------------------------------------------------
         ! top bc
@@ -481,6 +490,8 @@ program main
                 end do
             end do
         end if
+
+        call update_w(w,me,nall)
  #ifdef USE_NVTX
         call nvtxEndRange
         call nvtxStartRange("pressure correction",5)
@@ -497,7 +508,7 @@ program main
         !-----------------------------------------------------------------------
         ! get pressure grandients (and press)
         call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan_batch)
-! !         ! call update_uv(p,me,nall)
+        call update_uv(p,me,nall)
         call ddz<<<grid, tBlock>>>(dpdz,p,0)
         
         ! bc bot dpdz
@@ -525,9 +536,9 @@ program main
         call velo_corr<<<grid, tBlock>>>(u,dpdx )
         call velo_corr<<<grid, tBlock>>>(v,dpdy )
         call velo_corr<<<grid, tBlock>>>(w,dpdz )
-#ifdef USE_NVTX
-        call nvtxEndRange
-#endif
+! #ifdef USE_NVTX
+!         call nvtxEndRange
+! #endif
         !-----------------------------------------------------------------------
         ! io
         !-----------------------------------------------------------------------

@@ -103,9 +103,9 @@ module sgs
             v_lag = 0.
             w_lag = 0.
 
+            call update_uv(cs2,me,nall)
+
         end if
-        
-        call update_uv(cs2,me,nall)
 
         !---------------------------------------------------------------------------
         ! 2. get Tau
