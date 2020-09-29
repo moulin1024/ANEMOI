@@ -324,8 +324,6 @@ program main
         call ddxy_filter(w,dwdx,dwdy,plan_batch)
 
         call update_w_async(w,request,me,nall)
-        call update_w_async(dwdx,request,me,nall)
-        call update_w_async(dwdy,request,me,nall)
 
         if (mod(t,c_count*10)==0) then
             u_host = u 
@@ -359,16 +357,19 @@ program main
         endif
 
         call mpi_wait(REQUEST,STATUS2,IERR)
+
+        call update_w_async(dwdx,request,me,nall)
+        call update_w_async(dwdy,request,me,nall)
         ! -----------------------------------------------------------------------
         ! spatial deriv
         call ddz<<<grid, tBlock>>>(dudz,u,0)    ! cell centre
-        call update_w(dudz,me,nall)
+        call update_w_async(dudz,request,me,nall)
 
         call ddz<<<grid, tBlock>>>(dvdz,v,0)    ! cell centre
-        call update_w(dvdz,me,nall)
+        call update_w_async(dvdz,request,me,nall)
         
         call ddz<<<grid, tBlock>>>(dwdz,w,1)    ! staggered
-        call update_uv(dwdz,me,nall)
+        call update_uv_async(dwdz,request,me,nall)
         
 #ifdef USE_NVTX
         call nvtxEndRange
@@ -380,6 +381,8 @@ program main
         ! we need to hide this wall modif to the other processor because
         ! dudz, dvdz change location (from w node to uv nodes) --> no update
 
+        call mpi_wait(REQUEST,STATUS2,IERR)
+        
         if (me==0) then
             call wall_stress(txz,tyz,dudz,dvdz,ustar,m,u,v,zo,t,plan_2d)
         end if
