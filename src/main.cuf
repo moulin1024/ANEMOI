@@ -25,7 +25,7 @@ program main
     !---------------------------------------------------------------------------
     ! iterator
     integer*4 t
-    integer i,j,k
+    integer i,j,k,REQUEST
     !---------------------------------------------------------------------------
     ! flow
     real(fp),dimension(nx,ny):: zo_host,ustar_host,m_host
@@ -311,21 +311,21 @@ program main
 #endif
         call ddxy_filter(u,dudx,dudy,plan_batch)
 
-        call update_uv(u,me,nall)
-        call update_uv(dudx,me,nall)
-        call update_uv(dudy,me,nall)
+        call update_uv_async(u,request,me,nall)
+        call update_uv_async(dudx,request,me,nall)
+        call update_uv_async(dudy,request,me,nall)
 
         call ddxy_filter(v,dvdx,dvdy,plan_batch)
 
-        call update_uv(v,me,nall)
-        call update_uv(dvdx,me,nall)
-        call update_uv(dvdy,me,nall)
+        call update_uv_async(v,request,me,nall)
+        call update_uv_async(dvdx,request,me,nall)
+        call update_uv_async(dvdy,request,me,nall)
 
         call ddxy_filter(w,dwdx,dwdy,plan_batch)
 
-        call update_w(dwdx,me,nall)
-        call update_w(dwdy,me,nall)
-        call update_w(w,me,nall)
+        call update_w_async(w,request,me,nall)
+        call update_w_async(dwdx,request,me,nall)
+        call update_w_async(dwdy,request,me,nall)
 
         if (mod(t,c_count*10)==0) then
             u_host = u 
@@ -357,6 +357,8 @@ program main
                 end do
             end do
         endif
+
+        call mpi_wait(REQUEST,STATUS2,IERR)
         ! -----------------------------------------------------------------------
         ! spatial deriv
         call ddz<<<grid, tBlock>>>(dudz,u,0)    ! cell centre
