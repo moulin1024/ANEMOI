@@ -61,21 +61,19 @@
     rhs_p = rhs_p_host
     
     ! Initial variable
-    call MPI_BARRIER(nall, ierr)
-    call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,1,plan_batch)
     ! Time profiling
-    ! istat = cudaEventRecord(startEvent, 0)
-    ! do t = 2,Nt+1
-    !     call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,2,plan_batch)
-    ! end do 
-    ! istat = cudaEventRecord(stopEvent, 0)
-    ! istat = cudaEventSynchronize(stopEvent)
-    ! istat = cudaEventElapsedTime(time, startEvent, stopEvent)
+    istat = cudaEventRecord(startEvent, 0)
+    do t = 1,Nt
+        call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan_batch)
+    end do 
+    istat = cudaEventRecord(stopEvent, 0)
+    istat = cudaEventSynchronize(stopEvent)
+    istat = cudaEventElapsedTime(time, startEvent, stopEvent)
     
     ! dpdx_host1 = dpdx
     ! print *,dpdx_host1(10,10,10)
 
-    ! print *,'Time ', time/Nt, ' ms'
+    print *,'Time ', time/Nt, ' ms'
 
     ! call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,0)
 

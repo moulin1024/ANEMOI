@@ -70,12 +70,14 @@ module pressure
         ! Notice: In a single processor (GPU) it is simply doing h_x = h_3
             call slab_transpose_z2y<<<grid1, tBlock1>>>(h_x,h_3)
             if (fp==singlePrecision) then 
-                call mpi_alltoall(h_3(1,1,1),lsize,mpi_complex, &
-                h_2(1,1,1),lsize,mpi_complex,nall,ierr)
+                call mpi_ialltoall(h_3(1,1,1),lsize,mpi_complex, &
+                h_2(1,1,1),lsize,mpi_complex,nall,REQUEST,ierr)
             else
-                call mpi_alltoall(h_3(1,1,1),lsize,mpi_double_complex, &
-                h_2(1,1,1),lsize,mpi_double_complex,nall,ierr)
+                call mpi_ialltoall(h_3(1,1,1),lsize,mpi_double_complex, &
+                h_2(1,1,1),lsize,mpi_double_complex,nall,REQUEST,ierr)
             end if
+
+            call mpi_wait(REQUEST,STATUS2, IERR)
     
         !---------------------------------------------------------------------------
         ! solve tri-diag matrix
@@ -87,13 +89,14 @@ module pressure
         ! Notice: In a single processor (GPU) it is simply doing h_3 = h_x
         ! h_3 = h_x
             if (fp==singlePrecision) then 
-                call mpi_alltoall(h_2(1,1,1),lsize,mpi_complex, &
-                    h_3(1,1,1),lsize,mpi_complex,nall,ierr)
+                call mpi_ialltoall(h_2(1,1,1),lsize,mpi_complex, &
+                    h_3(1,1,1),lsize,mpi_complex,nall,REQUEST,ierr)
             else 
-                call mpi_alltoall(h_2(1,1,1),lsize,mpi_double_complex, &
-                    h_3(1,1,1),lsize,mpi_double_complex,nall,ierr)
+                call mpi_ialltoall(h_2(1,1,1),lsize,mpi_double_complex, &
+                    h_3(1,1,1),lsize,mpi_double_complex,nall,REQUEST,ierr)
             end if
 
+            call mpi_wait(REQUEST,STATUS2, IERR)
             call slab_transpose_y2z<<<grid1, tBlock1>>>(h_3,h_x)
     
         ! end if
