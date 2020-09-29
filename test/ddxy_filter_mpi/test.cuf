@@ -27,8 +27,8 @@
     integer,parameter :: nt = 100
     integer istat,i,j,k,t
     type(c_ptr) plan_batch(2)
-
-    integer(kind=cuda_stream_kind) :: stream(num_streams)
+    
+    integer(kind=cuda_stream_kind) :: stream(3)
     type (cudaEvent) :: startEvent, stopEvent
     real :: time,time_cpu,max_error
     real(fp) :: wctime1,wctime2
@@ -70,10 +70,6 @@
 
     ! Create fft plan
     call get_batchfft_plan(plan_batch,1)
-
-    ! call ddxy_filter(u,dudx,dudy,plan_batch)
-    ! call ddxy_filter(v,dudx,dudy,plan_batch)
-    ! call ddxy_filter(w,dudx,dudy,plan_batch)
     
     istat = cudaEventRecord(startEvent, 0)
     do t = 1,Nt
@@ -81,10 +77,20 @@
         call ddxy_filter(u,dudx,dudy,plan_batch)
 
         call update_uv_async(u,request,me,nall)
+        call update_uv_async(dudx,request,me,nall)
+        call update_uv_async(dudy,request,me,nall)
+
         call ddxy_filter(v,dvdx,dvdy,plan_batch)
+        
         call update_uv_async(v,request,me,nall)
+        call update_uv_async(dvdx,request,me,nall)
+        call update_uv_async(dvdy,request,me,nall)
+
         call ddxy_filter(w,dwdx,dwdy,plan_batch)
-        call update_w_async (w,request,me,nall)
+        
+        call update_uv_async(w,request,me,nall)
+        call update_uv_async(dwdx,request,me,nall)
+        call update_uv_async(dwdy,request,me,nall)
 
         ! call mpi_wait(request, STATUS2, ierr)
         call mpi_barrier(nall,ierr)
