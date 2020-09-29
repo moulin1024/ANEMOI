@@ -26,7 +26,7 @@ module pressure
         complex(fp), dimension(:,:,:),allocatable,device:: dpdx_hat,dpdy_hat
         
         integer i_global,j_global
-        integer i,j,k,ii,jj,size,istat
+        integer i,j,k,ii,jj,size,istat,REQUEST
         type(c_ptr) plan(2)
        
         ! Cuda variable
@@ -70,12 +70,14 @@ module pressure
         ! Notice: In a single processor (GPU) it is simply doing h_x = h_3
             call slab_transpose_z2y<<<grid1, tBlock1>>>(h_x,h_3)
             if (fp==singlePrecision) then 
-                call mpi_alltoall(h_3(1,1,1),lsize,mpi_complex, &
-                h_2(1,1,1),lsize,mpi_complex,nall,ierr)
+                call mpi_Ialltoall(h_3(1,1,1),lsize,mpi_complex, &
+                h_2(1,1,1),lsize,mpi_complex,nall,REQUEST,ierr)
             else
-                call mpi_alltoall(h_3(1,1,1),lsize,mpi_complex, &
-                h_2(1,1,1),lsize,mpi_double_complex,nall,ierr)
+                call mpi_Ialltoall(h_3(1,1,1),lsize,mpi_complex, &
+                h_2(1,1,1),lsize,mpi_double_complex,nall,REQUEST,ierr)
             end if
+
+            call MPI_WAIT(REQUEST, STATUS2, ierr)
     
         !---------------------------------------------------------------------------
         ! solve tri-diag matrix
@@ -87,13 +89,15 @@ module pressure
         ! Notice: In a single processor (GPU) it is simply doing h_3 = h_x
         ! h_3 = h_x
             if (fp==singlePrecision) then 
-                call mpi_alltoall(h_2(1,1,1),lsize,mpi_complex, &
-                    h_3(1,1,1),lsize,mpi_complex,nall,ierr)
+                call mpi_Ialltoall(h_2(1,1,1),lsize,mpi_complex, &
+                    h_3(1,1,1),lsize,mpi_complex,nall,REQUEST,ierr)
             else 
-                call mpi_alltoall(h_2(1,1,1),lsize,mpi_complex, &
-                    h_3(1,1,1),lsize,mpi_complex,nall,ierr)
+                call mpi_Ialltoall(h_2(1,1,1),lsize,mpi_complex, &
+                    h_3(1,1,1),lsize,mpi_complex,nall,REQUEST,ierr)
             end if
 
+
+            call MPI_WAIT(REQUEST, STATUS2, ierr)
             call slab_transpose_y2z<<<grid1, tBlock1>>>(h_3,h_x)
     
         ! end if
