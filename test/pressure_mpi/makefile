@@ -8,7 +8,7 @@ FC = mpif90
 # FFLAGS
 ################################################################################
 
-FFLAGS = -O3 -Mpreprocess -mcmodel=medium -lfftw3
+FFLAGS = -O3 -Mpreprocess -mcmodel=medium
 CUDA = -Mcuda -lcufft -ta=nvidia
 PRECISION=-DDOUBLE
 # debug
