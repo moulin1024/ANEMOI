@@ -26,12 +26,12 @@ z_i		= 1000.0	# normalization height
 l_r		= 1		# ratio of streamwise to spanwise dimensions
 
 # custom
-lx		= 5120		# length of dom in the streamwise dir
-ly		= 5120		# length of dom in the spanwise dir
-lz		= 1270		# length of dom in the wall-normal dir
+lx		= 10240		# length of dom in the streamwise dir
+ly		= 10240		# length of dom in the spanwise dir
+lz		= 1260		# length of dom in the wall-normal dir
 
-nx		= 64		# number of grid points in the streamwise dir
-ny		= 64		# number of grid points in the spanwise dir
+nx		= 512		# number of grid points in the streamwise dir
+ny		= 512		# number of grid points in the spanwise dir
 nz		= 64		# number of grid points in the wall-normal dir
 
 ########################################################################################################################
@@ -117,5 +117,5 @@ ts_tstart	= 9001		# t start of ts_output (ts_tstart-1 must be multiple of c_coun
 ########################################################################################################################
 # exec
 ########################################################################################################################
-job_np		= 1		# numer of processors (<= nz/2!, nz2=nz/nprocs+2)
+job_np		= 8		# numer of processors (<= nz/2!, nz2=nz/nprocs+2)
 job_time	= 01:00:00	# duration of job
