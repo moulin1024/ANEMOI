@@ -3,7 +3,7 @@
     ! use filter
     use cufft_m
     use cudafor
-    use nvtx
+    ! use nvtx
     use cpu_timer
     use dimen
     use precision
