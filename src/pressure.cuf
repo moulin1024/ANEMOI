@@ -8,8 +8,8 @@ module pressure
     parameter(ni=(nx/2+1)/npsx, nj=ny/npsy)
     parameter(lsize=(nx/2+1)*nj*nzb)
     contains
-    
-    subroutine pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan)
+
+    subroutine pressure_poisson(p,rhs_p,dpdx,dpdy,rank,nall,t,plan)
     
         !---------------------------------------------------------------------------
         ! declaration
@@ -18,7 +18,7 @@ module pressure
         use cufft_m
         implicit none
     
-        integer,intent(in) :: t,me,nall
+        integer,intent(in) :: t,rank,nall
         real(fp),dimension(nx,ny,nz2),intent(in),device:: rhs_p
         real(fp),dimension(nx,ny,nz2),intent(inout),device:: p,dpdx,dpdy
         real(fp),dimension(nx,ny,nz2),device:: p_test
@@ -38,10 +38,8 @@ module pressure
     
         tBlock_3d = dim3(32,1,1)
         grid_3d = dim3(int((nx/2+1)/32)+1,ny,nzb) ! Notice the difference between nzb and nz2
-    
         
         save h_x,h_2,h_3,dpdx_hat,dpdy_hat
-    
     
         !---------------------------------------------------------------------------
         ! main code
@@ -60,49 +58,39 @@ module pressure
         ! compute forward fft interior
         call cufftExec(plan(1),rhs_p(:,:,2:nzb+1),h_x)
     
-        ! if (nzb + 2 == nz2 ) then
-        !     !---------------------------------------------------------------------------
-        !     ! solve tri-diag matrix directly, if there is only 1 GPU
-        !     call solve_tridiag<<<grid, tBlock>>>(h_x,me)
-        ! else 
         !---------------------------------------------------------------------------
         ! redistribute the  mpi
-        ! Notice: In a single processor (GPU) it is simply doing h_x = h_3
-            call slab_transpose_z2y<<<grid1, tBlock1>>>(h_x,h_3)
-            if (fp==singlePrecision) then 
-                call mpi_ialltoall(h_3(1,1,1),lsize,mpi_complex, &
-                h_2(1,1,1),lsize,mpi_complex,nall,REQUEST,ierr)
-            else
-                call mpi_ialltoall(h_3(1,1,1),lsize,mpi_double_complex, &
-                h_2(1,1,1),lsize,mpi_double_complex,nall,REQUEST,ierr)
-            end if
-
-            call mpi_wait(REQUEST,STATUS2, IERR)
+        ! Notice: In a single processor (GPU) it is simply doing h_x = h_2
+        call slab_transpose_z2y<<<grid1, tBlock1>>>(h_x,h_3)
+        
+        if (fp==singlePrecision) then 
+            call mpi_alltoall(h_3(1,1,1),lsize,mpi_complex, &
+                              h_2(1,1,1),lsize,mpi_complex,nall,ierr)
+        else
+            call mpi_alltoall(h_3(1,1,1),lsize,mpi_double_complex, &
+                              h_2(1,1,1),lsize,mpi_double_complex,nall,ierr)
+        end if
     
         !---------------------------------------------------------------------------
-        ! solve tri-diag matrix
-            call solve_tridiag<<<grid1, tBlock1>>>(h_2,me)
-    
+        ! solve tri-diag matrix using Thomas's algorithm
+        call solve_tridiag<<<grid1, tBlock1>>>(h_2,rank)
     
         !-------------------------------------------------------------------------
         ! redistribute mpi
-        ! Notice: In a single processor (GPU) it is simply doing h_3 = h_x
-        ! h_3 = h_x
-            if (fp==singlePrecision) then 
-                call mpi_ialltoall(h_2(1,1,1),lsize,mpi_complex, &
-                    h_3(1,1,1),lsize,mpi_complex,nall,REQUEST,ierr)
-            else 
-                call mpi_ialltoall(h_2(1,1,1),lsize,mpi_double_complex, &
-                    h_3(1,1,1),lsize,mpi_double_complex,nall,REQUEST,ierr)
-            end if
+        ! Notice: In a single processor (GPU) it is simply doing h_2 = h_x
+        if (fp==singlePrecision) then 
+            call mpi_alltoall(h_2(1,1,1),lsize,mpi_complex, &
+                              h_3(1,1,1),lsize,mpi_complex,nall,ierr)
+        else 
+            call mpi_alltoall(h_2(1,1,1),lsize,mpi_double_complex, &
+                              h_3(1,1,1),lsize,mpi_double_complex,nall,ierr)
+        end if
 
-            call mpi_wait(REQUEST,STATUS2, IERR)
-            call slab_transpose_y2z<<<grid1, tBlock1>>>(h_3,h_x)
+        call slab_transpose_y2z<<<grid1, tBlock1>>>(h_3,h_x)
     
         ! end if
         !-------------------------------------------------------------------------
         ! compute p_hat (i.e h_z), dpdx_hat, dpdy_hat
-        ! x
         call press_grad<<<grid_3d, tBlock_3d>>>(h_x,dpdx_hat,dpdy_hat)
         call cufftExec(plan(2),dpdx_hat,dpdx(:,:,2:nzb+1))
         call cufftExec(plan(2),dpdy_hat,dpdy(:,:,2:nzb+1))

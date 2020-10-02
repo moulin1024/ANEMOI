@@ -84,15 +84,9 @@ program main
     tBlock_2d = dim3(16,16,1)
     real(fp), device :: d_avg1,d_avg2
     real(fp) :: d_avg_debug
-    integer :: device_id
 
     integer :: localRank
     character(len=10) :: rankStr
-
-    ! MPI_Comm loc_comm
-    ! MPI_COMM_SPLIT_TYPE(COMM, SPLIT_TYPE, KEY, INFO, NEWCOMM, IERROR)
-
-    ! MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rank, MPI_INFO_NULL, &loc_comm)
 
     !===========================================================================
     ! init
@@ -103,7 +97,7 @@ program main
     !---------------------------------------------------------------------------
     ! init mpi
     !---------------------------------------------------------------------------
-    me = 0
+    rank = 0
     nall = 0
 
     call GET_ENVIRONMENT_VARIABLE ('OMPI_COMM_WORLD_LOCAL_RANK',rankStr)
@@ -111,11 +105,11 @@ program main
     istat = cudaSetDevice (localRank)
 
     call mpi_init( ierr )
-    call mpi_comm_rank( mpi_comm_world, me, ierr )
+    call mpi_comm_rank( mpi_comm_world, rank, ierr )
     call mpi_comm_size( mpi_comm_world, job_np, ierr )
     nall=mpi_comm_world
 
-    if(me == 0) t01=mpi_wtime()
+    if(rank== 0) t01=mpi_wtime()
 
     if (job_np /= nprocs) then
         print *, 'error: job_np /= nprocs'
@@ -126,7 +120,7 @@ program main
     ! print start (important for debug)
     !---------------------------------------------------------------------------
 
-    call print_start(me)
+    call print_start(rank)
 
     allocate(u(nx,ny,nz2),&
              v(nx,ny,nz2),&
@@ -152,27 +146,27 @@ program main
     ! load variables
     !---------------------------------------------------------------------------
 
-    call load_variable(u_host,'input/u.bin',me,nall)
-    call load_variable(v_host,'input/v.bin',me,nall)
-    call load_variable(w_host,'input/w.bin',me,nall)
+    call load_variable(u_host,'input/u.bin',rank,nall)
+    call load_variable(v_host,'input/v.bin',rank,nall)
+    call load_variable(w_host,'input/w.bin',rank,nall)
 
     ! bc bot
-    if (me==0) then
+    if (rank==0) then
         w_host(:,:,2)=0._fp
     end if
 
     ! bc top (part1)
-    if (me==nprocs-1) then
+    if (rank==nprocs-1) then
         w_host(:,:,nzb+1)=0._fp
     end if
 
     ! TODO: DO THIS ON GPU
-    call update_uv_cpu(u_host,me,nall)
-    call update_uv_cpu(v_host,me,nall)
-    call update_w_cpu (w_host,me,nall)
+    call update_uv_cpu(u_host,rank,nall)
+    call update_uv_cpu(v_host,rank,nall)
+    call update_w_cpu (w_host,rank,nall)
 
     ! bc top (part2)
-    if (me==nprocs-1) then
+    if (rank==nprocs-1) then
         u_host(:,:,nzb+1)=u_host(:,:,nzb)
         v_host(:,:,nzb+1)=v_host(:,:,nzb)
     endif
@@ -183,14 +177,14 @@ program main
     w  = w_host
 
     if (resub_flag > 0 .or. sim_flag > 1) then
-        call load_variable(rhsx_host,'input/rhsx.bin',me,nall)
-        call load_variable(rhsy_host,'input/rhsy.bin',me,nall)
-        call load_variable(rhsz_host,'input/rhsz.bin',me,nall)
+        call load_variable(rhsx_host,'input/rhsx.bin',rank,nall)
+        call load_variable(rhsy_host,'input/rhsy.bin',rank,nall)
+        call load_variable(rhsz_host,'input/rhsz.bin',rank,nall)
         
-        call load_variable(lm_old_host,'input/lm_old.bin',me,nall)
-        call load_variable(mm_old_host,'input/mm_old.bin',me,nall)
-        call load_variable(qn_old_host,'input/qn_old.bin',me,nall)
-        call load_variable(nn_old_host,'input/nn_old.bin',me,nall)
+        call load_variable(lm_old_host,'input/lm_old.bin',rank,nall)
+        call load_variable(mm_old_host,'input/mm_old.bin',rank,nall)
+        call load_variable(qn_old_host,'input/qn_old.bin',rank,nall)
+        call load_variable(nn_old_host,'input/nn_old.bin',rank,nall)
 
         ! Copy to device
         rhsx  = rhsx_host
@@ -226,7 +220,7 @@ program main
     !---------------------------------------------------------------------------
     !---------------------------------------------------------------------------
     ! init log
-    if(log_flag > 0) call open_log(me)
+    if(log_flag > 0) call open_log(rank)
 
     ! !---------------------------------------------------------------------------'
     ! ! init ta outputs
@@ -247,19 +241,19 @@ program main
     ! init ts outputs
     if (ts_flag > 0) then
         if (ts_flag == 1) then
-            call open_ts1(me)
-            ! call open_ts2(me)
+            call open_ts1(rank)
+            ! call open_ts2(rank)
         end if
     end if
 
     !---------------------------------------------------------------------------
     ! init inflow
     if (sim_flag > 1) then
-        call open_inflow_m(me)
+        call open_inflow_m(rank)
     end if
     !---------------------------------------------------------------------------
     ! init turb
-    if(turb_flag > 0) call open_turb(me)
+    if(turb_flag > 0) call open_turb(rank)
 
     !---------------------------------------------------------------------------
     ! init fft 
@@ -278,7 +272,7 @@ program main
     !---------------------------------------------------------------------------
     ! copy cpu data to gpu memory
 
-    device_id = me
+
 #ifdef USE_NVTX    
     call nvtxEndRange
 #endif
@@ -311,21 +305,21 @@ program main
 #endif
         call ddxy_filter(u,dudx,dudy,plan_batch)
 
-        call update_uv_async(u,request,me,nall)
-        call update_uv_async(dudx,request,me,nall)
-        call update_uv_async(dudy,request,me,nall)
+        call update_uv_async(u,request,rank,nall)
+        call update_uv_async(dudx,request,rank,nall)
+        call update_uv_async(dudy,request,rank,nall)
 
         call ddxy_filter(v,dvdx,dvdy,plan_batch)
 
-        call update_uv_async(v,request,me,nall)
-        call update_uv_async(dvdx,request,me,nall)
-        call update_uv_async(dvdy,request,me,nall)
+        call update_uv_async(v,request,rank,nall)
+        call update_uv_async(dvdx,request,rank,nall)
+        call update_uv_async(dvdy,request,rank,nall)
 
         call ddxy_filter(w,dwdx,dwdy,plan_batch)
 
-        call update_w_async(w,request,me,nall)
-        call update_w_async(dwdx,request,me,nall)
-        call update_w_async(dwdy,request,me,nall)
+        call update_w_async(w,request,rank,nall)
+        call update_w_async(dwdx,request,rank,nall)
+        call update_w_async(dwdy,request,rank,nall)
 
         if (mod(t,c_count*10)==0) then
             u_host = u 
@@ -336,19 +330,19 @@ program main
             fz_host = fz
 
             ustar_host = ustar 
-            call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
-            if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
+            call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,rank,nall)
+            if(log_flag > 0) call write_log(log_ustar,log_umax,rank)               
             if (log_umax>100) exit
 
             if (ts_flag > 0 .and. t >= ts_tstart) then 
                 print *,'Write instant field:'
-                call write_ts1(u_host,v_host,w_host,me)
+                call write_ts1(u_host,v_host,w_host,rank)
             end if
         end if
 
         !-----------------------------------------------------------------------
         ! bc top uv
-        if (me==nprocs-1) then
+        if (rank==nprocs-1) then
             !$cuf kernel do(2) <<<(nx/16,ny/16),(16,16)>>>
             do j=1,ny
                 do i=1,nx
@@ -362,13 +356,13 @@ program main
         ! -----------------------------------------------------------------------
         ! spatial deriv
         call ddz<<<grid, tBlock>>>(dudz,u,0)    ! cell centre
-        call update_w_async(dudz,request,me,nall)
+        call update_w_async(dudz,request,rank,nall)
 
         call ddz<<<grid, tBlock>>>(dvdz,v,0)    ! cell centre
-        call update_w_async(dvdz,request,me,nall)
+        call update_w_async(dvdz,request,rank,nall)
         
         call ddz<<<grid, tBlock>>>(dwdz,w,1)    ! staggered
-        call update_uv_async(dwdz,request,me,nall)
+        call update_uv_async(dwdz,request,rank,nall)
         
 #ifdef USE_NVTX
         call nvtxEndRange
@@ -382,7 +376,7 @@ program main
 
         call mpi_wait(REQUEST,STATUS2,IERR)
         
-        if (me==0) then
+        if (rank==0) then
             call wall_stress(txz,tyz,dudz,dvdz,ustar,m,u,v,zo,t,plan_2d)
         end if
 
@@ -413,15 +407,15 @@ program main
                                 dvdx,dvdy,dvdz,&
                                 dwdx,dwdy,dwdz, &
                                 LM_old,MM_old,QN_old,NN_old,cs2,plan_batch,&
-                                t,me,nall)
+                                t,rank,nall)
 
-            call update_w(txz,me,nall)
-            call update_w(tyz,me,nall)
-            call update_uv(tzz,me,nall)
+            call update_w(txz,rank,nall)
+            call update_w(tyz,rank,nall)
+            call update_uv(tzz,rank,nall)
         end if
         !-----------------------------------------------------------------------
         ! top bc
-         if (me==nprocs-1) then
+         if (rank==nprocs-1) then
             !$cuf kernel do <<<*,*>>>
              do j=1,ny
                do i=1,nx
@@ -458,7 +452,7 @@ program main
         if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx)
         
         ! if (turb_flag == 1) then
-        !     if (device_id == 0) then
+        !     if (rank == 0) then
         !         call turbine_force(fx,fy,fz,u,v,w,alpha_cl_cd,t)
         !         ! applying forcing to the rhs
         !         call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
@@ -479,7 +473,7 @@ program main
             call timestepping<<<grid,tBlock>>>(w,rhsz,rhsz_f,0)
         end if
         ! bc bot w
-        if (me==0) then
+        if (rank==0) then
          !$cuf kernel do <<<*,*>>>
             do j=1,ny
                 do i=1,nx
@@ -488,7 +482,7 @@ program main
             end do
         end if
         ! bc top w
-        if (me==nprocs-1) then
+        if (rank==nprocs-1) then
          !$cuf kernel do <<<*,*>>>
             do j=1,ny
                 do i=1,nx
@@ -497,7 +491,7 @@ program main
             end do
         end if
 
-        call update_w(w,me,nall)
+        call update_w(w,rank,nall)
  #ifdef USE_NVTX
         call nvtxEndRange
         call nvtxStartRange("pressure correction",5)
@@ -513,12 +507,12 @@ program main
         call div_p<<<grid, tBlock>>>(rhs_p,dudx,dvdy,dwdz)
         !-----------------------------------------------------------------------
         ! get pressure grandients (and press)
-        call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan_batch)
-        call update_uv(p,me,nall)
+        call pressure_poisson(p,rhs_p,dpdx,dpdy,rank,nall,t,plan_batch)
+        call update_uv(p,rank,nall)
         call ddz<<<grid, tBlock>>>(dpdz,p,0)
         
         ! bc bot dpdz
-        if (me==0) then
+        if (rank==0) then
         !$cuf kernel do <<<*,*>>>
             do j=1,ny
                 do i=1,nx
@@ -528,7 +522,7 @@ program main
         end if
 
         ! bc top dpdz
-        if (me==nprocs-1) then
+        if (rank==nprocs-1) then
         !$cuf kernel do <<<*,*>>>
             do j=1,ny
                 do i=1,nx
@@ -559,13 +553,13 @@ program main
         !     fz_host = fz
 
         !     ustar_host = ustar 
-        !     call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
-        !     if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
+        !     call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,rank,nall)
+        !     if(log_flag > 0) call write_log(log_ustar,log_umax,rank)               
         !     if (log_umax>100) exit
 
         !     if (ts_flag > 0 .and. t >= ts_tstart) then 
         !         print *,'Write instant field:'
-        !         call write_ts1(u_host,v_host,w_host,me)
+        !         call write_ts1(u_host,v_host,w_host,rank)
         !     end if
         ! end if
 
@@ -584,7 +578,7 @@ program main
         !     call read_inflow(u,v,w,t)
         ! end if
         ! if (sim_flag > 2 .and. mod(t,2)== 0) then
-        !    call read_inflow_m(u,v,w,me)
+        !    call read_inflow_m(u,v,w,rank)
         ! end if
 
         ! !-----------------------------------------------------------------------
@@ -597,7 +591,7 @@ program main
         !                                             ta_u,ta_v,ta_w,&
         !                                             ta_u2,ta_v2,ta_w2 )
         !     ! elseif (ta_flag == 2) then
-        ! !         call compute_ta2(u,v,w,txz,dudz,ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz,me)
+        ! !         call compute_ta2(u,v,w,txz,dudz,ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz,rank)
         !     end if
 
         ! end if
@@ -616,11 +610,11 @@ program main
         !         ta_w2_host = ta_w2 
                 
         !         call write_ta1(ta_u_host,ta_v_host,ta_w_host,&
-        !                        ta_u2_host,ta_v2_host,ta_w2_host,me)
+        !                        ta_u2_host,ta_v2_host,ta_w2_host,rank)
         !         call initialize_ta1(ta_u,ta_v,ta_w,&
         !                             ta_u2,ta_v2,ta_w2 )
         ! !     elseif (ta_flag == 2) then
-        ! !         call write_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz,me)
+        ! !         call write_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz,rank)
         ! !         call initialize_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz)
         !     end if
 
@@ -633,7 +627,7 @@ program main
         ! !-----------------------------------------------------------------------
         ! ! turb outputs
 
-        ! ! if (t >= ta_tstart .and. turb_flag > 0 .and. me == 0) then
+        ! ! if (t >= ta_tstart .and. turb_flag > 0 .and. rank == 0) then
 
         ! !     ta_thrust = ta_thrust + thrust
         ! !     ta_power = ta_power + power
@@ -655,20 +649,20 @@ program main
     call nvtxEndRange
 #endif
  ! ===============================================================================
- ! end time loop
+ ! end tirank loop
  !===============================================================================
 
     !---------------------------------------------------------------------------
     ! close log
     !---------------------------------------------------------------------------
-    if(log_flag > 0) call close_log(me)
+    if(log_flag > 0) call close_log(rank)
 
     ! !---------------------------------------------------------------------------
     ! ! close inflow
     ! !---------------------------------------------------------------------------
 
     if (sim_flag > 1) then
-       call close_inflow_m(me)
+       call close_inflow_m(rank)
     end if
 
     ! !---------------------------------------------------------------------------
@@ -677,11 +671,11 @@ program main
 
     ! if (ta_flag > 0) then
     !    if (ta_flag==1) then
-    !        call close_ta1(me)
-    !        call recompose_ta1(me)
+    !        call close_ta1(rank)
+    !        call recompose_ta1(rank)
     ! !    elseif (ta_flag == 2) then
-    ! !        call close_ta2(me)
-    ! !        call recompose_ta2(me)
+    ! !        call close_ta2(rank)
+    ! !        call recompose_ta2(rank)
     !    end if
     ! end if
 
@@ -691,16 +685,16 @@ program main
 
     if (ts_flag > 0) then
        if (ts_flag==1) then
-           call close_ts1(me)
-        !    call close_ts2(me)
-           call recompose_ts1(me)
+           call close_ts1(rank)
+        !    call close_ts2(rank)
+           call recompose_ts1(rank)
        end if
     end if
 
     !---------------------------------------------------------------------------
     ! close turb
     !---------------------------------------------------------------------------
-    ! if(turb_flag > 0) call close_turb(me)
+    ! if(turb_flag > 0) call close_turb(rank)
 
     !---------------------------------------------------------------------------
     ! save variables
@@ -716,22 +710,22 @@ program main
     rhsy_host = rhsy
     rhsz_host = rhsz
 
-    call save_variable(u_host,'input/u.bin',me,nall)
-    call save_variable(v_host,'input/v.bin',me,nall)
-    call save_variable(w_host,'input/w.bin',me,nall)
-    call save_variable(lm_old_host,'input/lm_old.bin',me,nall)
-    call save_variable(mm_old_host,'input/mm_old.bin',me,nall)
-    call save_variable(qn_old_host,'input/qn_old.bin',me,nall)
-    call save_variable(nn_old_host,'input/nn_old.bin',me,nall)
-    call save_variable(rhsx_host,'input/rhsx.bin',me,nall)
-    call save_variable(rhsy_host,'input/rhsy.bin',me,nall)
-    call save_variable(rhsz_host,'input/rhsz.bin',me,nall)
+    call save_variable(u_host,'input/u.bin',rank,nall)
+    call save_variable(v_host,'input/v.bin',rank,nall)
+    call save_variable(w_host,'input/w.bin',rank,nall)
+    call save_variable(lm_old_host,'input/lm_old.bin',rank,nall)
+    call save_variable(mm_old_host,'input/mm_old.bin',rank,nall)
+    call save_variable(qn_old_host,'input/qn_old.bin',rank,nall)
+    call save_variable(nn_old_host,'input/nn_old.bin',rank,nall)
+    call save_variable(rhsx_host,'input/rhsx.bin',rank,nall)
+    call save_variable(rhsy_host,'input/rhsy.bin',rank,nall)
+    call save_variable(rhsz_host,'input/rhsz.bin',rank,nall)
 
     ! !---------------------------------------------------------------------------
     ! ! save warmup data for precursor and main
     ! !---------------------------------------------------------------------------
 
-    if (me == 0 .and. sim_flag < 2) then
+    if (rank== 0 .and. sim_flag < 2) then
        if (resub_flag == 0 ) call system('mkdir ../init_data')
        call system('cp input/* ../init_data')
     end if
@@ -740,7 +734,7 @@ program main
     ! ! print end
     ! !---------------------------------------------------------------------------
 
-    call print_end(t01,me)
+    call print_end(t01,rank)
 
     ! !---------------------------------------------------------------------------
     ! ! mpi finalize
