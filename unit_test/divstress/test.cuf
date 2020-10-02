@@ -1,0 +1,81 @@
+ program test_cufft
+    use, intrinsic :: iso_c_binding 
+    use cufft_m
+    use divergence
+    use cudafor
+    use precision
+    use mpi
+    use divergence_cpu
+    use dimen
+    implicit none
+
+    integer istat
+    ! REAL time_begin, time_end,time_gpu,time_cpu,max_error
+    real(fp),dimension(:,:,:),allocatable,device  :: txx,txy,txz,tyy,tyz,tzz,divtx,divty,divtz
+
+    real(fp),dimension(nx,ny,nz2) :: u_host1,dudx_host1,dudy_host1
+    real(fp),dimension(nx,ny,nz2) :: u_host2,dudx_host2,dudy_host2
+    real(fp),dimension(nx,ny,nz2)  :: txx_host1,txy_host1,txz_host1,&
+                                    tyy_host1,tyz_host1,tzz_host1,divtx_host1,divtz_host1 
+    real(fp),dimension(nx,ny,nz2)  :: txx_host2,txy_host2,txz_host2,&
+                                    tyy_host2,tyz_host2,tzz_host2,divtx_host2,divtz_host2 
+    integer t,i
+
+    type(c_ptr) plan_batch(2)
+    REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
+    REAL time_begin, time_end,time_gpu,time_cpu,max_error
+    type (cudaEvent) :: startEvent, stopEvent
+    real*4 :: time
+
+    integer :: localRank
+    character(len=10) :: rankStr
+    ! MPI initialization
+    call GET_ENVIRONMENT_VARIABLE ('OMPI_COMM_WORLD_LOCAL_RANK',rankStr)
+    read (rankStr,'(i10)') localRank
+    istat = cudaSetDevice (localRank)
+
+    call mpi_init( ierr )
+    call mpi_comm_rank( mpi_comm_world, me, ierr )
+    call mpi_comm_size( mpi_comm_world, job_np, ierr )
+    nall=mpi_comm_world
+
+    print *,me,localRank
+
+
+    call random_number(txx_host2)
+    call random_number(txy_host2)
+    call random_number(txz_host2)
+    call random_number(tyz_host2)
+    call random_number(tzz_host2)
+
+    allocate(txx(nx,ny,nz2),txy(nx,ny,nz2),&
+    txz(nx,ny,nz2),&       ! Stress term
+    tyy(nx,ny,nz2),tyz(nx,ny,nz2),tzz(nx,ny,nz2),&       
+    divtx(nx,ny,nz2),divty(nx,ny,nz2),divtz(nx,ny,nz2))
+
+    txx = txx_host2
+    txy = txy_host2
+    txz = txz_host2
+    tyz = tyz_host2
+    tzz = tzz_host2    
+    call get_batchfft_plan(plan_batch,1)
+
+    call divstress(divtx,txx,txy,txz,1,plan_batch)    ! w node
+    call divstress(divtz,txz,tyz,tzz,0,plan_batch)    ! uv node
+
+    divtx_host1 = divtx
+    divtz_host1 = divtz
+
+    call ddx_cpu(dudx_host2,u_host2,0)
+    call ddy_cpu(dudy_host2,u_host2,0)
+    call divstress_uv_cpu(divtx_host2,txx_host2,txy_host2,txz_host2)
+    call divstress_w_cpu (divtz_host2,txz_host2,tyz_host2,tzz_host2)
+
+
+    print *,maxval(abs(divtx_host2-divtx_host1))
+    print *,maxval(abs(divtz_host2-divtz_host1))
+
+    call MPI_finalize(ierr)
+
+end program test_cufft
+
