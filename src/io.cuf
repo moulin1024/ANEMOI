@@ -562,7 +562,7 @@ subroutine write_ta1(ta_u_host,ta_v_host,ta_w_host,&
                                                         ta_u2_host,ta_v2_host,ta_w2_host
     real(fp) :: ta_fr != real(c_count)/ real(p_count)
 
-    ! if (me <= ta_kend/nzb -1 ) then
+    if (me <= ta_kend/nzb -1 ) then
         ta_fr = dble(c_count)/dble(p_count)
 
         write (11000+me) ta_fr*ta_u_host
@@ -571,7 +571,7 @@ subroutine write_ta1(ta_u_host,ta_v_host,ta_w_host,&
         write (14000+me) ta_fr*ta_u2_host
         write (15000+me) ta_fr*ta_v2_host
         write (16000+me) ta_fr*ta_w2_host
-    ! end if
+    end if
 
 end subroutine write_ta1
 
@@ -602,28 +602,13 @@ subroutine write_ts1(u,v,w,me)
     integer me,nall
     real(fp), dimension(nx,ny,nz2), intent(in) :: u,v,w
 
-    ! if (me <= ts_kend/nzb -1 ) then
+    if (me <= ts_kend/nzb -1 ) then
         write (51000+me) u(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
         write (52000+me) v(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
         write (53000+me) w(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
-    ! end if
-
-end subroutine write_ts1
-
-subroutine write_ts2(Fx,Fy,Fz,me)
-
-    implicit none
-    integer me,nall
-    real(fp), dimension(nx,ny,nz2), intent(in) :: Fx,Fy,Fz
-
-    if (me <= ts_kend/nzb -1 ) then
-        write (54000+me) Fx(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
-        write (55000+me) Fy(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
-        write (56000+me) Fz(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
     end if
 
-end subroutine write_ts2
-
+end subroutine write_ts1
 
 subroutine write_log(log_ustar,log_umax,me)
 
@@ -851,7 +836,7 @@ subroutine recompose_ts(fname, me)
     ! main code
 
     if (me == 0) then
-
+        
         allocate(q(ts_nx,ts_ny,ts_kend,ts_ns))
         ! loop over processor files
         do p = 0,(ts_kend/nzb -1)
@@ -900,19 +885,19 @@ end subroutine open_inflow_m
 ! write prec
 !-------------------------------------------------------------------------------
 
-subroutine write_inflow(u,v,w,t)
+subroutine write_inflow(u,v,w,t,me)
     implicit none
     integer me,nall
     real(fp),dimension(nx,ny,nz2),intent(in),device :: u,v,w
     real(fp),dimension(:,:,:,:),allocatable,device :: u_batch,v_batch,w_batch
-    real(fp),dimension(:,:,:,:),allocatable,pinned :: u_in,v_in,w_in
+    real(fp),dimension(:,:,:,:),allocatable,pinned :: u_out,v_out,w_out
     integer :: i,j,k,i_batch,t
-    save  u_in,v_in,w_in,u_batch,v_batch,w_batch
+    save  u_out,v_out,w_out,u_batch,v_batch,w_batch
 
     if (t == 1) then
-        allocate(u_in(inflow_nx,ny,nzb,block_size))
-        allocate(v_in(inflow_nx,ny,nzb,block_size))
-        allocate(w_in(inflow_nx,ny,nzb,block_size))
+        allocate(u_out(inflow_nx,ny,nzb,batch_size))
+        allocate(v_out(inflow_nx,ny,nzb,batch_size))
+        allocate(w_out(inflow_nx,ny,nzb,batch_size))
 
         allocate(u_batch(inflow_nx,ny,nzb,batch_size)) 
         allocate(v_batch(inflow_nx,ny,nzb,batch_size)) 
@@ -920,8 +905,8 @@ subroutine write_inflow(u,v,w,t)
     end if
 
     ! On gpu, copy inflow data to a data batch for every sampling steps
-    if (mod(t-1,cs_count)==0) then
-        i_batch = mod((t-1)/cs_count,batch_size) + 1
+    if (mod(t-1,inflow_count)==0) then
+        i_batch = mod((t-1)/inflow_count,batch_size) + 1
         u_batch(:,:,:,i_batch) = u(inflow_istart:inflow_iend,:,2:nzb+1)
         v_batch(:,:,:,i_batch) = v(inflow_istart:inflow_iend,:,2:nzb+1)
         w_batch(:,:,:,i_batch) = w(inflow_istart:inflow_iend,:,2:nzb+1)
@@ -929,19 +914,20 @@ subroutine write_inflow(u,v,w,t)
 
     ! On copy, transfer the inflow data to memeory for every c_count steps
     if (mod(t-1,c_count) == c_count - 1) then
-        u_in(:,:,:,((t-1)/cs_count-batch_size+2):((t-1)/cs_count+1))=u_batch
-        v_in(:,:,:,((t-1)/cs_count-batch_size+2):((t-1)/cs_count+1))=v_batch
-        w_in(:,:,:,((t-1)/cs_count-batch_size+2):((t-1)/cs_count+1))=w_batch
+        u_out = u_batch
+        v_out = v_batch
+        w_out = w_batch
+
+        write(91000+me) u_out
+        write(92000+me) v_out
+        write(93000+me) w_out
     end if
 
     ! If needed, add one more layer of writting
     ! But right now we just write it once at the end
-    if (t == nsteps) then
-        me = 0
-        write(91000+me) u_in
-        write(92000+me) v_in
-        write(93000+me) w_in
-    end if
+    ! if (mod(t-1,p_count)== p_count - 1) then
+
+    ! end if
 
 end subroutine write_inflow
 
@@ -979,7 +965,7 @@ attributes(global) subroutine force_inflow(u,v,w,prec_u,prec_v,prec_w)
 
 end subroutine force_inflow
 
-subroutine read_inflow(u,v,w,t)
+subroutine read_inflow(u,v,w,t,me)
     use cudafor
     implicit none
     integer me,nall
@@ -995,9 +981,9 @@ subroutine read_inflow(u,v,w,t)
     save u_in,v_in,w_in,u_batch,v_batch,w_batch,prec_u,prec_v,prec_w
 
     if (t == 1) then
-        allocate(u_in(inflow_nx,ny,nzb,block_size))
-        allocate(v_in(inflow_nx,ny,nzb,block_size))
-        allocate(w_in(inflow_nx,ny,nzb,block_size))
+        allocate(u_in(inflow_nx,ny,nzb,batch_size))
+        allocate(v_in(inflow_nx,ny,nzb,batch_size))
+        allocate(w_in(inflow_nx,ny,nzb,batch_size))
 
         allocate(u_batch(inflow_nx,ny,nzb,batch_size)) 
         allocate(v_batch(inflow_nx,ny,nzb,batch_size)) 
@@ -1007,23 +993,23 @@ subroutine read_inflow(u,v,w,t)
         allocate(prec_v(inflow_nx,ny,nzb))
         allocate(prec_w(inflow_nx,ny,nzb))
 
-        me = 0
-        read(91000+me) u_in
-        read(92000+me) v_in
-        read(93000+me) w_in
     end if
 
 
     if (mod(t-1,c_count) == 0) then
-        u_batch = u_in(:,:,:,((t-1)/cs_count+1):((t-1)/cs_count+batch_size))
-        v_batch = v_in(:,:,:,((t-1)/cs_count+1):((t-1)/cs_count+batch_size))
-        w_batch = w_in(:,:,:,((t-1)/cs_count+1):((t-1)/cs_count+batch_size))
+        read(91000+me) u_in
+        read(92000+me) v_in
+        read(93000+me) w_in
+
+        u_batch = u_in
+        v_batch = v_in
+        w_batch = w_in
     end if
 
-    if (mod(t-1,cs_count*3)==0) then
-        i_batch = mod((t-1)/(cs_count*3),batch_size) + 1
-        ! Cycling inflow section
-        cyc_pt = mod((t-1)/(cs_count*3),ny)+1
+    if (mod(t-1,inflow_count)==0) then
+        i_batch = mod((t-1)/(inflow_count),batch_size) + 1
+        ! Cycling inflow section: 10 times per p_count
+        cyc_pt = mod((t-1)/(inflow_count*5),ny)+1
         ! cyc_pt = ny
         prec_u(:,1:cyc_pt,:)    = u_batch(:,(ny-cyc_pt+1):ny,:,i_batch)
         prec_v(:,1:cyc_pt,:)    = v_batch(:,(ny-cyc_pt+1):ny,:,i_batch)
@@ -1034,9 +1020,6 @@ subroutine read_inflow(u,v,w,t)
             prec_w(:,cyc_pt+1:ny,:) = w_batch(:,1:(ny-cyc_pt),:,i_batch)
         end if
 
-        ! prec_u = u_batch(:,:,:,i_batch)
-        ! prec_v = v_batch(:,:,:,i_batch)
-        ! prec_w = w_batch(:,:,:,i_batch)
         call force_inflow<<<tblock,grid>>>(u,v,w,prec_u,prec_v,prec_w)
     end if
 

@@ -327,7 +327,7 @@ program main
         call update_w_async(dwdx,request,me,nall)
         call update_w_async(dwdy,request,me,nall)
 
-        if (mod(t,c_count*10)==0) then
+        if (mod(t-1,c_count)==0) then
             u_host = u 
             v_host = v 
             w_host = w 
@@ -457,15 +457,17 @@ program main
         ! applying pressure gradient (not needed fror)
         if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx)
         
-        ! if (turb_flag == 1) then
-        !     if (device_id == 0) then
-        !         call turbine_force(fx,fy,fz,u,v,w,alpha_cl_cd,t)
-        !         ! applying forcing to the rhs
-        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
-        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
-        !         call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
-        !     end if
-        ! end if
+        if (turb_flag == 1) then
+            if (device_id == 0 ) then
+                if (mod(t-1,turb_count)==0) then
+                    call turbine_force(fx,fy,fz,u,v,w,alpha_cl_cd,t)
+                    ! applying forcing to the rhs
+                    call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
+                    call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
+                    call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
+                end if
+            end if
+        end if
         !-----------------------------------------------------------------------
         ! Time stepping
         !-----------------------------------------------------------------------        
@@ -549,43 +551,18 @@ program main
         ! io
         !-----------------------------------------------------------------------
         !-----------------------------------------------------------------------
-        ! print log
-        ! if (mod(t,c_count*10)==0) then
-        !     u_host = u 
-        !     v_host = v 
-        !     w_host = w 
-        !     fx_host = fx
-        !     fy_host = fy
-        !     fz_host = fz
+        ! write inflow
 
-        !     ustar_host = ustar 
-        !     call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
-        !     if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
-        !     if (log_umax>100) exit
+        if (sim_flag == 2) then
+            call write_inflow(u,v,w,t,me)
+        end if
 
-        !     if (ts_flag > 0 .and. t >= ts_tstart) then 
-        !         print *,'Write instant field:'
-        !         call write_ts1(u_host,v_host,w_host,me)
-        !     end if
-        ! end if
+        !-----------------------------------------------------------------------
+        ! read (and force) inflow
 
-
-        ! !-----------------------------------------------------------------------
-        ! ! write inflow
-
-        ! if (sim_flag == 2) then
-        !     call write_inflow(u,v,w,t)
-        ! end if
-
-        ! ! !-----------------------------------------------------------------------
-        ! ! ! read (and force) inflow
-
-        ! if (sim_flag == 3) then
-        !     call read_inflow(u,v,w,t)
-        ! end if
-        ! if (sim_flag > 2 .and. mod(t,2)== 0) then
-        !    call read_inflow_m(u,v,w,me)
-        ! end if
+        if (sim_flag == 3) then
+            call read_inflow(u,v,w,t,me)
+        end if
 
         ! !-----------------------------------------------------------------------
         ! ! compute time average outputs (just the sum at this stage)

@@ -54,6 +54,7 @@ module dimen
     integer :: idx1,idx3,idx2
     integer, parameter :: turb_flag = $turb_flag
     integer, parameter :: n_turb = $turb_nb
+    integer, parameter :: turb_count=$turb_count
 
     !-------------------------------------------------------------------------------
     ! spec
@@ -132,6 +133,7 @@ module dimen
     integer, parameter :: inflow_istart = $inflow_istart
     integer, parameter :: inflow_iend = $inflow_iend
     integer, parameter :: inflow_nx = $inflow_nx
+    integer, parameter :: inflow_count=$inflow_count
 
     !-------------------------------------------------------------------------------
     ! exec
@@ -157,9 +159,9 @@ module dimen
     integer, dimension(ny), parameter :: windy = [(1, idx2=0,fcy-1),(0, idx2=fcy,ny-fcy),(1,idx2=ny-fcy+1,ny-1)]
 
     ! Inflow
-    integer, parameter :: block_size = nsteps/cs_count
-    integer, parameter :: batch_size = c_count/cs_count 
+    integer, parameter :: block_size = nsteps/inflow_count
+    integer, parameter :: batch_size = c_count/inflow_count 
     integer, parameter :: inflow_size = inflow_nx*ny*nz2
-        
+
     
 end module dimen
