@@ -60,6 +60,60 @@ subroutine update(u,me,nall)
 
 end subroutine update
 
+subroutine update_cpu(u,me,nall)
+
+    implicit none
+    real(fp), dimension(nx,ny,nz2),intent(inout) :: u
+    integer,intent(in) :: me,nall
+
+    if(nprocs.gt.1)then
+
+        if (fp==singlePrecision) then 
+
+            if (me==0) then
+
+                call mpi_sendrecv(u(1,1,nzb+1),nx*ny, MPI_REAL,me+1,me+1,&
+                    u(1,1,nzb+2),nx*ny, MPI_REAL,me+1,me,nall,status2,ierr)
+
+            elseif (me<=nprocs-2) then
+
+                call mpi_sendrecv(u(1,1,2),nx*ny, MPI_REAL,me-1,me-1,&
+                    u(1,1,1),nx*ny, MPI_REAL,me-1,me,nall,status2,ierr)
+
+                call mpi_sendrecv(u(1,1,nzb+1),nx*ny, MPI_REAL,me+1,me+1,&
+                    u(1,1,nzb+2),nx*ny, MPI_REAL,me+1,me,nall,status2,ierr)
+
+            else
+
+                call mpi_sendrecv(u(1,1,2),nx*ny, MPI_REAL,me-1,me-1,&
+                    u(1,1,1),nx*ny, MPI_REAL,me-1,me,nall,status2,ierr)
+
+            endif
+        else
+            if (me==0) then
+
+                call mpi_sendrecv(u(1,1,nzb+1),nx*ny, MPI_DOUBLE_PRECISION,me+1,me+1,&
+                    u(1,1,nzb+2),nx*ny, MPI_DOUBLE_PRECISION,me+1,me,nall,status2,ierr)
+
+            elseif (me<=nprocs-2) then
+
+                call mpi_sendrecv(u(1,1,2),nx*ny, MPI_DOUBLE_PRECISION,me-1,me-1,&
+                    u(1,1,1),nx*ny, MPI_DOUBLE_PRECISION,me-1,me,nall,status2,ierr)
+
+                call mpi_sendrecv(u(1,1,nzb+1),nx*ny, MPI_DOUBLE_PRECISION,me+1,me+1,&
+                    u(1,1,nzb+2),nx*ny, MPI_DOUBLE_PRECISION,me+1,me,nall,status2,ierr)
+
+            else
+
+                call mpi_sendrecv(u(1,1,2),nx*ny, MPI_DOUBLE_PRECISION,me-1,me-1,&
+                    u(1,1,1),nx*ny, MPI_DOUBLE_PRECISION,me-1,me,nall,status2,ierr)
+
+            endif
+        end if
+    endif
+
+end subroutine update_cpu
+
 subroutine update_uv(u,me,nall)
 
     implicit none

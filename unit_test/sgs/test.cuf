@@ -1,0 +1,154 @@
+ program test_cufft
+    use, intrinsic :: iso_c_binding 
+    use cufft_m
+    use cudafor
+    use precision
+    use mpi
+    use sgs
+    use sgs_cpu_m
+    use filter_cpu_m
+    use dimen
+    implicit none
+
+    integer istat
+    ! REAL time_begin, time_end,time_gpu,time_cpu,max_error
+    real(fp), dimension(nx,ny,nz2) ::  txx_host,txy_host,txz_host,&
+                                        tyy_host,tyz_host,tzz_host,&
+                                        u_host,v_host,w_host,cs2_host,beta_host
+
+    real(fp), dimension(nx,ny,nz2) ::  txx_host1,txy_host1,txz_host1,&
+                                        tyy_host1,tyz_host1,tzz_host1,&
+                                        u_host1,v_host1,w_host1,cs2_host1,beta_host1
+
+    real(fp), dimension(nx,ny,nz2) :: dudx_host,dudy_host,dudz_host,&
+                                        dvdx_host,dvdy_host,dvdz_host,&
+                                        dwdx_host,dwdy_host,dwdz_host,&
+                                        lm_old_host,mm_old_host,qn_old_host,nn_old_host,u_hat,u_hatd,u_test
+
+    real(fp), dimension(:,:,:),device,allocatable :: txx,txy,txz,tyy,tyz,tzz,u,v,w
+    real(fp), dimension(:,:,:),device,allocatable :: dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz,&
+                                                        lm_old,mm_old,qn_old,nn_old,cs2
+
+    real(fp), dimension(nx,ny,nz2) :: debug
+    integer t,i
+    integer Nt
+
+    type(c_ptr) plan_batch(2)
+    REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
+    REAL time_begin, time_end,time_gpu,time_cpu,max_error
+    type (cudaEvent) :: startEvent, stopEvent
+    real*4 :: time
+
+    integer :: localRank
+    character(len=10) :: rankStr
+    ! MPI initialization
+    call GET_ENVIRONMENT_VARIABLE ('OMPI_COMM_WORLD_LOCAL_RANK',rankStr)
+    read (rankStr,'(i10)') localRank
+    istat = cudaSetDevice (localRank)
+
+    call mpi_init( ierr )
+    call mpi_comm_rank( mpi_comm_world, me, ierr )
+    call mpi_comm_size( mpi_comm_world, job_np, ierr )
+    nall=mpi_comm_world
+
+    print *,me,localRank
+
+    Print *, 'Check subroutine: sgs.cuf'
+    ! batch fft plan
+
+    call random_number(u_host)
+    call random_number(v_host)
+    call random_number(w_host)
+    call random_number(lm_old_host)
+    call random_number(mm_old_host)
+    call random_number(qn_old_host)
+    call random_number(nn_old_host)
+    call random_number(dudx_host)
+    call random_number(dvdx_host)
+    call random_number(dwdx_host)
+    call random_number(dudy_host)
+    call random_number(dvdy_host)
+    call random_number(dwdy_host)
+    call random_number(dudz_host)
+    call random_number(dvdz_host)
+    call random_number(dwdz_host)
+
+    dudx_host = 100*(dudx_host-0.5)
+    dvdx_host = 100*(dvdx_host-0.5)
+    dwdx_host = 100*(dwdx_host-0.5)
+    dudy_host = 100*(dudy_host-0.5)
+    dvdy_host = 100*(dvdy_host-0.5)
+    dwdy_host = 100*(dwdy_host-0.5)
+    dudz_host = 100*(dudz_host-0.5)
+    dvdz_host = 100*(dvdz_host-0.5)
+    dwdz_host = 100*(dwdz_host-0.5)
+
+    allocate(u(nx,ny,nz2),v(nx,ny,nz2),w(nx,ny,nz2),txx(nx,ny,nz2),&
+            txy(nx,ny,nz2),txz(nx,ny,nz2),tyy(nx,ny,nz2),tyz(nx,ny,nz2),tzz(nx,ny,nz2),&
+            dudx(nx,ny,nz2),dudy(nx,ny,nz2),dudz(nx,ny,nz2),dvdx(nx,ny,nz2),dvdy(nx,ny,nz2),dvdz(nx,ny,nz2),dwdx(nx,ny,nz2),dwdy(nx,ny,nz2),dwdz(nx,ny,nz2),&
+            lm_old(nx,ny,nz2),mm_old(nx,ny,nz2),qn_old(nx,ny,nz2),nn_old(nx,ny,nz2),cs2(nx,ny,nz2))
+
+    u = u_host
+    v = v_host
+    w = w_host
+    
+    dudx = dudx_host
+    dvdx = dvdx_host
+    dwdx = dwdx_host
+    dudy = dudy_host
+    dvdy = dvdy_host
+    dwdy = dwdy_host
+    dudz = dudz_host
+    dvdz = dvdz_host
+    dwdz = dwdz_host
+
+    lm_old = lm_old_host
+    mm_old = mm_old_host
+    qn_old = qn_old_host
+    nn_old = nn_old_host
+t = 1
+    
+    call subgrid_stress(txx,txy,txz,tyy,tyz,tzz,&
+                        u,v,w,&
+                        dudx,dudy,dudz,&
+                        dvdx,dvdy,dvdz,&
+                        dwdx,dwdy,dwdz, &
+                        LM_old,MM_old,QN_old,NN_old,cs2,&
+                        t,me,nall)
+t = 10
+
+    call subgrid_stress(txx,txy,txz,tyy,tyz,tzz,&
+                        u,v,w,&
+                        dudx,dudy,dudz,&
+                        dvdx,dvdy,dvdz,&
+                        dwdx,dwdy,dwdz, &
+                        LM_old,MM_old,QN_old,NN_old,cs2,&
+                        t,me,nall)
+
+    txx_host1 = txx
+    txy_host1 = txy
+    txz_host1 = txz
+    tyy_host1 = tyy
+    tyz_host1 = tyz
+    tzz_host1 = tzz
+
+t = 1
+    Call filter_sgs_cpu(u_hat,u_hatd,u_test,0)
+    call sgs_cpu(txx_host,txy_host,txz_host,tyy_host,tyz_host,tzz_host,cs2_host,beta_host,&
+                u_host,v_host,w_host,dudx_host,dudy_host,dudz_host,dvdx_host,dvdy_host,dvdz_host,dwdx_host,dwdy_host,dwdz_host, &
+                lm_old_host,mm_old_host,qn_old_host,nn_old_host,t,me,nall)
+t = 10
+    call sgs_cpu(txx_host,txy_host,txz_host,tyy_host,tyz_host,tzz_host,cs2_host,beta_host,&
+                u_host,v_host,w_host,dudx_host,dudy_host,dudz_host,dvdx_host,dvdy_host,dvdz_host,dwdx_host,dwdy_host,dwdz_host, &
+                lm_old_host,mm_old_host,qn_old_host,nn_old_host,t,me,nall)
+
+    print *,'txx',maxval(txx_host1-txx_host)
+    print *,'txy',maxval(txy_host1-txy_host)
+    print *,'txz',maxval(txz_host1-txz_host)
+    print *,'tyy',maxval(tyy_host1-tyy_host)
+    print *,'tyz',maxval(tyz_host1-tyz_host)
+    print *,'tzz',maxval(tzz_host1-tzz_host)
+    call MPI_finalize(ierr)
+
+end program test_cufft
+

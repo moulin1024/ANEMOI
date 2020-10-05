@@ -412,7 +412,7 @@ program main
                                 dudx,dudy,dudz,&
                                 dvdx,dvdy,dvdz,&
                                 dwdx,dwdy,dwdz, &
-                                LM_old,MM_old,QN_old,NN_old,cs2,plan_batch,&
+                                LM_old,MM_old,QN_old,NN_old,cs2,&
                                 t,me,nall)
 
             call update_w(txz,me,nall)

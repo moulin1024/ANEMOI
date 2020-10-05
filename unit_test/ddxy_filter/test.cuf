@@ -1,0 +1,74 @@
+ program test_cufft
+    use, intrinsic :: iso_c_binding 
+    use cufft_m
+    use cudafor
+    use mpi 
+    use dimen
+    use precision
+    use update_m
+    use filter
+    use filter_cpu
+    implicit none
+
+    real(fp),dimension(nx,ny,nz2) :: u_host1,dudx_host1,dudy_host1
+    real(fp),dimension(nx,ny,nz2) :: u_host2,dudx_host2,dudy_host2
+    real(fp),dimension(:,:,:),device,allocatable :: u,dudx,dudy
+    
+    integer istat,i,j,k,t
+    type(c_ptr) plan_batch(2)
+    
+    integer(kind=cuda_stream_kind) :: stream(3)
+    real :: max_error
+    integer :: token,request
+    integer :: localRank
+    character(len=10) :: rankStr
+    ! MPI initialization
+    
+    call GET_ENVIRONMENT_VARIABLE ('OMPI_COMM_WORLD_LOCAL_RANK',rankStr)
+    read (rankStr,'(i10)') localRank
+    istat = cudaSetDevice (localRank)
+
+    call mpi_init( ierr )
+    call mpi_comm_rank( mpi_comm_world, me, ierr )
+    call mpi_comm_size( mpi_comm_world, job_np, ierr )
+    nall=mpi_comm_world
+
+    call random_number(u_host1)
+
+    allocate(u(nx,ny,nz2),dudx(nx,ny,nz2),dudy(nx,ny,nz2))
+
+    u = u_host1+me
+
+    !---------------------------------------------------------------------------
+    ! GPU code
+    !---------------------------------------------------------------------------
+
+    ! Create fft plan
+    call get_batchfft_plan(plan_batch,1)
+    
+    call ddxy_filter(u,dudx,dudy,plan_batch)
+
+    call update_uv_async(u,request,me,nall)
+    call update_uv_async(dudx,request,me,nall)
+    call update_uv_async(dudy,request,me,nall)
+
+    u_host2 = u 
+    dudx_host2 = dudx
+    dudy_host2 = dudy
+
+    !---------------------------------------------------------------------------
+    ! cpu code
+    !---------------------------------------------------------------------------
+    call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,0)
+    call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,1)
+
+    max_error = maxval(abs(dudx_host1(:,:,2:nzb+1)-dudx_host2(:,:,2:nzb+1)))
+    print *,'Max error',max_error
+
+
+    call cufftDestroy(plan_batch(1))
+    call cufftDestroy(plan_batch(2))   
+
+    call MPI_finalize(ierr)
+end program test_cufft
+
