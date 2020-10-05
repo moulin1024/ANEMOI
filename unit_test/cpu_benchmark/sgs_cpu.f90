@@ -128,7 +128,7 @@ subroutine sgs_cpu(txx,txy,txz,tyy,tyz,tzz,cs2,beta,&
         end do
     end do
 
-    if (mod(t,cs_count) == 0) then
+    if (mod(t-1,cs_count) == 0 .and. t /= 1) then
 
         call cs_cpu(Cs2,beta,u,v,w_,u_lag,v_lag,w_lag,s,S11,S12,S13,S22,S23,S33, &
             LM_old,MM_old,QN_old,NN_old,t,me,nall)

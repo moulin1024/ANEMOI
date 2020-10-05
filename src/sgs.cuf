@@ -101,7 +101,7 @@ module sgs
         ! Compute lagarangian velocity with 0
         call get_u_lag<<<grid,tblock>>>(u_lag,v_lag,w_lag,u,v,w)
 
-        if (mod(t,cs_count) == 0 ) then
+        if (mod(t-1,cs_count) == 0 .and. t /= 1 ) then
 
             call optim_sd(Cs2,&
                           u,v,w,u_lag,v_lag,w_lag,Sij,&

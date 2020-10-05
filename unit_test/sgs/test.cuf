@@ -115,7 +115,7 @@ t = 1
                         dwdx,dwdy,dwdz, &
                         LM_old,MM_old,QN_old,NN_old,cs2,&
                         t,me,nall)
-t = 10
+t = 11
 
     call subgrid_stress(txx,txy,txz,tyy,tyz,tzz,&
                         u,v,w,&
@@ -137,7 +137,7 @@ t = 1
     call sgs_cpu(txx_host,txy_host,txz_host,tyy_host,tyz_host,tzz_host,cs2_host,beta_host,&
                 u_host,v_host,w_host,dudx_host,dudy_host,dudz_host,dvdx_host,dvdy_host,dvdz_host,dwdx_host,dwdy_host,dwdz_host, &
                 lm_old_host,mm_old_host,qn_old_host,nn_old_host,t,me,nall)
-t = 10
+t = 11
     call sgs_cpu(txx_host,txy_host,txz_host,tyy_host,tyz_host,tzz_host,cs2_host,beta_host,&
                 u_host,v_host,w_host,dudx_host,dudy_host,dudz_host,dvdx_host,dvdy_host,dvdz_host,dwdx_host,dwdy_host,dwdz_host, &
                 lm_old_host,mm_old_host,qn_old_host,nn_old_host,t,me,nall)
