@@ -217,7 +217,7 @@ module sgs
         call get_LMQN(LM,MM,u_hat,uu_hat,Sij_hat,SSij_hat,tf1,plan_vector,plan_tensor)
         call get_LMQN(QN,NN,u_hat,uu_hat,Sij_hat,SSij_hat,tf2,plan_vector,plan_tensor)
         
-        if (t.eq.(cs_count) .and. resub_flag == 0 .and. sim_flag < 2) then
+        if (t-1.eq.(cs_count) .and. resub_flag == 0 .and. sim_flag < 2) then
             call load_LMQN_old<<<grid,tBlock>>>(LM,MM,LM_old,MM_old,0)
             call load_LMQN_old<<<grid,tBlock>>>(QN,NN,QN_old,NN_old,0)
         end if
