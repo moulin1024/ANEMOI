@@ -26,13 +26,13 @@ z_i		= 1000.0	# normalization height
 l_r		= 1		# ratio of streamwise to spanwise dimensions
 
 # custom
-lx		= 10240		# length of dom in the streamwise dir
-ly		= 10240		# length of dom in the spanwise dir
-lz		= 1260		# length of dom in the wall-normal dir
+lx		= 5120		# length of dom in the streamwise dir
+ly		= 5120		# length of dom in the spanwise dir
+lz		= 1270		# length of dom in the wall-normal dir
 
-nx		= 512		# number of grid points in the streamwise dir
-ny		= 512		# number of grid points in the spanwise dir
-nz		= 64		# number of grid points in the wall-normal dir
+nx		= 128		# number of grid points in the streamwise dir
+ny		= 128		# number of grid points in the spanwise dir
+nz		= 128		# number of grid points in the wall-normal dir
 
 ########################################################################################################################
 # time (dt=dtr*u_star/z_i, dtr=dt*z_i/u_star)
@@ -43,7 +43,7 @@ time_flag	= 1		# 0 = native, 1 = custom
 dt		= 0.001		# non-dim timestep (dt=dtr*u_star/z_i)
 
 # custom
-dtr		= 0.1		# dim. timestep (dt=dtr*u_star/z_i)
+dtr		= 0.3		# dim. timestep (dt=dtr*u_star/z_i)
 
 nsteps		= 10000		# number of timesteps
 
@@ -78,11 +78,14 @@ tow_c           = 1.2           # tower drag coeff
 nac_r           = 0.011         #  nacelle radius
 nac_c           = 0.85          # nacelle drag coeff
 yaw_angle       = (/0.0/)       # yaw_angle
+turb_count	= 10		        # frequency of turbine force update
+
 ########################################################################################################################
 # precursor
 ########################################################################################################################
 inflow_istart	= 6		# i start of inflow zone
 inflow_iend	= 10		# i end of inflow zone
+inflow_count	= 10		# frequency of sgs coefficients update
 
 ########################################################################################################################
 # output
@@ -95,7 +98,7 @@ log_flag	= 1		# 0 = no log_output, 1= log_output
 
 
 # ta_output (3d each p_count, time averaged)
-ta_flag		= 2		# 0 = no ta_output, 1= ta_output no1, etc
+ta_flag		= 0		# 0 = no ta_output, 1= ta_output no1, etc
 ta_mask		= 0		# 0 = no ts_mask, 1= ts_mask
 ta_istart	= 1		# i start of ts_output if ta_mask
 ta_iend		= 32		# i end of ts_output if ta_mask
@@ -117,5 +120,5 @@ ts_tstart	= 9001		# t start of ts_output (ts_tstart-1 must be multiple of c_coun
 ########################################################################################################################
 # exec
 ########################################################################################################################
-job_np		= 8		# numer of processors (<= nz/2!, nz2=nz/nprocs+2)
+job_np		= 2		# numer of processors (<= nz/2!, nz2=nz/nprocs+2)
 job_time	= 01:00:00	# duration of job
