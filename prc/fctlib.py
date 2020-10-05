@@ -209,11 +209,13 @@ def get_config(case_path):
     config['nac_r'] = float(config['nac_r'])
     config['nac_c'] = float(config['nac_c'])
     config['yaw_angle'] = config['yaw_angle']
+    config['turb_count'] = int(config['turb_count'])
 
     # prec
     config['inflow_istart'] = int(config['inflow_istart'])
     config['inflow_iend'] = int(config['inflow_iend'])
     config['inflow_nx'] = config['inflow_iend']-config['inflow_istart']+1
+    config['inflow_count'] = int(config['inflow_count'])
 
     # output
     config['log_flag'] = int(config['log_flag'])
@@ -256,7 +258,7 @@ def get_config(case_path):
     config['ts_tstart'] = int(config['ts_tstart'])
     config['ts_nx'] = config['ts_iend']-config['ts_istart']+1
     config['ts_ny'] = config['ts_jend']-config['ts_jstart']+1
-    config['ts_ns'] = int((config['nsteps']-config['ts_tstart']+1)/(config['c_count']*10))
+    config['ts_ns'] = int((config['nsteps']-config['ts_tstart']+1)/(config['c_count']))
 
     # exec
     config['nzb'] = int(config['nz'])//int(config['job_np'])
