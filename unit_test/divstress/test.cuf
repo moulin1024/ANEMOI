@@ -67,14 +67,14 @@
     divtx_host1 = divtx
     divtz_host1 = divtz
 
-    ! call ddx_cpu(dudx_host2,u_host2,0)
-    ! call ddy_cpu(dudy_host2,u_host2,0)
-    ! call divstress_uv_cpu(divtx_host2,txx_host2,txy_host2,txz_host2)
-    ! call divstress_w_cpu (divtz_host2,txz_host2,tyz_host2,tzz_host2)
+    call ddx_cpu(dudx_host2,u_host2,0)
+    call ddy_cpu(dudy_host2,u_host2,0)
+    call divstress_uv_cpu(divtx_host2,txx_host2,txy_host2,txz_host2)
+    call divstress_w_cpu (divtz_host2,txz_host2,tyz_host2,tzz_host2)
 
 
-    ! print *,maxval(abs(divtx_host2-divtx_host1))
-    ! print *,maxval(abs(divtz_host2-divtz_host1))
+    print *,maxval(abs(divtx_host2-divtx_host1))
+    print *,maxval(abs(divtz_host2-divtz_host1))
 
     call MPI_finalize(ierr)
 

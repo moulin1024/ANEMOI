@@ -358,7 +358,7 @@ program main
             end do
         endif
 
-        call mpi_wait(REQUEST,STATUS2,IERR)
+        if (nprocs >= 2) call mpi_wait(REQUEST,STATUS2,IERR)
         ! -----------------------------------------------------------------------
         ! spatial deriv
         call ddz<<<grid, tBlock>>>(dudz,u,0)    ! cell centre
@@ -380,7 +380,7 @@ program main
         ! we need to hide this wall modif to the other processor because
         ! dudz, dvdz change location (from w node to uv nodes) --> no update
 
-        call mpi_wait(REQUEST,STATUS2,IERR)
+        if (nprocs >= 2) call mpi_wait(REQUEST,STATUS2,IERR)
         
         if (me==0) then
             call wall_stress(txz,tyz,dudz,dvdz,ustar,m,u,v,zo,t,plan_2d)
@@ -436,9 +436,9 @@ program main
         !-----------------------------------------------------------------------
         ! Divergence
         !-----------------------------------------------------------------------
-        call divstress(divtx,txx,txy,txz,1,t,plan_batch)    ! w node
-        call divstress(divty,txy,tyy,tyz,1,t,plan_batch)    ! w node
-        call divstress(divtz,txz,tyz,tzz,0,t,plan_batch)    ! uv node
+        call divstress(divtx,txx,txy,txz,1,plan_batch)    ! w node
+        call divstress(divty,txy,tyy,tyz,1,plan_batch)    ! w node
+        call divstress(divtz,txz,tyz,tzz,0,plan_batch)    ! uv node
 
         !-----------------------------------------------------------------------
         ! assemble matrix
@@ -507,8 +507,8 @@ program main
         !-----------------------------------------------------------------------
         !-----------------------------------------------------------------------
         ! get div
-        call ddxy(dudx,u,1,t,plan_batch)
-        call ddxy(dvdy,v,2,t,plan_batch)
+        call ddxy(dudx,u,1,plan_batch)
+        call ddxy(dvdy,v,2,plan_batch)
         call ddz<<<grid, tBlock>>>(dwdz,w,1)
         call div_p<<<grid, tBlock>>>(rhs_p,dudx,dvdy,dwdz)
         !-----------------------------------------------------------------------

@@ -10,7 +10,7 @@ FC = mpif90
 
 FFLAGS = -O3 -Mpreprocess -mcmodel=medium
 CUDA = -Mcuda -lcufft -ta=nvidia
-# PRECISION=-DDOUBLE
+PRECISION=-DDOUBLE
 # debug
 # -check bounds -debug all -traceback -fpe0 fp-stack-check -debug inline-debug-info -parallel-source-info=2 -warn all
 
@@ -27,7 +27,7 @@ LIBS = -L/home/moulin/anaconda3/lib -lfftw3
 # OBJ, PROG
 ################################################################################
 
-OBJ = precision.o dimen.o cufft_m.o derivative.o divergence.o \
+OBJ = precision.o dimen.o cufft_m.o derivative.o divergence.o div.o\
 	  test.o \
 
 PROG = wireles
@@ -39,7 +39,7 @@ build:
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/cufft_m.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/derivative.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/divergence.cuf
-	# $(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../cpu_benchmark/div.f90
+	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../cpu_benchmark/div.f90
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c test.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(OBJ) -o $(PROG).run $(LIBS)
 
