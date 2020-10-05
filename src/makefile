@@ -8,7 +8,7 @@ FC = mpif90
 # FFLAGS
 ################################################################################
 
-FFLAGS = -O3 -Mpreprocess# -mcmodel=medium
+FFLAGS = -O3 -Mpreprocess -mcmodel=medium
 CUDA = -Mcuda -lcufft -ta=nvidia
 # debug
 # -check bounds -debug all -traceback -fpe0 fp-stack-check -debug inline-debug-info -parallel-source-info=2 -warn all
