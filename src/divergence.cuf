@@ -3,7 +3,7 @@ use precision
 use dimen
 contains
 
-subroutine divstress(divt,tx,ty,tz,stagger_flag,plan)
+subroutine divstress(divt,tx,ty,tz,stagger_flag,t,plan)
 
     !---------------------------------------------------------------------------
     ! declaration
@@ -11,7 +11,7 @@ subroutine divstress(divt,tx,ty,tz,stagger_flag,plan)
     use cudafor
     use derivative
     implicit none
-    integer :: i,j,k,stagger_flag
+    integer :: i,j,k,t,stagger_flag
     real(fp),dimension(nx,ny,nz2),intent(inout),device:: divt
     real(fp),dimension(nx,ny,nz2),intent(inout),device:: tx,ty,tz
     real(fp),dimension(:,:,:),allocatable,device:: tdx,tdy,tdz
@@ -22,25 +22,25 @@ subroutine divstress(divt,tx,ty,tz,stagger_flag,plan)
     type(dim3) :: grid, tBlock
     grid = dim3(nx/16,ny/16,nz2/2)
     tBlock = dim3(16,16,2)
-    integer :: stat_flag = 1
-    save tdx,tdy,tdz,stat_flag
+
+    save tdx,tdy,tdz
     !---------------------------------------------------------------------------
     ! main code
     !---------------------------------------------------------------------------
-    if (stat_flag /= 0) then
-        allocate(tdx(nx,ny,nz2),STAT=stat_flag)
-        allocate(tdy(nx,ny,nz2),STAT=stat_flag)
-        allocate(tdz(nx,ny,nz2),STAT=stat_flag)
+    if (t==1) then
+        allocate(tdx(nx,ny,nz2))
+        allocate(tdy(nx,ny,nz2))
+        allocate(tdz(nx,ny,nz2))
     end if
     !---------------------------------------------------------------------------
     ! stress gradients
-    call ddxy(tdx,tx,1,plan)
-    call ddxy(tdy,ty,2,plan)
+    call ddxy(tdx,tx,1,t,plan)
+    call ddxy(tdy,ty,2,t,plan)
     call ddz<<<grid, tBlock>>>(tdz,tz,stagger_flag)
-    ! !---------------------------------------------------------------------------
-    ! ! stress divergence
+    !---------------------------------------------------------------------------
+    ! stress divergence
     call div_sum<<<grid, tBlock>>>(divt,tdx,tdy,tdz)
-    ! ! stop
+    ! stop
 end subroutine divstress
 
 attributes(global) subroutine div_sum(divt,tdx,tdy,tdz)

@@ -9,7 +9,7 @@ module derivative
     ! - ddxy
     !---------------------------------------------------------------------------
 
-subroutine ddxy(dfdi,f,axis,plan)
+subroutine ddxy(dfdi,f,axis,t,plan)
     !---------------------------------------------------------------------------
     ! declaration
     !---------------------------------------------------------------------------
@@ -18,25 +18,24 @@ subroutine ddxy(dfdi,f,axis,plan)
     implicit none
     ! Input: velocity field
     real(fp), dimension(nx,ny,nz2),intent(inout),device :: f,dfdi
-    integer,intent(in) :: axis
-    type(c_ptr),intent(in)  :: plan(2)
+    integer axis
     complex(fp), dimension(:,:,:),allocatable,device :: f_hat,dfdi_hat
     ! fft plan
-    integer :: istat,k
+    type(c_ptr)  :: plan(2)
+    integer :: istat,k,t
     ! Cuda variable
     type(dim3) :: grid, tBlock
     grid = dim3(int((nx/2+1)/32)+1,ny,nzb)
     tBlock = dim3(32,1,1)
-    integer :: stat_flag = 1
-    save f_hat,dfdi_hat,stat_flag
+    save f_hat,dfdi_hat
     !---------------------------------------------------------------------------
     ! main code
     !---------------------------------------------------------------------------
     !---------------------------------------------------------------------------
     ! init
-    if (stat_flag /= 0) then
-        allocate(f_hat(nx/2+1,ny,nzb),STAT=stat_flag)
-        allocate(dfdi_hat(nx/2+1,ny,nzb),STAT=stat_flag)
+    if (t.eq.1) then
+        allocate(f_hat(nx/2+1,ny,nzb))
+        allocate(dfdi_hat(nx/2+1,ny,nzb))
     endif
 
     !---------------------------------------------------------------------------
