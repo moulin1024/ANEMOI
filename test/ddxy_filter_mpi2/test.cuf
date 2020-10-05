@@ -1,0 +1,78 @@
+program testxt
+
+    use cudafor
+    use cufft_m
+    use mpi 
+    use iso_c_binding
+    use dimen
+    use filter
+
+    implicit none
+    ! interface cufftCreate
+    !   function cufftCreate(plan) bind(C,name='cufftCreate')
+    !      use iso_c_binding
+    !      type(c_ptr):: plan
+    !      integer(c_int), value :: cufftCreate
+    !   end function cufftCreate
+    ! end interface cufftCreate
+
+    ! interface
+    !    function cufftXtSetGPUs (plan, nGPUs, whichGPUs) bind(C,name='cufftXtSetGPUs')
+    !       use iso_c_binding
+    !       type(c_ptr)        :: plan
+    !       integer(c_int), value :: nGPUs
+    !       integer(c_int)  :: whichGPUs(*)
+    !       integer(c_int), value :: cufftXtSetGPUs
+    !    end function cufftXtSetGPUs
+    ! end interface
+
+    real(fp),dimension(:,:,:,:),allocatable :: u_host,dudx_host,dudy_host
+    real(fp), dimension(:,:,:,:),device,allocatable :: u,dudx,dudy
+
+   !  real(fp),dimension(nx,ny,nz2,3) :: u_host,dudx_host,dudy_host
+   !  real(fp), dimension(nx,ny,nz2,3),device :: u,dudx,dudy
+
+    real(fp), dimension(nx,ny,nz2,3) :: u_host1
+    integer(kind=cuda_stream_kind) :: stream(2)
+    integer :: localRank, rank, N,istat,i,j,k
+    type(c_ptr) :: plan(2)
+    character(len=10) :: rankStr
+    ! MPI initialization
+    call GET_ENVIRONMENT_VARIABLE ('OMPI_COMM_WORLD_LOCAL_RANK',rankStr)
+    read (rankStr,'(i10)') localRank
+    call CHECK_STAT ( cudaSetDevice (localRank) )
+
+    call mpi_init( ierr )
+    call mpi_comm_rank( mpi_comm_world, me, ierr )
+    call mpi_comm_size( mpi_comm_world, job_np, ierr )
+    nall=mpi_comm_world
+
+    print *,localRank,me,job_np
+
+    allocate(u_host(nx,ny,nz2,3))
+    allocate(u(nx,ny,nz2,3),dudx(nx,ny,nz2,3),dudy(nx,ny,nz2,3))
+
+    call random_number(u_host)
+    u = u_host
+
+    call get_batchfft_plan(plan,3)
+  
+    call ddxy_filter( u,dudx,dudy,plan )
+
+    u_host1 = u
+    print *,u_host1(10,10,10,1)
+
+    call MPI_finalize(ierr)
+    
+ end program testxt
+ 
+ subroutine CHECK_STAT (istat)
+    use cudafor
+    implicit none
+    integer, intent(in) :: istat
+    if (istat /= cudaSuccess) then
+       write(0,'(A,I2,A)',advance='no') " Error code ",istat,": "
+       write(*,*) cudaGetErrorString(istat)
+    !    stop
+    endif
+ end subroutine CHECK_STAT

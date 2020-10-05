@@ -1,0 +1,172 @@
+module dimen
+    use precision
+    use cudafor
+    implicit none
+    ! include 'mpif.h'
+
+    !-------------------------------------------------------------------------------
+    ! csts
+    !-------------------------------------------------------------------------------
+    real(fp), parameter :: vonk=0.4_fp
+    real(fp), parameter :: Pi=3.14159265358979_fp
+    real(fp), parameter :: rad2deg = 180._fp/pi
+    real(fp), parameter :: Sc=1.0,Co=0.1,nnn=1.
+    real(fp), parameter :: u_scale=1._fp
+    real(fp), parameter :: iRe=1.5d-5
+
+    !-------------------------------------------------------------------------------
+    ! init
+    !-------------------------------------------------------------------------------
+    integer, parameter :: sim_flag = 0
+    integer, parameter ::  resub_flag = 0
+    integer, parameter ::  double_flag = 0
+
+    !-------------------------------------------------------------------------------
+    ! space
+    !-------------------------------------------------------------------------------
+    integer, parameter :: nx=128, ny=128, nz=128
+    real(fp), parameter :: z_i=407.4366543152521_fp, l_z=630.0_fp
+    integer, parameter :: l_r=1
+
+    !-------------------------------------------------------------------------------
+    ! time
+    !-------------------------------------------------------------------------------
+    integer, parameter :: nsteps=10000
+    real(fp), parameter :: dt=0.0004908738521234052
+
+    !-----------------------------------------------------------------------------
+    ! physic
+    !-------------------------------------------------------------------------------
+    real(fp), parameter :: u_s=0.45
+
+    !-----------------------------------------------------------------------------
+    ! sgs
+    !-------------------------------------------------------------------------------
+    integer, parameter :: model=3
+    integer, parameter :: cs_count=3
+    real(fp), parameter :: fgr=1.5, tfr=2.0
+    real(fp), parameter :: dtl = dt*cs_count
+
+    !-------------------------------------------------------------------------------
+    ! turbine
+    !-------------------------------------------------------------------------------
+    ! integer :: i_turb,i_phi,i_r
+    integer :: idx1,idx3,idx2
+    integer, parameter :: turb_flag = 0
+    integer, parameter :: n_turb = 1
+
+    !-------------------------------------------------------------------------------
+    ! spec
+    real(fp), parameter, dimension(n_turb) :: turb_x = (/65/)/z_i
+    real(fp), parameter, dimension(n_turb) :: turb_y = (/33/)/z_i
+    real(fp), parameter, dimension(n_turb) :: turb_r = 0.075/z_i
+    real(fp), parameter, dimension(n_turb) :: turb_z = 0.125/z_i
+    real(fp), parameter, dimension(n_turb) :: turb_w = 253.3
+    real(fp), parameter, dimension(n_turb) :: nac_r = 0.011/z_i
+    real(fp), parameter, dimension(n_turb) :: tow_r = 0.0024/z_i
+    real(fp), parameter, dimension(n_turb) :: nac_c = 0.85
+    real(fp), parameter, dimension(n_turb) :: tow_c = 1.2
+    real(fp), parameter, dimension(n_turb) :: yaw_angle = (/0.0/)/180._fp*pi
+
+    integer, parameter :: mask_x = 32
+    integer, parameter :: mask_y = 32
+    integer, parameter :: mask_z = 32
+
+    integer, parameter :: ker_d_x = 8
+    integer, parameter :: ker_d_y = 8
+    integer, parameter :: ker_d_z = 16
+    !-------------------------------------------------------------------------------
+    ! model
+    integer, parameter :: turbine_model = 1
+    integer, parameter :: nacelle_model = 1
+    integer, parameter :: tower_model = 1
+    integer, parameter :: n_phi = 32    ! Don't change it! (because of cuda kernel)
+    integer, parameter :: n_r = 32      ! Don't change it! (because of cuda kernel)
+    integer, parameter :: n_r_s = 3
+
+    !-------------------------------------------------------------------------------
+    ! derived
+    real(fp), parameter :: dang = 2.0_fp*pi/real(n_phi)
+    real(fp), dimension(n_turb), parameter :: dr = [(turb_r(idx1)/real(n_r), idx1=1,n_turb)]
+    real(fp), dimension(n_r,n_turb), parameter :: r = & 
+    reshape([((real(idx2-0.5_fp)*dr(idx1), idx2=1,n_r), idx1=1,n_turb)],(/n_r,n_turb/))
+
+    !-------------------------------------------------------------------------------
+    ! output
+    !-------------------------------------------------------------------------------
+    integer, parameter :: c_count=10,p_count=10000
+
+    !-------------------------------------------------------------------------------
+    ! log_output (time averaged)
+    integer, parameter :: log_flag = 1
+
+    !-------------------------------------------------------------------------------
+    ! ta_output (time averaged)
+    integer, parameter :: ta_flag = 2
+    integer, parameter :: ta_istart = 1
+    integer, parameter :: ta_iend = 64
+    integer, parameter :: ta_jstart = 1
+    integer, parameter :: ta_jend = 64
+    integer, parameter :: ta_kend = 64
+    integer, parameter :: ta_nx = 64
+    integer, parameter :: ta_ny = 64
+    integer, parameter :: ta_tstart = 30001
+    integer, parameter :: ta_ns = -2
+
+    !-------------------------------------------------------------------------------
+    !  ts output (time sampled)
+    integer, parameter :: ts_flag = 1
+    integer, parameter :: ts_istart = 1
+    integer, parameter :: ts_iend = 64
+    integer, parameter :: ts_jstart = 1
+    integer, parameter :: ts_jend = 64
+    integer, parameter :: ts_kend = 64
+    integer, parameter :: ts_nx = 64
+    integer, parameter :: ts_ny = 64
+    integer, parameter :: ts_tstart = 9001
+    integer, parameter :: ts_ns = 10
+
+    !-------------------------------------------------------------------------------
+    ! inflow
+    !-------------------------------------------------------------------------------
+    integer, parameter :: inflow_istart = 6
+    integer, parameter :: inflow_iend = 10
+    integer, parameter :: inflow_nx = 5
+
+    !-------------------------------------------------------------------------------
+    ! exec
+    !-------------------------------------------------------------------------------
+    integer, parameter :: nzb=128, nz2=130, nprocs=1
+    integer job_np, me, nall, ierr!, status2(MPI_STATUS_SIZE)
+
+    !-------------------------------------------------------------------------------
+    ! derived
+    !-------------------------------------------------------------------------------
+    real(fp), parameter :: dx=2.0_fp*pi/nx, dy=2.0_fp*pi/ny/l_r, dz=(l_z/z_i)/(nz-1)
+    real(fp), parameter :: delta=(fgr*dx*fgr*dy*dz)**(1./3.)
+    real(fp), parameter :: idx=1.0/dx, idy=1.0/dy, idz=1.0/dz
+    real(fp), parameter :: inxny=1.0/(nx*ny), iny=1.0/ny
+    real(fp), parameter :: pres_force =(u_s/u_scale)**2/(l_z/z_i)
+
+        ! Predefined box cutoff
+    integer, dimension(nx/2+1), parameter :: freqx = [(idx1, idx1=0,nx/2-1),0]
+    integer, dimension(ny), parameter :: freqy = [(idx2*l_r, idx2=0,ny/2-1),0,((idx2-ny)*l_r, idx2=ny/2+1,ny-1)]
+    integer, parameter :: fcx = nint(nx/2/fgr)
+    integer, parameter :: fcy = nint(ny/2/fgr)
+    integer, dimension(nx/2+1), parameter :: windx = [(1, idx1=0,fcx-1),(0,idx1=fcx,nx/2)]
+    integer, dimension(ny), parameter :: windy = [(1, idx2=0,fcy-1),(0, idx2=fcy,ny-fcy),(1,idx2=ny-fcy+1,ny-1)]
+
+    ! Inflow
+    integer, parameter :: block_size = nsteps/cs_count
+    integer, parameter :: batch_size = c_count/cs_count 
+    integer, parameter :: inflow_size = inflow_nx*ny*nz2
+
+    ! Cuda kernal block config
+    type(dim3),parameter :: grid_fft= dim3(int((nx/2+1)/32)+1,ny,nzb)
+    type(dim3),parameter :: tBlock_fft= dim3(32,1,1)
+
+    type(dim3),parameter :: grid_flow = dim3(nx/32,ny/32,nzb)
+    type(dim3),parameter :: tBlock_flow = dim3(32,32,1)
+
+        
+end module dimen

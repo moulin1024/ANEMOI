@@ -1,0 +1,87 @@
+ program test_cufft
+    use, intrinsic :: iso_c_binding 
+    use cufft_m
+    ! use pressure_cpu
+    use pressure
+    use cudafor
+    use precision
+    use mpi
+    ! use press_cpu
+    use dimen
+    implicit none
+
+    integer istat
+    ! REAL time_begin, time_end,time_gpu,time_cpu,max_error
+    real(fp),dimension(nx,ny,nz2):: rhs_p_host,dpdx_host,dpdy_host,p_host
+    real(fp),dimension(nx,ny,nz2):: rhs_p_host1,dpdx_host1,dpdy_host1,p_host1
+    real(fp),dimension(:,:,:),device, allocatable :: rhs_p,dpdx,dpdy,p
+    integer t,i
+    integer Nt
+
+    type(c_ptr) plan_batch(2)
+    REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
+    REAL time_begin, time_end,time_gpu,time_cpu,max_error
+    type (cudaEvent) :: startEvent, stopEvent
+    real*4 :: time
+
+    integer :: localRank
+    character(len=10) :: rankStr
+    ! include 'dimen.h'
+    ! MPI initialization
+    call GET_ENVIRONMENT_VARIABLE ('OMPI_COMM_WORLD_LOCAL_RANK',rankStr)
+    read (rankStr,'(i10)') localRank
+    istat = cudaSetDevice (localRank)
+
+    call mpi_init( ierr )
+    call mpi_comm_rank( mpi_comm_world, me, ierr )
+    call mpi_comm_size( mpi_comm_world, job_np, ierr )
+    nall=mpi_comm_world
+
+    print *,me,localRank
+    t = 1
+    Nt = 100
+
+    Print *, 'Check subroutine: press_stag.cuf'
+    ! batch fft plan
+
+    allocate(rhs_p(nx,ny,nz2),dpdx(nx,ny,nz2),dpdy(nx,ny,nz2),p(nx,ny,nz2))
+    ! Create fft plan
+    call cufftPlanMany(plan_batch(1),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_D2Z,nzb) 
+    call cufftPlanMany(plan_batch(2),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_Z2D,nzb)
+        
+    
+    istat = cudaEventCreate(startEvent)
+    istat = cudaEventCreate(stopEvent)
+
+    call random_number(p_host)
+    call random_number(rhs_p_host)
+    rhs_p_host  = -rhs_p_host**2*100
+    
+    p = p_host
+    rhs_p = rhs_p_host
+    
+    ! Initial variable
+    ! Time profiling
+    istat = cudaEventRecord(startEvent, 0)
+    do t = 1,Nt
+        call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan_batch)
+    end do 
+    istat = cudaEventRecord(stopEvent, 0)
+    istat = cudaEventSynchronize(stopEvent)
+    istat = cudaEventElapsedTime(time, startEvent, stopEvent)
+    
+    ! dpdx_host1 = dpdx
+    ! print *,dpdx_host1(10,10,10)
+
+    print *,'Time ', time/Nt, ' ms'
+
+    ! call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,0)
+
+    ! call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,1)
+    ! print *,maxval(dpdx_host(:,:,2:nzb+1)-dpdx_host1(:,:,2:nzb+1))
+
+
+    call MPI_finalize(ierr)
+
+end program test_cufft
+

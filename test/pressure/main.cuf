@@ -1,0 +1,76 @@
+ program test_cufft
+    use, intrinsic :: iso_c_binding 
+    use cufft_m
+    ! use pressure_cpu
+    use pressure
+    use cudafor
+    use precision
+    use dimen
+    implicit none
+
+    integer istat
+    ! REAL time_begin, time_end,time_gpu,time_cpu,max_error
+    real(fp),dimension(nx,ny,nz2):: rhs_p_host,dfdx_host,dfdy_host,p_host
+    real(fp),dimension(nx,ny,nz2):: rhs_p_host1,dfdx_host1,dfdy_host1,p_host1
+    real(fp),dimension(nx,ny,nz2),device:: rhs_p,dfdx,dfdy,p
+    integer t
+    integer Nt
+
+    type(c_ptr) plan_batch(2)
+    REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
+    REAL time_begin, time_end,time_gpu,time_cpu,max_error
+    type (cudaEvent) :: startEvent, stopEvent
+    real*4 :: time
+
+    t = 1
+    Nt = 100
+    me = 0
+    nall = 0
+    Print *, 'Check subroutine: press_stag.cuf'
+    ! batch fft plan
+
+    ! Create fft plan
+    call cufftPlanMany(plan_batch(1),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_D2Z,nzb) 
+    call cufftPlanMany(plan_batch(2),2,(/ny,nx/),null_ptr,0,0,null_ptr,0,0,cufft_Z2D,nzb)
+        
+    
+    istat = cudaEventCreate(startEvent)
+    istat = cudaEventCreate(stopEvent)
+
+    call random_number(p_host)
+    call random_number(rhs_p_host)
+    rhs_p_host  = -rhs_p_host**2*100
+    
+    p = p_host
+    rhs_p = rhs_p_host
+      
+    ! call press_cpu(p_host,rhs_p_host,dfdx_host,dfdy_host,me,nall,0)
+    ! call pressure_poisson(p,rhs_p,dfdx,dfdy,me,nall,1,plan_batch)
+    ! p_host1 = p
+    ! dfdx_host1 = dfdx
+    ! dfdy_host1 = dfdy
+    ! max_error = max(maxval(p_host1-p_host),maxval(dfdx_host1-dfdx_host),maxval(dfdy_host1-dfdy_host))
+    ! print *,'Max error: ', max_error
+    ! ! if (max_error < 1e-5) then
+    ! !     print *,'Check pass!'
+    ! ! end if
+    ! CALL CPU_TIME ( time_begin ) 
+    ! call press_cpu(p_host,rhs_p_host,dfdx_host,dfdy_host,me,nall,1)
+    ! CALL CPU_TIME ( time_end )
+    ! time_cpu = (time_end - time_begin)
+    
+    ! Initial variable
+    call pressure_poisson(p,rhs_p,dfdx,dfdy,me,nall,1,plan_batch)
+    ! Time profiling
+    istat = cudaEventRecord(startEvent, 0)
+    do t = 2,Nt+1
+        call pressure_poisson(p,rhs_p,dfdx,dfdy,me,nall,2,plan_batch)
+    end do 
+    istat = cudaEventRecord(stopEvent, 0)
+    istat = cudaEventSynchronize(stopEvent)
+    istat = cudaEventElapsedTime(time, startEvent, stopEvent)
+    
+    print *,'Time ', time/Nt, ' ms'
+
+end program test_cufft
+

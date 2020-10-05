@@ -1,0 +1,249 @@
+module filter
+    use iso_c_binding
+    use precision
+    use dimen
+    contains
+    subroutine ddxy_filter(f,dfdx,dfdy,plan)
+        !---------------------------------------------------------------------------
+        ! declaration
+        !---------------------------------------------------------------------------
+        use cufft_m 
+        use cudafor
+        implicit none 
+        ! Input: velocity field
+        real(fp), dimension(nx,ny,nz2),intent(inout),device :: f,dfdx, dfdy
+        complex(fp), dimension(:,:,:),allocatable,device :: f_hat,dfdx_hat,dfdy_hat
+        ! fft plan
+        type(c_ptr) :: plan(2)
+        integer :: istat,k,t,stat_flag=1
+        ! Cuda variable
+        type(dim3) :: grid, tBlock
+        grid= dim3(int((nx/2+1)/32)+1,ny*nzb,1)
+        tBlock= dim3(32,1,1)
+
+        save f_hat,dfdx_hat,dfdy_hat,stat_flag
+        !---------------------------------------------------------------------------
+        ! main code
+        !---------------------------------------------------------------------------
+    
+        !---------------------------------------------------------------------------
+        ! init
+        if (stat_flag /= 0 ) then
+            allocate(f_hat(nx/2+1,ny,nzb),STAT=stat_flag)
+            allocate(dfdx_hat(nx/2+1,ny,nzb),STAT=stat_flag)
+            allocate(dfdy_hat(nx/2+1,ny,nzb),STAT=stat_flag)
+        endif
+        
+        !---------------------------------------------------------------------------
+        ! Forward fft
+        call  cufftExec(plan(1),f(:,:,2:nzb+1),f_hat)
+        
+        !---------------------------------------------------------------------------
+        ! ! Apply sharp spectral filter
+        call ddxy_filter_kernel<<<grid, tBlock>>>(f_hat,dfdx_hat,dfdy_hat)
+        ! !---------------------------------------------------------------------------
+        ! ! Backward fft
+        call  cufftExec(plan(2),f_hat,f(:,:,2:nzb+1))
+        call  cufftExec(plan(2),dfdx_hat,dfdx(:,:,2:nzb+1)) 
+        call  cufftExec(plan(2),dfdy_hat,dfdy(:,:,2:nzb+1)) 
+        
+    end subroutine ddxy_filter
+
+    attributes(global) subroutine ddxy_filter_kernel(f_hat,dfdx_hat,dfdy_hat)
+
+        implicit none
+        complex(fp), dimension(*), intent(inout) :: f_hat, dfdx_hat, dfdy_hat
+        integer :: i,j, offset, idx, jdx
+        complex(fp), dimension(32), shared :: s_fhat, s_dfx, s_dfy
+        real(kind=8) :: fx,fy,tmp
+
+        ! The block must be 1D. If not of length 32, change the length of the shared mem array.
+        ! The grid MUST be 2D, with ny and nz directions collapsed into the second grid index.
+
+        i = (blockIdx%x - 1) * blockDim%x + threadIdx%x
+        j = blockIdx%y
+        jdx = mod(j, ny) + 1
+
+        if (i <= nx/2+1) then
+            ! Load the complex data into shared memory (coalesced reads)
+            idx = i + j*(nx/2+1)
+            s_fhat(threadIdx%x) = f_hat(idx)    
+            
+            ! Load the filter coeffs into registers
+            fx = freqx(i)
+            fy = freqx(jdx)
+            
+            ! Derivatives in Fourier space (real part)
+            tmp = s_fhat(threadIdx%x)%re * (-1._fp)
+            s_dfx(threadIdx%x)%re = tmp * fx
+            s_dfy(threadIdx%x)%re = tmp * fy
+
+            ! Derivatives in Fourier space (Complex part)
+            tmp = s_fhat(threadIdx%x)%im
+            s_dfx(threadIdx%x)%im = tmp * fx
+            s_dfy(threadIdx%x)%im = tmp * fy
+   
+            ! Scale factor for f_hat
+            tmp = inxny*windx(i)*windy(jdx)
+
+            ! Write out the arrays (coalesced writes)
+            f_hat(idx) = s_fhat(threadIdx%x) * tmp
+            dfdx_hat(idx) = s_dfx(threadIdx%x)
+            dfdy_hat(idx) = s_dfy(threadIdx%x)
+        end if
+
+    end subroutine ddxy_filter_kernel
+
+    subroutine filter_3d(f_hat,filterRadius,plan,t,flag)
+        use, intrinsic :: iso_c_binding 
+        use cufft_m 
+        use cudafor
+        implicit none
+        real(fp), dimension(nx,ny,nz2),intent(inout),device :: f_hat
+        integer,intent(in) :: t,flag
+        real(fp),intent(in),value :: filterRadius
+        REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
+        type(c_ptr) :: plan(2)
+        complex(fp),dimension(:,:,:),allocatable,device :: f_hat_ft
+        type(dim3) :: grid, tBlock
+
+        grid=dim3(int((nx/2+1)/32)+1,ny,nzb)
+        tBlock= dim3(32,1,1)
+
+        save f_hat_ft
+
+        if(t == 1 .and. flag == 0) then
+            allocate(f_hat_ft(nx/2+1,ny,nzb))
+        end if
+        call cufftExec(plan(1),f_hat(:,:,2:nzb+1),f_hat_ft)
+        call filter_kernel<<<grid,tBlock>>>(f_hat_ft,filterRadius)
+        call cufftExec(plan(2),f_hat_ft,f_hat(:,:,2:nzb+1))
+
+    end subroutine filter_3d
+
+    subroutine filter_2dsl(f_filtered,f,t,plan_2d)
+
+        !---------------------------------------------------------------------------
+        ! declaration
+        !---------------------------------------------------------------------------
+        use cudafor
+        use cufft_m
+        implicit none
+    
+        integer :: i,j,k,ii,jj,t,flag,iret,istat
+        type(c_ptr) :: plan_2d(2)
+    
+        real(fp),dimension(nx,ny),intent(in),device :: f
+        real(fp),dimension(nx,ny),intent(out),device :: f_filtered
+        complex(fp), dimension(:,:),allocatable,device :: f_hat
+        
+        type(dim3) :: grid, tBlock
+        grid= dim3(int((nx/2+1)/32)+1,ny,1)
+        tBlock= dim3(32,1,1)
+        
+        save f_hat
+    
+        !---------------------------------------------------------------------------
+        ! main code
+        !---------------------------------------------------------------------------
+    
+        !---------------------------------------------------------------------------
+        ! init
+
+        if (t.eq.1) then
+            allocate(f_hat(nx/2+1,ny))
+        end if
+        !---------------------------------------------------------------------------
+        ! compute
+        ! forward fft --> f
+        call  cufftExec(plan_2d(1),f,f_hat)
+        ! Apply sharp spectral cutoff. Note: square cutoff
+        call filter_kernel_2d<<<grid, tBlock>>>(f_hat)
+        ! backward fft --> f
+        call cufftExec(plan_2d(2),f_hat,f_filtered)
+        
+    end subroutine filter_2dsl
+
+    attributes(global) subroutine filter_kernel_2d(f_hat)
+        ! 2d Filter at the wall
+        implicit none
+        complex(fp), dimension(nx/2+1,ny),intent(inout) :: f_hat
+        complex(fp), dimension(32), shared :: s_fhat
+        integer :: i,j,ii,jj
+  
+        ! This kernel assumes also a 1D block of length 32.
+        ! We use shared memory to get coalseced reads/writes in all threads.
+        ! The data is modified in the shared array, before we write it back to global memory.
+        i = (blockIdx%x - 1) * blockDim%x + threadIdx%x;
+        j = blockIdx%y;
+        ! Scale back the fft
+        if (i<=nx/2+1) then
+            ! Load in shared memory (coalesced reads)
+            s_fhat(i) = f_hat(i,j)*inxny
+            
+            ! Shift wave number (in the shared memory temp)
+            ii = i - 1
+            jj = j - 1
+            if(jj.gt.int(nx/2)) jj=jj-ny
+            jj=jj*l_r
+            if (ii >= floor(nx/(2*fgr*tfr)))then
+                s_fhat(i)= dcmplx(0.0_fp)
+            ! filter y
+            elseif(abs(jj) >= floor(l_r*ny/(2*fgr*tfr)))then
+                s_fhat(i)= dcmplx(0.0_fp)
+            end if
+            
+            ! Write back the data in shared memory back to global with coalesced writes.
+            f_hat(i,j) = s_fhat(i)         
+        end if
+    end subroutine filter_kernel_2d
+
+    attributes(global) subroutine filter_kernel(f_hat_ft,filterRadius)
+        implicit none
+        complex(fp), dimension(nx/2+1,ny,nz2),intent(inout) :: f_hat_ft
+        complex(fp), dimension(32), shared :: s_fhat
+        real(fp),intent(in),value :: filterRadius
+        integer :: i,j,k,ii,jj
+
+        ! This kernel assumes a 1D block of length 32.
+        ! The grid is 3D with the ny and nz direction on the 2nd and 3rd indices of the grid.
+        ! We use shared memory here to have coalesced reads/writes in all the threads.
+        ! The data is modified in the shared memory array, which is a lot faster.
+        i = (blockIdx%x - 1) * blockDim%x + threadIdx%x
+        j = blockIdx%y
+        k = blockIdx%z
+        ! Scale back the fft
+        if (i<=nx/2+1) then
+            s_fhat(threadIdx%x) = f_hat_ft(i,j,k)*inxny
+            call spec_box_cutoff(s_fhat,filterRadius,i,j,k)
+            f_hat_ft(i,j,k) = s_fhat(threadIdx%x)
+        end if
+    end subroutine filter_kernel
+    
+
+    attributes(device) subroutine spec_box_cutoff(s_fhat,filter,i,j,k)
+        implicit none
+        complex(fp), dimension(32), intent(inout) :: s_fhat
+        real(fp),intent(in) :: filter
+        integer,intent(in) :: i,j,k
+        integer :: ii,jj
+
+        !---------------------------------------------------------------------------
+        ! Preparing sharp spectral cut-off
+        ! Shift wave number
+        ii = i - 1
+        jj = j - 1
+        if(jj >= nint(ny/2.0)) jj = jj-ny
+        jj = jj*l_r
+
+        !---------------------------------------------------------------------------
+        ! Apply sharp spectral cut-off
+        ! filter x
+        if (ii      >= nint(nx/(2.0*filter)) .or. &
+            abs(jj) >= nint(l_r*ny/(2.0*filter))) then
+            s_fhat(threadIdx%x)=dcmplx(0._fp)
+        end if
+
+    end subroutine spec_box_cutoff
+
+end module filter
