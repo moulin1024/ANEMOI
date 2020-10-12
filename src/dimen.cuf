@@ -69,28 +69,11 @@ module dimen
     real(fp), parameter, dimension(n_turb) :: tow_c = ${tow_c}
     real(fp), parameter, dimension(n_turb) :: yaw_angle = $yaw_angle/180._fp*pi
 
-    integer, parameter :: mask_x = 32
-    integer, parameter :: mask_y = 32
-    integer, parameter :: mask_z = 32
-
-    integer, parameter :: ker_d_x = 8
-    integer, parameter :: ker_d_y = 8
-    integer, parameter :: ker_d_z = 16
     !-------------------------------------------------------------------------------
     ! model
     integer, parameter :: turbine_model = 1
     integer, parameter :: nacelle_model = 1
     integer, parameter :: tower_model = 1
-    integer, parameter :: n_phi = 32    ! Don't change it! (because of cuda kernel)
-    integer, parameter :: n_r = 32      ! Don't change it! (because of cuda kernel)
-    integer, parameter :: n_r_s = 3
-
-    !-------------------------------------------------------------------------------
-    ! derived
-    real(fp), parameter :: dang = 2.0_fp*pi/real(n_phi)
-    real(fp), dimension(n_turb), parameter :: dr = [(turb_r(idx1)/real(n_r), idx1=1,n_turb)]
-    real(fp), dimension(n_r,n_turb), parameter :: r = & 
-    reshape([((real(idx2-0.5_fp)*dr(idx1), idx2=1,n_r), idx1=1,n_turb)],(/n_r,n_turb/))
 
     !-------------------------------------------------------------------------------
     ! output

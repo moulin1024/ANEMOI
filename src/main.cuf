@@ -51,7 +51,7 @@ program main
                                              qn_old,nn_old,cs2
     !---------------------------------------------------------------------------
     ! turbine
-    real(fp), dimension(nx,ny,nz2),device :: fx,fy,fz 
+    real(fp), dimension(:,:,:),allocatable,device :: fx,fy,fz 
     real(fp), dimension(3,181) :: alpha_cl_cd_host
     real(fp), dimension(3,181),device :: alpha_cl_cd
     !---------------------------------------------------------------------------
@@ -147,7 +147,8 @@ program main
              dpdx(nx,ny,nz2),dpdy(nx,ny,nz2),dpdz(nx,ny,nz2),&    ! Pressure gradient
              rhs_p(nx,ny,nz2),&               ! Poisson eq rhs
              lm_old(nx,ny,nz2),mm_old(nx,ny,nz2),&
-             qn_old(nx,ny,nz2),nn_old(nx,ny,nz2),cs2(nx,ny,nz2))
+             qn_old(nx,ny,nz2),nn_old(nx,ny,nz2),cs2(nx,ny,nz2),&
+             fx(nx,ny,nz2),fy(nx,ny,nz2),fz(nx,ny,nz2))
     !---------------------------------------------------------------------------
     ! load variables
     !---------------------------------------------------------------------------
@@ -298,6 +299,7 @@ program main
         rhsx_f  = rhsx 
         rhsy_f  = rhsy 
         rhsz_f  = rhsz 
+       
 #ifdef USE_NVTX    
     call nvtxEndRange
 #endif
@@ -459,13 +461,12 @@ program main
         
         if (turb_flag == 1) then
             if (device_id == 0 ) then
-                if (mod(t-1,turb_count)==0) then
-                    call turbine_force(fx,fy,fz,u,v,w,alpha_cl_cd,t)
-                    ! applying forcing to the rhs
-                    call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
-                    call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
-                    call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
-                end if
+                if (mod(t-1,turb_count)==0) call turbine_force(fx,fy,fz,u,v,w,alpha_cl_cd,t)
+
+                call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
+                call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
+                call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
+
             end if
         end if
         !-----------------------------------------------------------------------

@@ -199,8 +199,8 @@ def get_config(case_path):
     # turbine
     config['turb_flag'] = int(config['turb_flag'])
     config['turb_nb'] = int(config['turb_nb'])
-    config['turb_i'] = config['turb_i']
-    config['turb_j'] = config['turb_j']
+    # config['turb_i'] = config['turb_i']
+    # config['turb_j'] = config['turb_j']
     config['turb_r'] = float(config['turb_r'])
     config['turb_z'] = float(config['turb_z'])
     config['turb_w'] = config['turb_w']
@@ -208,7 +208,7 @@ def get_config(case_path):
     config['tow_c'] = float(config['tow_c'])
     config['nac_r'] = float(config['nac_r'])
     config['nac_c'] = float(config['nac_c'])
-    config['yaw_angle'] = config['yaw_angle']
+    # config['yaw_angle'] = config['yaw_angle']
     config['turb_count'] = int(config['turb_count'])
 
     # prec

@@ -75,8 +75,8 @@ def anime(PATH, case_name):
     XX,YY = np.meshgrid(x,y,indexing='ij')
     YY2,ZZ = np.meshgrid(y,z,indexing='ij')
     u = result_4d['u_inst_c']
-    # v = result_4d['v_inst_c']
-    # w = result_4d['w_inst_c']
+    v = result_4d['v_inst_c']
+    w = result_4d['w_inst_c']
 
     # u2 = u*u - np.mean(u,axis=0)*np.mean(u,axis=0)
     # v2 = v*v - np.mean(v,axis=0)*np.mean(v,axis=0)
@@ -156,19 +156,25 @@ def anime(PATH, case_name):
 
 
     fig, ax = plt.subplots(2,1)
-    def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
+    i = 49
+    # def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
     #     zeniths = np.linspace(0, 0.5, 30)
     #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
-        values = u[i,:,16,:]#np.random.random((azimuths.size, zeniths.size))
-        ax[0].imshow(values.T,origin='lower',aspect=config['dz']/config['dx'])
-        ax[0].set_xlabel('x')
-        ax[0].set_ylabel('z')
-        values = u[i,16,:,:]#np.random.random((azimuths.size, zeniths.size))
-        ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
-        ax[1].set_xlabel('y')
-        ax[1].set_ylabel('z')
-        print(i)
-        return
+    values = w[i,:,:,16]#np.random.random((azimuths.size, zeniths.size))
+    im1 = ax[0].imshow(values.T,origin='lower',aspect=config['dy']/config['dx'])
+    ax[0].set_xlabel('x')
+    ax[0].set_ylabel('y')
+    values = u[i,128,:,:]#np.random.random((azimuths.size, zeniths.size))
+    im2 = ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
+    # ax[1].scatter([63],[19],marker='+',color='r')
+    ax[1].set_xlabel('y')
+    ax[1].set_ylabel('z')
+    print(i)
+        # return
 
-    anim = animation.FuncAnimation(fig, animate, frames=10)
-    anim.save('animation.gif',writer='imagemagick', fps=12)
+
+    fig.colorbar(im1, ax=ax[0])
+    fig.colorbar(im2, ax=ax[1])
+    plt.savefig('force.png')
+    # anim = animation.FuncAnimation(fig, animate, frames=10)
+    # anim.save('animation.gif',writer='imagemagick', fps=10)
