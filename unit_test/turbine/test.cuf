@@ -1,0 +1,110 @@
+ program test_cufft
+    use, intrinsic :: iso_c_binding 
+    use cudafor
+    use mpi 
+    use dimen
+    use precision
+    use turbine_gpu_m
+    use turbine_cpu_m
+    implicit none
+
+    real(fp),dimension(nx,ny,nz2) :: u_host,v_host,w_host
+    real(fp),dimension(nx,ny,nz2) :: u_host2,v_host2,w_host2
+    real(fp),dimension(nx,ny,nz2) :: Fx_host,Fy_host,Fz_host, Fx_host1,Fy_host1,Fz_host1
+    real(fp), dimension(n_phi,n_r,n_turb) :: sum_ker_u,sum_ker_w
+    real(fp) :: thrust_host(n_turb),power_host(n_turb),omega_host(n_turb)
+    real(fp), dimension(n_phi,n_r,n_turb) :: CTFx_host,CTFt_host,CTux_host,CTaoa_host
+
+    real(fp), dimension(:,:,:),device,allocatable :: CTFx,CTFt
+    real(fp),dimension(:),device,allocatable :: thrust,power,omega
+    real(fp),dimension(:,:,:),device,allocatable :: Fx,Fy,Fz
+    real(fp),dimension(:,:,:),device,allocatable :: u,v,w
+    
+    real(fp),dimension(n_phi,n_r,n_turb,2),device :: sum_ker,ctf
+
+    real(fp),dimension(n_phi,n_r,n_turb,2) :: sum_ker_host,ctf_host
+
+    real(fp),dimension(3,181) :: alpha_cl_cd
+    real(fp),dimension(3,181),device :: alpha_cl_cd_gpu
+    integer istat,i,j,k,t
+    type(c_ptr) plan_batch(2)
+    
+    integer(kind=cuda_stream_kind) :: stream(3)
+    real :: max_error
+    integer :: token,request
+    integer :: localRank
+    character(len=10) :: rankStr
+    ! MPI initialization
+    
+    call GET_ENVIRONMENT_VARIABLE ('OMPI_COMM_WORLD_LOCAL_RANK',rankStr)
+    read (rankStr,'(i10)') localRank
+    istat = cudaSetDevice (localRank)
+
+    call mpi_init( ierr )
+    call mpi_comm_rank( mpi_comm_world, me, ierr )
+    call mpi_comm_size( mpi_comm_world, job_np, ierr )
+    nall=mpi_comm_world
+
+    call random_number(u_host)
+    call random_number(v_host)
+    call random_number(w_host)
+
+
+    !---------------------------------------------------------------------------
+    ! GPU code
+    !---------------------------------------------------------------------------
+
+
+    ! u_host2 = u 
+    ! dudx_host2 = dudx
+    ! dudy_host2 = dudy
+
+    !---------------------------------------------------------------------------
+    ! cpu code
+    !---------------------------------------------------------------------------
+    ! t = 1
+    print *,'allocate'
+    allocate(Fx(nx,ny,nz2),Fy(nx,ny,nz2),Fz(nx,ny,nz2))
+    allocate(u(nx,ny,nz2),v(nx,ny,nz2),w(nx,ny,nz2))
+    allocate(CTFx(n_phi,n_r,n_turb),CTFt(n_phi,n_r,n_turb))
+    allocate(thrust(n_turb),power(n_turb),omega(n_turb))
+
+    t = 1
+    u_host = 5
+    v_host = 0
+    w_host = 0
+
+    u = u_host
+    v = v_host
+    w = w_host
+
+    omega_host = 253
+t = 1
+    call turbine_cpu(Fx_host,Fy_host,Fz_host,&
+                     thrust_host,power_host,sum_ker_u,sum_ker_w,&
+                     CTFx_host,CTFt_host,CTux_host,&
+                     CTaoa_host,omega_host,&
+                     u_host,v_host,w_host,t,me,nall)
+
+    open(unit=99,file='input/cl_cd.dat')
+    do k=1,181
+        read(99,*) alpha_cl_cd(1:3,k)
+    enddo
+    close(99)
+
+    alpha_cl_cd_gpu = alpha_cl_cd
+
+    call turbine_force(Fx,Fy,Fz,u,v,w,alpha_cl_cd_gpu,t)
+    
+    Fx_host1 = Fx
+    Fy_host1 = Fy
+    Fz_host1 = Fz
+
+
+    print *,maxval(abs(Fx_host1-Fx_host))
+    print *,maxval(abs(Fy_host1-Fy_host))
+    print *,maxval(abs(Fz_host1-Fz_host))
+
+    call MPI_finalize(ierr)
+end program test_cufft
+
