@@ -206,7 +206,7 @@ module turbine_gpu_m
         real(fp),dimension(n_phi,n_r,n_turb,2,8) ,intent(out) :: coeff    
         real(fp),dimension(n_r,n_turb),intent(out) :: twist,CTsoli
         real(fp),dimension(8) :: c_w_1d,c_uv_1d
-        real(fp) :: blade_ii,blade_jj,blade_kk  
+        real(fp) :: blade_ii,blade_jj,blade_kk_uv,blade_kk_w  
         real(fp) :: tmp3,chordl
         integer :: i,j,k,i_turb,i_phi,i_r,me_k
         
@@ -229,23 +229,25 @@ module turbine_gpu_m
         ! blade element centre location
         blade_ii = turb_i(i_turb)+r(i_r,i_turb)*sin(yaw_angle(i_turb))*cos_Tang(i_phi)/dx
         blade_jj = turb_j(i_turb)-r(i_r,i_turb)*cos(yaw_angle(i_turb))*cos_Tang(i_phi)/dy
-        blade_kk = turb_k(i_turb)+r(i_r,i_turb)*sin_Tang(i_phi)/dz
-
+        blade_kk_w = turb_k(i_turb)+r(i_r,i_turb)*sin_Tang(i_phi)/dz + 2._fp
+        blade_kk_uv = blade_kk_w - 0.5_fp 
         ! print *,int(floor(blade_ii)),int(floor(blade_jj)),int(floor(blade_kk)) 
         ! Global index of the left_lower grid to a blade element centre
         blade_ijk(i_phi,i_r,i_turb,1) = nint(blade_ii)
         blade_ijk(i_phi,i_r,i_turb,2) = nint(blade_jj)
-        blade_ijk(i_phi,i_r,i_turb,3) = nint(blade_kk)  
+        blade_ijk(i_phi,i_r,i_turb,3) = nint(blade_kk_uv)
+        blade_ijk(i_phi,i_r,i_turb,4) = nint(blade_kk_w)  
         ! Trilinear interpolation coefficients 
         ! Interpolation at o for w node needs to be treated with care
-        call get_interp_coeff(c_uv_1d,blade_ii,blade_jj,blade_kk) 
-        if ((blade_kk - int(floor(blade_kk))) < 0.5_fp) then
-            blade_ijk(i_phi,i_r,i_turb,4) = int(floor(blade_kk))
-            call get_interp_coeff(c_w_1d,blade_ii,blade_jj,blade_kk)   
-        else ! For the case when interpolation is in the upper layer
-            blade_ijk(i_phi,i_r,i_turb,4) = int(floor(blade_kk))+1
-            call get_interp_coeff(c_w_1d,blade_ii,blade_jj,blade_kk+1)  
-        end if
+        call get_interp_coeff(c_uv_1d,blade_ii,blade_jj,blade_kk_uv) 
+        call get_interp_coeff(c_w_1d,blade_ii,blade_jj,blade_kk_w) 
+        ! if ((blade_kk - int(floor(blade_kk))) < 0.5_fp) then
+        !     blade_ijk(i_phi,i_r,i_turb,4) = int(floor(blade_kk))
+        !     call get_interp_coeff(c_w_1d,blade_ii,blade_jj,blade_kk)   
+        ! else ! For the case when interpolation is in the upper layer
+        !     blade_ijk(i_phi,i_r,i_turb,4) = int(floor(blade_kk))+1
+        !     call get_interp_coeff(c_w_1d,blade_ii,blade_jj,blade_kk+1)  
+        ! end if
 
         coeff(i_phi,i_r,i_turb,1,:) = c_uv_1d(:)
         coeff(i_phi,i_r,i_turb,2,:) = c_w_1d(:)

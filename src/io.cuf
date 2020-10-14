@@ -623,20 +623,20 @@ subroutine write_log(log_ustar,log_umax,me)
 
 end subroutine write_log
 
-subroutine write_turb(CTFx,CTFt,omega,me)
+! subroutine write_turb(CTFx,CTFt,omega,me)
 
-    implicit none
-    integer me,nall
-    real(fp), dimension(n_phi,n_r,n_turb) , intent(in):: CTFx,CTFt
-    real(fp), dimension(n_turb) , intent(in):: omega
+!     implicit none
+!     integer me,nall
+!     real(fp), dimension(n_phi,n_r,n_turb) , intent(in):: CTFx,CTFt
+!     real(fp), dimension(n_turb) , intent(in):: omega
     
-    if (me == 0) then
-        write (73000) CTFx*dx*dy*dz*z_i**2
-        write (74000) CTFt*dx*dy*dz*z_i**2
-        write (75000) omega
-    end if
+!     if (me == 0) then
+!         write (73000) CTFx*dx*dy*dz*z_i**2
+!         write (74000) CTFt*dx*dy*dz*z_i**2
+!         write (75000) omega
+!     end if
 
-end subroutine write_turb
+! end subroutine write_turb
 
 
 !-------------------------------------------------------------------------------
