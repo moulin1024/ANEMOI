@@ -1,0 +1,38 @@
+module control
+    use precision
+    use dimen
+    contains
+    subroutine controller(turb_rpm,CTUin,turb_loc,t)
+    !---------------------------------------------------------------------------
+    ! declaration
+    !---------------------------------------------------------------------------
+        implicit none
+        ! Interface variables
+        real(fp),dimension(n_turb),intent(out),device  :: turb_rpm
+        real(fp),dimension(:),allocatable,device  :: turb_rpm_old
+        real(fp),dimension(n_turb),intent(in),device   :: CTUin
+        real(fp),dimension(n_turb,4),intent(in),device :: turb_loc
+        integer,intent(in) :: t
+        ! Internal variables
+        integer i_turb
+        save turb_rpm_old
+    !---------------------------------------------------------------------------
+    ! code
+    !---------------------------------------------------------------------------
+        if (t == 1) allocate(turb_rpm_old(n_turb))
+        !$cuf kernel do(1) <<<*,*>>>
+        do i_turb = 1,n_turb
+            turb_rpm(i_turb) = rpm_wire01(CTUin(i_turb))
+            if (t>100) then
+                turb_rpm(i_turb) = 0.1*turb_rpm(i_turb) + 0.9*turb_rpm_old(i_turb)
+            end if
+            turb_rpm_old(i_turb) = turb_rpm(i_turb)
+        end do
+
+    end subroutine controller
+
+    attributes(device) function rpm_wire01(u_inflow)
+        real(fp) u_inflow,rpm_wire01
+        rpm_wire01 = -11.90213817*u_inflow**3+ 55.83501108*u_inflow**2 + 515.7774735*u_inflow-324.26512599
+    end function rpm_wire01
+end module control

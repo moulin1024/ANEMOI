@@ -34,8 +34,8 @@ PROG = wireles_src
 
 DEP0  =   precision.o 
 DEP1  =   cufft_m.o dimen.o
-DEP2  =   update.o convection.o derivative.o filter.o io.o pressure.o rhs.o time.o turbine.o
-DEP3  =   divergence.o
+DEP2  =   update.o convection.o derivative.o filter.o io.o pressure.o rhs.o time.o control.o
+DEP3  =   divergence.o turbine.o
 DEP4  =   sgs.o wall.o
 
 
@@ -63,7 +63,7 @@ $(DEP1): %.o: %.cuf precision.o
 	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
 $(DEP2): %.o: %.cuf precision.o dimen.o
 	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
-$(DEP3): %.o: %.cuf precision.o dimen.o derivative.o
+$(DEP3): %.o: %.cuf precision.o dimen.o derivative.o control.o
 	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
 $(DEP4): %.o: %.cuf precision.o dimen.o cufft_m.o filter.o
 	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<

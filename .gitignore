@@ -9,3 +9,4 @@ job/*
 *.vts
 *.gif
 *.x
+*.npy

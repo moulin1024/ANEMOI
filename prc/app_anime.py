@@ -78,19 +78,19 @@ def anime(PATH, case_name):
     v = result_4d['v_inst_c']
     w = result_4d['w_inst_c']
 
-    # u2 = u*u - np.mean(u,axis=0)*np.mean(u,axis=0)
-    # v2 = v*v - np.mean(v,axis=0)*np.mean(v,axis=0)
-    # w2 = w*w - np.mean(w,axis=0)*np.mean(w,axis=0)
-    # uw = u*w - np.mean(u,axis=0)*np.mean(w,axis=0)
+    u2 = u*u - np.mean(u,axis=0)*np.mean(u,axis=0)
+    v2 = v*v - np.mean(v,axis=0)*np.mean(v,axis=0)
+    w2 = w*w - np.mean(w,axis=0)*np.mean(w,axis=0)
+    uw = u*w - np.mean(u,axis=0)*np.mean(w,axis=0)
     
-    # print(u.shape)
-    # def rms_profile(x2):
-    #     x2_mean = np.sqrt(np.mean(np.mean(np.mean(x2,axis=0),axis=0),axis=0))/config['u_fric']
-    #     return x2_mean
+    print(u.shape)
+    def rms_profile(x2):
+        x2_mean = np.sqrt(np.mean(np.mean(np.mean(x2,axis=0),axis=0),axis=0))/config['u_fric']
+        return x2_mean
     
-    # def vel_profile(x):
-    #     x_mean = np.mean(np.mean(np.mean(x,axis=0),axis=0),axis=0)/config['u_fric']
-    #     return x_mean
+    def vel_profile(x):
+        x_mean = np.mean(np.mean(np.mean(x,axis=0),axis=0),axis=0)/config['u_fric']
+        return x_mean
     
     # u_profile = vel_profile(u)
     # v_profile = vel_profile(v)
@@ -136,46 +136,45 @@ def anime(PATH, case_name):
 
     # # Mean field at hub-height
 
-    # figure(num=None, figsize=(12, 8), dpi=100, facecolor='w', edgecolor='k')
-    # u_mean = np.mean(u[20:,:,:,:],axis=0)
-    # u2_mean = np.mean(u[20:,:,:,:]*u[20:,:,:,:],axis=0) - u_mean*u_mean
-    # u_mean_field = u_mean
-    # # plt.plot(u_mean_field[156,:,20],'.')
-    # # plt.ylim([0,-0.8])
-    # # plt.plot(np.mean(np.mean(u2_mean,axis=0),axis=0))
-    # # u_mean_field = (u_mean/5.2)-1
-    # plt.imshow(u_mean_field[:,:,20].T,origin='lower',aspect=1)
-    # plt.colorbar()
-    # # plt.clim(0,0.2)
-    # # plt.plot(u2_mean[:,14,20])
-    # plt.savefig('field.png')
-    # # print('Print mean field')
-    # np.save('u_mean_turb.npy',u_mean)
-
-    # np.save('u2_mean_turb.npy',u2_mean)
-
-
-    fig, ax = plt.subplots(2,1)
-    # i = 9
-    def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
-    #     zeniths = np.linspace(0, 0.5, 30)
-    #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
-        values = u[i,:,:,16]#np.random.random((azimuths.size, zeniths.size))
-        im1 = ax[0].imshow(values.T,origin='lower',aspect=config['dy']/config['dx'])
-        ax[0].set_xlabel('x')
-        ax[0].set_ylabel('y')
-        values = u[i,200,:,:]#np.random.random((azimuths.size, zeniths.size))
-        im2 = ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
-        # im2 = ax[1].quiver(v[i,300,1::4,1::4].T,w[i,300,1::4,1::4].T,scale=10)
-        # ax[1].scatter([63],[19],marker='+',color='r')
-        ax[1].set_xlabel('y')
-        ax[1].set_ylabel('z')
-        print(i)
-        # return
+    figure(num=None, figsize=(12, 8), dpi=100, facecolor='w', edgecolor='k')
+    u_mean = np.mean(u,axis=0)
+    u2_mean = np.mean(u*u,axis=0) - u_mean*u_mean
+    u_mean_field = u_mean
+    # plt.plot(u_mean_field[156,:,20],'.')
+    # plt.ylim([0,-0.8])
+    # plt.plot(np.mean(np.mean(u2_mean,axis=0),axis=0))
+    # u_mean_field = (u_mean/5.2)-1
+    plt.imshow(u_mean_field[:,:,16].T,origin='lower',aspect=1)
+    plt.colorbar()
+    # plt.clim(0,0.2)
+    # plt.plot(u2_mean[:,14,20])
+    plt.savefig('field.png')
+    # print('Print mean field')
+    np.save('u_mean.npy',u_mean)
+    np.save('u2_mean.npy',u2_mean)
 
 
-    # fig.colorbar(im1, ax=ax[0])
-    # fig.colorbar(im2, ax=ax[1])
-    # plt.savefig('force.png')
-    anim = animation.FuncAnimation(fig, animate, frames=10)
-    anim.save('animation.gif',writer='imagemagick', fps=5)
+    # fig, ax = plt.subplots(2,1)
+    # # i = 9
+    # def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
+    # #     zeniths = np.linspace(0, 0.5, 30)
+    # #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
+    #     values = u[i,:,:,16]#np.random.random((azimuths.size, zeniths.size))
+    #     im1 = ax[0].imshow(values.T,origin='lower',aspect=config['dy']/config['dx'])
+    #     ax[0].set_xlabel('x')
+    #     ax[0].set_ylabel('y')
+    #     values = u[i,200,:,:]#np.random.random((azimuths.size, zeniths.size))
+    #     im2 = ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
+    #     # im2 = ax[1].quiver(v[i,300,1::4,1::4].T,w[i,300,1::4,1::4].T,scale=10)
+    #     # ax[1].scatter([63],[19],marker='+',color='r')
+    #     ax[1].set_xlabel('y')
+    #     ax[1].set_ylabel('z')
+    #     print(i)
+    #     # return
+
+
+    # # fig.colorbar(im1, ax=ax[0])
+    # # fig.colorbar(im2, ax=ax[1])
+    # # plt.savefig('force.png')
+    # anim = animation.FuncAnimation(fig, animate, frames=20)
+    # anim.save('animation.gif',writer='imagemagick', fps=10)
