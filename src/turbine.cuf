@@ -316,10 +316,10 @@ module turbine
         j      = threadIdx%y
         i_turb = blockIdx%x
 
-        i_global = nint(turb_loc(i_turb,1)/dx + i1) + i - ker_d_x/2
+        i_global = nint(turb_loc(i_turb,1)/dx) + i - ker_d_x/2
         j_global = nint(turb_loc(i_turb,2)/dy) + j - ker_d_y/2
 
-        coord_x = i_global*dx-turb_loc(i_turb,1) - i1*dx
+        coord_x = i_global*dx-turb_loc(i_turb,1)
         coord_y = j_global*dy-turb_loc(i_turb,2)
 
         ! Formulate the gaussian kernel
@@ -359,10 +359,10 @@ module turbine
 
         kk = dble(k-1.5d0)*dz
         if( kk < (turb_loc(i_turb,3)) ) then    
-            i_global = nint(turb_loc(i_turb,1)/dx+i1) + i - ker_d_x/2
+            i_global = nint(turb_loc(i_turb,1)/dx) + i - ker_d_x/2
             j_global = nint(turb_loc(i_turb,2)/dy) + j - ker_d_y/2
             k_global = k + 1  
-            CTU = u(nint(turb_loc(i_turb,1)/dx-i0+i1),nint(turb_loc(i_turb,2)/dy),k_global)
+            CTU = u(nint(turb_loc(i_turb,1)/dx-i0),nint(turb_loc(i_turb,2)/dy),k_global)
             ! Drag force of the nacelle
             CTFx = 0.5d0*(CTU**2.d0)*tow_c(i_turb)*dA_tower(i_turb)/(dx*dy*dz)
             ! Apply 
