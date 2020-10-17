@@ -123,6 +123,9 @@ def pre(PATH, case_name):
         os.system('ln -snf ' + os.path.join(pwd, inflow_path, '*') + ' ' + os.path.join(pwd, case_path, 'inflow_data'))
 
 
+    if config['turb_flag'] == 1:
+        os.system('cp ' +os.path.join(case_path, 'input/*.dat')+ ' '+ os.path.join(case_path, 'src', 'input'))
+
     # write zo and zs. Must be here to allow for changes beween prec/main
 
     zo = compute_zo(config)

@@ -34,7 +34,6 @@ program main
     real(fp), dimension(nx,ny,nz2) :: lm_old_host,mm_old_host,qn_old_host,nn_old_host
 
     real(fp),dimension(nx,ny,nz2) :: fx_host,fy_host,fz_host
-    real(fp),dimension(n_turb) :: power_host
     real(fp),dimension(nx,ny),device :: zo,ustar,m 
     real(fp),dimension(:,:,:),allocatable,device  :: u,v,w,p,&       ! Velocity & pressure   
                                              cx,cy,cz,&          ! Convection term      
@@ -54,6 +53,7 @@ program main
     ! turbine
     real(fp), dimension(:,:,:),allocatable,device :: fx,fy,fz 
     real(fp),dimension(:),allocatable,device    :: power
+    real(fp),dimension(n_turb)     :: power_host,mean_power
     ! real(fp), dimension(3,181) :: alpha_cl_cd_host
     ! real(fp), dimension(3,181),device :: alpha_cl_cd
 
@@ -89,7 +89,7 @@ program main
     tBlock_2d = dim3(16,16,1)
     ! real(fp), device :: d_avg1,d_avg2
     ! real(fp) :: d_avg_debug
-    integer :: device_id
+    integer :: device_id,counter=1
 
     integer :: localRank
     character(len=10) :: rankStr
@@ -357,8 +357,13 @@ program main
             if (log_umax>100) exit
 
             if (ts_flag > 0 .and. t >= ts_tstart) then 
-                print *,'Write instant field:'
+                ! print *,'Write instant field:'
                 call write_ts1(u_host,v_host,w_host,me)
+                counter = counter + 1
+                power_host = power
+                mean_power = mean_power + power_host
+                print *,mean_power/counter
+                print *,power_host
             end if
         end if
 

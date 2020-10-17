@@ -58,8 +58,8 @@ module dimen
 
     !-------------------------------------------------------------------------------
     ! spec
-    real(fp), parameter, dimension(n_turb) :: turb_x = ${turb_x}/z_i
-    real(fp), parameter, dimension(n_turb) :: turb_y = ${turb_y}/z_i
+    ! real(fp), parameter, dimension(n_turb) :: turb_x != ${turb_x}/z_i
+    ! real(fp), parameter, dimension(n_turb) :: turb_y != ${turb_y}/z_i
     real(fp), parameter, dimension(n_turb) :: turb_r = ${turb_r}/z_i
     real(fp), parameter, dimension(n_turb) :: turb_z = ${turb_z}/z_i
     real(fp), parameter, dimension(n_turb) :: turb_w = ${turb_w}
@@ -67,7 +67,7 @@ module dimen
     real(fp), parameter, dimension(n_turb) :: tow_r = ${tow_r}/z_i
     real(fp), parameter, dimension(n_turb) :: nac_c = ${nac_c}
     real(fp), parameter, dimension(n_turb) :: tow_c = ${tow_c}
-    real(fp), parameter, dimension(n_turb) :: yaw_angle = $yaw_angle/180._fp*pi
+    ! real(fp), parameter, dimension(n_turb) :: yaw_angle != $yaw_angle/180._fp*pi
 
     !-------------------------------------------------------------------------------
     ! model
