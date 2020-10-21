@@ -18,6 +18,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import h5py
 
 ################################################################################
 # CONSTANTS
@@ -78,30 +79,30 @@ def post(PATH, case_name):
         ########################################################################
         # avg
 
-        plot_sl(space['x_'], space['y_'], result_3d['u_avg_c'][:,:,config['nz']//2], 'x', 'y', 'u_avg', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['u_avg_c'][:,:,16], 'x', 'y', 'u_avg', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['u_avg_c'][:,config['ny']//2,:], 'x', 'z', 'u_avg', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['u_avg_c'][config['nx']//2,:,:], 'y', 'z', 'u_avg', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['v_avg_c'][:,:,config['nz']//2], 'x', 'y', 'v_avg', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['v_avg_c'][:,:,16], 'x', 'y', 'v_avg', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['v_avg_c'][:,config['ny']//2,:], 'x', 'z', 'v_avg', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['v_avg_c'][config['nx']//2,:,:], 'y', 'z', 'v_avg', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['w_avg_c'][:,:,config['nz']//2], 'x', 'y', 'w_avg', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['w_avg_c'][:,:,16], 'x', 'y', 'w_avg', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['w_avg_c'][:,config['ny']//2,:], 'x', 'z', 'w_avg', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['w_avg_c'][config['nx']//2,:,:], 'y', 'z', 'w_avg', 1, out_path)
 
         ########################################################################
         # std
 
-        plot_sl(space['x_'], space['y_'], result_3d['u_std_c'][:,:,config['nz']//2], 'x', 'y', 'u_std', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['u_std_c'][:,:,16], 'x', 'y', 'u_std', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['u_std_c'][:,config['ny']//2,:], 'x', 'z', 'u_std', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['u_std_c'][config['nx']//2,:,:], 'y', 'z', 'u_std', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['v_std_c'][:,:,config['nz']//2], 'x', 'y', 'v_std', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['v_std_c'][:,:,16], 'x', 'y', 'v_std', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['v_std_c'][:,config['ny']//2,:], 'x', 'z', 'v_std', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['v_std_c'][config['nx']//2,:,:], 'y', 'z', 'v_std', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['w_std_c'][:,:,config['nz']//2], 'x', 'y', 'w_std', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['w_std_c'][:,:,16], 'x', 'y', 'w_std', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['w_std_c'][:,config['ny']//2,:], 'x', 'z', 'w_std', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['w_std_c'][config['nx']//2,:,:], 'y', 'z', 'w_std', 1, out_path)
 
@@ -295,9 +296,9 @@ def plot_pr(z, var, z_name, var_name, out_path):
 def plot_sl(x, y, var, x_name, y_name, var_name, plot_flag, out_path):
     plt.figure()
     if plot_flag == 1:
-        plt.pcolormesh(x, y, var.T, cmap='jet')
+        plt.pcolormesh(x, y, var.T, cmap='bwr')
     elif plot_flag == 2:
-        plt.contourf(x, y, var.T, 100, cmap='jet')
+        plt.contourf(x, y, var.T, 100, cmap='bwr')
     plt.xlabel(x_name)
     plt.ylabel(y_name)
     plt.axes().set_aspect('equal')
@@ -311,18 +312,18 @@ def plot_sl_anim(x, y, var, x_name, y_name, var_name, plot_flag, out_path):
     for i in range (np.size(var, axis=0)):
         if i == 0:
             if plot_flag == 1:
-                im =plt.pcolormesh(x, y, var[i,:,:].T, cmap='jet')
+                im =plt.pcolormesh(x, y, var[i,:,:].T, cmap='bwr')
             elif plot_flag == 2:
-                im =plt.contourf(x, y, var[i,:,:].T, 100, cmap='jet')
+                im =plt.contourf(x, y, var[i,:,:].T, 100, cmap='bwr')
             plt.axes().set_aspect('equal')
             plt.xlabel(x_name)
             plt.ylabel(y_name)
             plt.colorbar(orientation = 'horizontal', label= var_name, aspect=30)
         else:
             if plot_flag == 1:
-                im =plt.pcolormesh(x, y, var[i,:,:].T, cmap='jet')
+                im =plt.pcolormesh(x, y, var[i,:,:].T, cmap='bwr')
             elif plot_flag == 2:
-                im =plt.contourf(x, y, var[i,:,:].T, 100, cmap='jet')
+                im =plt.contourf(x, y, var[i,:,:].T, 100, cmap='bwr')
         ims.append([im])
 
     ani = animation.ArtistAnimation(fig, ims, blit=True, repeat_delay=100)

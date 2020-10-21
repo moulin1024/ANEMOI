@@ -307,7 +307,7 @@ module turbine
         real(fp),parameter :: sigma_x  = 2._fp*tow_r(1)
         real(fp),parameter :: sigma_y  = 2._fp*tow_r(1)
         real(fp),parameter :: tmp1  = 1._fp/(sigma_x*sigma_y*pi)
-        integer,parameter :: i0 = nint(1.0*turb_r(1)/dx)
+        integer,parameter :: i0 = 0!nint(2.0*turb_r(1)/dx)
         integer,parameter :: i1 = nint(0.5*turb_r(1)/dx)
     !----------------------------------------------------------------------------
     ! code
@@ -346,7 +346,7 @@ module turbine
         real(fp) :: CTFx,CTU,kk
 
         integer  :: i,j,k,i_turb,i_global,j_global,k_global,istat
-        integer,parameter :: i0 = nint(1.0*turb_r(1)/dx)
+        integer,parameter :: i0 = 0!nint(2.0*turb_r(1)/dx)
         integer,parameter :: i1 = nint(0.5*turb_r(1)/dx)
     !----------------------------------------------------------------------------
     ! code
@@ -433,7 +433,7 @@ module turbine
         integer  :: hub_k(n_turb)
         real(fp) :: lz1(n_turb),lz2(n_turb)
         integer  :: i,j,k,i_turb,i_global,j_global,k_global,istat
-        integer,parameter :: i0 = nint(1.0*turb_r(1)/dx)
+        integer,parameter :: i0 = 0!nint(2.0*turb_r(1)/dx)
     !----------------------------------------------------------------------------
     ! code
     !----------------------------------------------------------------------------
@@ -456,7 +456,7 @@ module turbine
         u(nint(turb_loc(i_turb,1)/dx)-i0,nint(turb_loc(i_turb,2)/dy),hub_k(i_turb)+1)*lz2(i_turb)
 
         ! Drag force of the nacelle
-        CTFx = 0.5_fp*(CTUin(i_turb)**2)*nac_c(i_turb)*dA_nacell(i_turb)/(dx*dy*dz)
+        CTFx = 0.5_fp*(CTU**2)*nac_c(i_turb)*dA_nacell(i_turb)/(dx*dy*dz)
         
         ! Global index 
         i_global = nint(turb_loc(i_turb,1)/dx) + i - ker_d_x/2
@@ -639,7 +639,7 @@ module turbine
             CTV = CTV_origin*cos(turb_loc(i_turb,4))-CTU_origin*sin(turb_loc(i_turb,4))
             CTW = CTW_origin
             ! Compute the tangential velocity relative to the rotating blade                   
-            CTV = - CTW*cos_Tang(i_phi)+CTV*sin_Tang(i_phi) + turb_rpm(i_turb)/60*2*pi*(r(i_r,i_turb)*z_i)
+            CTV = CTW*cos_Tang(i_phi)-CTV*sin_Tang(i_phi) + turb_rpm(i_turb)/60*2*pi*(r(i_r,i_turb)*z_i)
 
             ! Find the attack angle and relative inflow velocity for the blade element
             CTphi = atan(CTU/CTV)
@@ -710,8 +710,8 @@ module turbine
         do i_turb = 1,n_turb
             if (i_r >= n_r_s) then
                 mu_x = -r(i_r,i_turb)*cos_Tang(i_phi)*sin(turb_loc(i_turb,4)) 
-                mu_y = r(i_r,i_turb)*cos_Tang(i_phi)*cos(turb_loc(i_turb,4))
-                mu_z = r(i_r,i_turb)*sin_Tang(i_phi)
+                mu_y =  r(i_r,i_turb)*cos_Tang(i_phi)*cos(turb_loc(i_turb,4))
+                mu_z =  r(i_r,i_turb)*sin_Tang(i_phi)
 
                 ! global index for kernel
                 i_global = nint(turb_loc(i_turb,1)/dx) + i - mask_x/2

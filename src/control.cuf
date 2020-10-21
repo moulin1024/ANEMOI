@@ -2,7 +2,8 @@ module control
     use precision
     use dimen
     use cudafor
-    integer,parameter :: i0 = nint(1.0*turb_r(1)/dx)
+    integer,parameter :: i0 = nint(2.0*turb_r(1)/dx)
+    integer,parameter :: i2 = nint(1.0*turb_r(1)/dx)
     integer,parameter :: i1 = nint(2.0*turb_r(1)/dy)
     contains
     subroutine controller(turb_rpm,u,turb_loc,t)
@@ -13,9 +14,9 @@ module control
         ! Interface variables
         real(fp),dimension(n_turb),intent(out),device  :: turb_rpm
         real(fp),dimension(n_turb)  :: debug
-        real(fp),dimension(:),allocatable,device  :: CTUin
+        real(fp),dimension(:),allocatable,device  :: CTUin,CTUin_old
         real(fp),dimension(n_turb)  :: turb_rpm_host
-        real(fp),dimension(:),allocatable,device  :: turb_rpm_old
+        ! real(fp),dimension(:),allocatable,device  :: turb_rpm_old
         real(fp),dimension(nx,ny,nz2),intent(in),device   :: u
         real(fp),dimension(n_turb,4),intent(in),device :: turb_loc 
         integer,intent(in) :: t
@@ -24,14 +25,14 @@ module control
         integer i_turb,i,j,k,istat
 
         type(dim3) :: grid,tBlock
-        tblock = dim3(i1,1,1)
+        tblock = dim3(i1,i2,1)
         grid = dim3(n_turb,1,1)
 
-        save turb_rpm_old,CTUin
+        save CTUin_old,CTUin!,CTUin_old
     !---------------------------------------------------------------------------
     ! code
     !---------------------------------------------------------------------------
-        if (t == 1) allocate(turb_rpm_old(n_turb),CTUin(n_turb))
+        if (t == 1) allocate(CTUin_old(n_turb),CTUin(n_turb))
         !$cuf kernel do(1) <<<*,*>>>
         do i_turb = 1,n_turb
             CTUin(i_turb) = 0._fp
@@ -41,12 +42,19 @@ module control
 
         !$cuf kernel do(1) <<<*,*>>>
         do i_turb = 1,n_turb
-            turb_rpm(i_turb) = rpm_wire01(CTUin(i_turb))
             if (t>2000) then
-                turb_rpm(i_turb) = 0.5*turb_rpm(i_turb) + 0.5*turb_rpm_old(i_turb)
+                CTUin(i_turb) = 0.5*CTUin_old(i_turb) + 0.5* CTUin(i_turb)
             end if
-            turb_rpm_old(i_turb) = turb_rpm(i_turb)
+            turb_rpm(i_turb) = rpm_wire01(CTUin(i_turb))
+            CTUin_old(i_turb) = CTUin(i_turb)
+            ! if (t>2000) then
+            !     turb_rpm(i_turb) = 0.5*turb_rpm(i_turb) + 0.5*turb_rpm_old(i_turb)
+            ! end if
+            ! turb_rpm_old(i_turb) = turb_rpm(i_turb)
         end do
+
+        ! turb_rpm_host = CTUin
+        ! print *,turb_rpm_host
 
     end subroutine controller
 
@@ -55,6 +63,15 @@ module control
         rpm_wire01 = -11.90213817*u_inflow**3+ 55.83501108*u_inflow**2 + 515.7774735*u_inflow-324.26512599
     end function rpm_wire01
 
+    attributes(device) function rpm_v80(u_inflow)
+
+        real(fp) u_inflow,rpm_v80
+        rpm_v80 = 4.92921417e-03*u_inflow**5-1.84075843e-01*u_inflow**4+ &
+        2.61464736e+00*u_inflow**3-1.75224421e+01*u_inflow**2+       &
+        5.59968850e+01*u_inflow-5.65494044e+01
+    
+    end function rpm_v80
+
     attributes(global) subroutine get_inflow(CTUin,u,turb_loc)
         implicit none
         real(fp),dimension(n_turb),intent(inout) :: CTUin
@@ -62,6 +79,7 @@ module control
         real(fp),dimension(n_turb,4),intent(in) :: turb_loc
         integer :: i,j,k,hub_x,hub_y,hub_z,i_turb,istat
         
+        i = threadidx%y
         j = threadidx%x - int(i1/2)
         i_turb = blockidx%x
 
@@ -69,7 +87,7 @@ module control
         hub_y = nint(turb_loc(i_turb,2)/dy)
         hub_z = nint(turb_loc(i_turb,3)/dz) + 1
         
-        istat = atomicadd(CTUin(i_turb),u(hub_x-i0,hub_y+j,hub_z)/i1)
+        istat = atomicadd(CTUin(i_turb),u(hub_x-i0+i,hub_y+j,hub_z)/(i1*i2))
         call syncthreads() 
     end subroutine get_inflow
 end module control 
