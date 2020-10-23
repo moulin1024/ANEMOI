@@ -66,8 +66,8 @@ program main
     real(fp), dimension(nx,ny,nzb) :: ta_u_host,ta_v_host,ta_w_host,&
                                       ta_u2_host,ta_v2_host,ta_w2_host!,&
                                             ! ta_uw_host,ta_txz_host,ta_dudz_host
-    real(fp), dimension(nzb),device :: ta_power
-    real(fp), dimension(nzb) :: ta_power_host
+    real(fp), dimension(n_turb),device :: ta_power
+    real(fp), dimension(n_turb) :: ta_power_host
     real(fp), dimension(:,:,:),allocatable,device ::  ta_u,ta_v,ta_w,&
                                                 ta_u2,ta_v2,ta_w2 
 
@@ -279,6 +279,7 @@ program main
     ! init turb
     if(turb_flag > 0) call open_turb(me)
 
+    if (me == 0) OPEN(unit=(1993), FILE="output/ta_power.dat")  
     !---------------------------------------------------------------------------
     ! init fft 
     ! Watch out for the difference of row-first and column first indexing between fortran and cufft
@@ -629,13 +630,16 @@ program main
 
             !$cuf kernel do(1) <<<*,*>>>
             do i_turb = 1,n_turb
-                ta_power(i_turb) = ta_power(i_turb) + power(i_turb)
+                ta_power(i_turb) = ta_power(i_turb) + power(i_turb)/p_count
             end do
             
             if (mod(t,p_count) == 0) then
                 ta_power_host = ta_power
-                print *, 'ta_power: ', ta_power_host/p_count
+                print *, 'ta_power: ', ta_power_host
                 ta_power = 0._fp
+                do i_turb = 1,n_turb
+                    write (1993,*)  ta_power_host(i_turb)
+                end do
             endif
 
         endif
@@ -653,6 +657,7 @@ program main
     !---------------------------------------------------------------------------
     if(log_flag > 0) call close_log(me)
 
+    if (me == 0) close (unit=1993)
     ! !---------------------------------------------------------------------------
     ! ! close inflow
     ! !---------------------------------------------------------------------------
