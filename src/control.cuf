@@ -2,7 +2,7 @@ module control
     use precision
     use dimen
     use cudafor
-    integer,parameter :: i0 = nint(2.0*turb_r(1)/dx)
+    integer,parameter :: i0 = nint(3.0*turb_r(1)/dx)
     integer,parameter :: i2 = nint(1.0*turb_r(1)/dx)
     integer,parameter :: i1 = nint(2.0*turb_r(1)/dy)
     contains
