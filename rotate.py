@@ -6,7 +6,7 @@ theta = sys.argv[1]
 
 theta = np.radians(np.double(theta))
 
-wind_df = pd.read_csv("turbine_loc.dat")
+wind_df = pd.read_csv("HornsRev.dat")
 x = wind_df["x"]
 y = wind_df["y"]
 
