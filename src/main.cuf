@@ -598,7 +598,7 @@ program main
         !-----------------------------------------------------------------------
         !  write and re-initalize ta_ (from the sum)
 
-        if (ta_flag > 0 .and. t >= ta_tstart .and. mod(t,p_count) == 0) then
+        if (ta_flag > 0 .and. t >= ta_tstart .and. mod(t-ta_tstart+1,p_count) == 0) then
             print *,'Write average field:'
             if (ta_flag==1) then
                 ta_u_host  = ta_u 
@@ -633,7 +633,7 @@ program main
                 ta_power(i_turb) = ta_power(i_turb) + power(i_turb)/p_count
             end do
             
-            if (mod(t,p_count) == 0) then
+            if (mod(t-ta_tstart+1,p_count) == 0) then
                 ta_power_host = ta_power
                 print *, 'ta_power: ', ta_power_host
                 ta_power = 0._fp
