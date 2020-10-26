@@ -32,8 +32,8 @@ USE_NVTX = 1
 ################################################################################
 PROG = wireles_src
 
-DEP0  =   precision.o 
-DEP1  =   cufft_m.o dimen.o
+DEP0  =   precision.o dimen.o
+DEP1  =   cufft_m.o
 DEP2  =   update.o convection.o derivative.o filter.o io.o pressure.o rhs.o time.o control.o
 DEP3  =   divergence.o turbine.o
 DEP4  =   sgs.o wall.o
