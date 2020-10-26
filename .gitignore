@@ -10,3 +10,6 @@ job/*
 *.gif
 *.x
 *.npy
+*.txt
+*.csv
+turb_loc.dat
