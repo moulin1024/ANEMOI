@@ -304,7 +304,7 @@ module turbine
         
         real(fp) :: tmp3
         integer istat
-        real(fp),parameter :: sigma_x  = 2._fp*tow_r(1)
+        real(fp),parameter :: sigma_x  = 2._fp*dx
         real(fp),parameter :: sigma_y  = 2._fp*tow_r(1)
         real(fp),parameter :: tmp1  = 1._fp/(sigma_x*sigma_y*pi)
         integer,parameter :: i0 = 0!nint(2.0*turb_r(1)/dx)
@@ -386,7 +386,7 @@ module turbine
         
         real(fp) :: tmp3
         integer istat
-        real(fp),parameter :: sigma_x  = 2.d0*nac_r(1)
+        real(fp),parameter :: sigma_x  = 2.d0*dx
         real(fp),parameter :: sigma_yz  = 2.d0*nac_r(1)
         real(fp),parameter :: tmp1  = 1.d0/(sigma_yz**2*sigma_x*dsqrt(pi)**3)
     !----------------------------------------------------------------------------
@@ -549,7 +549,7 @@ module turbine
 
             if (i_r >= n_r_s) then
                 ! Blade element relative coordinates to the hub
-                mu_x = - r(i_r,i_turb)*cos_Tang(i_phi)*sin(turb_loc(i_turb,4)) ! Why minus sign: left-hand coord
+                mu_x = - r(i_r,i_turb)*cos_Tang(i_phi)*sin(turb_loc(i_turb,4)) 
                 mu_y = r(i_r,i_turb)*cos_Tang(i_phi)*cos(turb_loc(i_turb,4))
                 mu_z = r(i_r,i_turb)*sin_Tang(i_phi)                           ! Why +1: z = 2 to nzb+1
                 
@@ -565,7 +565,7 @@ module turbine
                 coord_z_w = coord_z_u - 0.5*dz
 
                 ! Apply gaussian smoothing kernel
-                sigma_x  = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_x  = 2.0*dx!sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
                 sigma_yz = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
@@ -731,7 +731,7 @@ module turbine
                 sin_CTangx = coord_z_u/(r_u+1e-16)
                 cos_CTangz = (coord_y/cos(turb_loc(i_turb,4)))/(r_w+1e-16)
 
-                sigma_x  = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_x  = 2.0*dx!2.0*sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
                 sigma_yz = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
