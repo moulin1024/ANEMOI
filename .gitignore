@@ -13,3 +13,4 @@ job/*
 *.txt
 *.csv
 turb_loc.dat
+post/*

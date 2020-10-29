@@ -5,6 +5,8 @@ module control
     integer,parameter :: i0 = nint(3.0*turb_r(1)/dx)
     integer,parameter :: i2 = nint(1.0*turb_r(1)/dx)
     integer,parameter :: i1 = nint(2.0*turb_r(1)/dy)
+    real(fp),dimension(3),parameter :: rpm_0_0_0 = (/2183.0,1405.7,1560.5/)
+    real(fp),dimension(3),parameter :: rpm_25_15_0 = (/2113.39462885849,1666.10117077778,1744.22877040370/)
     contains
     subroutine controller(turb_rpm,u,turb_loc,t)
     !---------------------------------------------------------------------------
@@ -45,7 +47,7 @@ module control
             if (t>2000) then
                 CTUin(i_turb) = 0.5*CTUin_old(i_turb) + 0.5* CTUin(i_turb)
             end if
-            turb_rpm(i_turb) = rpm_wire01(CTUin(i_turb))
+            turb_rpm(i_turb) = rpm_25_15_0(i_turb)!rpm_wire01(CTUin(i_turb))
             CTUin_old(i_turb) = CTUin(i_turb)
             ! if (t>2000) then
             !     turb_rpm(i_turb) = 0.5*turb_rpm(i_turb) + 0.5*turb_rpm_old(i_turb)

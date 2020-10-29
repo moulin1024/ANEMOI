@@ -20,10 +20,12 @@ import matplotlib.pyplot as plt
 import h5py
 import os.path
 import math
+import pandas as pd
 from pathlib import Path
 from matplotlib.pyplot import figure
 from matplotlib import animation, rc
 from pyevtk.hl import gridToVTK
+
 
 ################################################################################
 # MAIN FONCTION
@@ -40,6 +42,7 @@ def anime(PATH, case_name):
     ############################################################################
     # INIT
     out_path = os.path.join(case_path, 'output')
+    in_path = os.path.join(case_path, 'input')
     fctlib.test_and_mkdir(out_path)
     src_out_path = os.path.join(PATH['job'], case_name, 'src', 'output')
     src_inp_path = os.path.join(PATH['job'], case_name, 'src', 'input')
@@ -95,6 +98,13 @@ def anime(PATH, case_name):
         grp.attrs[key]=value
 
     f.close()
+
+    df = pd.read_csv(in_path+'/turb_loc.dat')
+    df_power = pd.read_csv(src_out_path+'/ta_power.dat',header=None)
+    df['power'] = df_power
+    print(df)
+    df.to_csv(out_path+'/ta_power.csv',index=False)
+
 
     #         # Spatial coorindates (masked)
 

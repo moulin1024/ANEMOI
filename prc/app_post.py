@@ -79,30 +79,30 @@ def post(PATH, case_name):
         ########################################################################
         # avg
 
-        plot_sl(space['x_'], space['y_'], result_3d['u_avg_c'][:,:,16], 'x', 'y', 'u_avg', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['u_avg_c'][:,:,19], 'x', 'y', 'u_avg', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['u_avg_c'][:,config['ny']//2,:], 'x', 'z', 'u_avg', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['u_avg_c'][config['nx']//2,:,:], 'y', 'z', 'u_avg', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['v_avg_c'][:,:,16], 'x', 'y', 'v_avg', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['v_avg_c'][:,:,19], 'x', 'y', 'v_avg', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['v_avg_c'][:,config['ny']//2,:], 'x', 'z', 'v_avg', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['v_avg_c'][config['nx']//2,:,:], 'y', 'z', 'v_avg', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['w_avg_c'][:,:,16], 'x', 'y', 'w_avg', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['w_avg_c'][:,:,19], 'x', 'y', 'w_avg', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['w_avg_c'][:,config['ny']//2,:], 'x', 'z', 'w_avg', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['w_avg_c'][config['nx']//2,:,:], 'y', 'z', 'w_avg', 1, out_path)
 
         ########################################################################
         # std
 
-        plot_sl(space['x_'], space['y_'], result_3d['u_std_c'][:,:,16], 'x', 'y', 'u_std', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['u_std_c'][:,:,19], 'x', 'y', 'u_std', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['u_std_c'][:,config['ny']//2,:], 'x', 'z', 'u_std', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['u_std_c'][config['nx']//2,:,:], 'y', 'z', 'u_std', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['v_std_c'][:,:,16], 'x', 'y', 'v_std', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['v_std_c'][:,:,19], 'x', 'y', 'v_std', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['v_std_c'][:,config['ny']//2,:], 'x', 'z', 'v_std', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['v_std_c'][config['nx']//2,:,:], 'y', 'z', 'v_std', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['w_std_c'][:,:,16], 'x', 'y', 'w_std', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['w_std_c'][:,:,19], 'x', 'y', 'w_std', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['w_std_c'][:,config['ny']//2,:], 'x', 'z', 'w_std', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['w_std_c'][config['nx']//2,:,:], 'y', 'z', 'w_std', 1, out_path)
 
