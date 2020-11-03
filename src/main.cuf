@@ -601,9 +601,9 @@ program main
         if (ta_flag > 0 .and. t >= ta_tstart .and. mod(t-ta_tstart+1,p_count) == 0) then
             print *,'Write average field:'
             if (ta_flag==1) then
-                ta_u_host  = ta_u 
-                ta_v_host  = ta_v 
-                ta_w_host  = ta_w 
+                ta_u_host  = ta_u  
+                ta_v_host  = ta_v  
+                ta_w_host  = ta_w  
                 ta_u2_host = ta_u2 
                 ta_v2_host = ta_v2 
                 ta_w2_host = ta_w2 

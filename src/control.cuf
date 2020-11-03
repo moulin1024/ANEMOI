@@ -47,7 +47,7 @@ module control
             if (t>2000) then
                 CTUin(i_turb) = 0.5*CTUin_old(i_turb) + 0.5* CTUin(i_turb)
             end if
-            turb_rpm(i_turb) = rpm_25_15_0(i_turb)!rpm_wire01(CTUin(i_turb))
+            turb_rpm(i_turb) = turb_w(i_turb)!rpm_wire01(CTUin(i_turb))
             CTUin_old(i_turb) = CTUin(i_turb)
             ! if (t>2000) then
             !     turb_rpm(i_turb) = 0.5*turb_rpm(i_turb) + 0.5*turb_rpm_old(i_turb)
