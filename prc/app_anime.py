@@ -102,7 +102,8 @@ def anime(PATH, case_name):
     df = pd.read_csv(in_path+'/turb_loc.dat')
     df_power = pd.read_csv(src_out_path+'/ta_power.dat',header=None)
     df['power'] = df_power
-    print(df)
+    print(df['power'])
+    print(np.sum(df_power.to_numpy()))
     df.to_csv(out_path+'/ta_power.csv',index=False)
 
 

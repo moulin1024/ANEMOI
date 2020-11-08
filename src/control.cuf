@@ -9,9 +9,6 @@ module control
     real(fp),dimension(3),parameter :: rpm_25_15_0 = (/2113.39462885849,1666.10117077778,1744.22877040370/)
     contains
     subroutine controller(turb_rpm,u,turb_loc,t)
-    !---------------------------------------------------------------------------
-    ! declaration
-    !---------------------------------------------------------------------------
         implicit none
         ! Interface variables
         real(fp),dimension(n_turb),intent(out),device  :: turb_rpm
@@ -31,9 +28,7 @@ module control
         grid = dim3(n_turb,1,1)
 
         save CTUin_old,CTUin!,CTUin_old
-    !---------------------------------------------------------------------------
-    ! code
-    !---------------------------------------------------------------------------
+    
         if (t == 1) allocate(CTUin_old(n_turb),CTUin(n_turb))
         !$cuf kernel do(1) <<<*,*>>>
         do i_turb = 1,n_turb
@@ -64,6 +59,15 @@ module control
         real(fp) u_inflow,rpm_wire01
         rpm_wire01 = -11.90213817*u_inflow**3+ 55.83501108*u_inflow**2 + 515.7774735*u_inflow-324.26512599
     end function rpm_wire01
+
+    attributes(device) function rpm_wire01_iter(torque,gamma)
+        real(fp),intent(in) :: torque,gamma
+        real(fp) rpm_wire01_iter,tmp
+        
+        tmp = torque/cos(gamma)**2
+        rpm_wire01_iter = -33504.93975539*tmp**2 + 14473.5127381*tmp + 561.54844566
+
+    end function rpm_wire01_iter
 
     attributes(device) function rpm_v80(u_inflow)
 
