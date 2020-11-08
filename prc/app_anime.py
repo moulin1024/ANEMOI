@@ -24,7 +24,7 @@ import pandas as pd
 from pathlib import Path
 from matplotlib.pyplot import figure
 from matplotlib import animation, rc
-from pyevtk.hl import gridToVTK
+# from pyevtk.hl import gridToVTK
 
 
 ################################################################################
@@ -86,13 +86,13 @@ def anime(PATH, case_name):
     dset = grp.create_dataset("y", data=y)
     dset = grp.create_dataset("z", data=z)
 
-    gridToVTK(
-        out_path+'/'+case_name,
-        x,
-        y,
-        z,
-        pointData={"u": result_3d['u_avg_c'],"v": result_3d['v_avg_c'],"w": result_3d['w_avg_c']}
-    )
+    # gridToVTK(
+    #     out_path+'/'+case_name,
+    #     x,
+    #     y,
+    #     z,
+    #     pointData={"u": result_3d['u_avg_c'],"v": result_3d['v_avg_c'],"w": result_3d['w_avg_c']}
+    # )
 
     for key, value in config.items():
         grp.attrs[key]=value
