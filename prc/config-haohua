@@ -45,7 +45,7 @@ dt		= 0.001		# non-dim timestep (dt=dtr*u_star/z_i)
 # custom
 dtr		= 0.00015		# dim. timestep (dt=dtr*u_star/z_i)
 
-nsteps		= 29001		# number of timesteps
+nsteps		= 49001		# number of timesteps
 
 ########################################################################################################################
 # bc
@@ -91,7 +91,7 @@ inflow_count	= 10		# frequency of sgs coefficients update
 # output
 ########################################################################################################################
 c_count		= 10		# frequency of ta/ts_output sampling
-p_count		= 20000		# frequency of ta_output and averaging period (must be multiple of c_count)
+p_count		= 45000		# frequency of ta_output and averaging period (must be multiple of c_count)
 
 # log_output (1d each time step, global quantity)
 log_flag	= 1		# 0 = no log_output, 1= log_output
@@ -105,7 +105,7 @@ ta_iend		= 32		# i end of ts_output if ta_mask
 ta_jstart	= 1		# j start of ts_output if ta_mask
 ta_jend		= 32		# j end of ts_output if ta_mask
 ta_kend		= 32		# k end of ts_output if ta_mask
-ta_tstart	= 9001		# t start of ta_output (ta_tstart-1 must be multiple of p_count)
+ta_tstart	= 4001		# t start of ta_output (ta_tstart-1 must be multiple of p_count)
 
 # ts output (3d each c_count, time sampled)
 ts_flag		= 0		# 0 = no ts_output, 1= ts_output no1, etc

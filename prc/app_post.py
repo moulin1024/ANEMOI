@@ -393,6 +393,7 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     ax.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax.yaxis.set_major_locator(plt.MaxNLocator(4))
     plt.grid(b=True, which='both')
+    print(result_pr['u_avg_c'][19])
 
     ax = plt.subplot(232)
     plt.plot(result_pr['v_avg_c']/config['u_fric'], space['z_c']/config['l_z'], 'g')
@@ -416,6 +417,7 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     plt.ylabel(r'$z/H$')
     ax.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax.yaxis.set_major_locator(plt.MaxNLocator(4))
+    print(result_pr['u_std_c'][19]/result_pr['u_avg_c'][19])
     plt.grid(b=True, which='both')
 
     ax = plt.subplot(235)

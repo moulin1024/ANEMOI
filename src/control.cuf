@@ -2,9 +2,9 @@ module control
     use precision
     use dimen
     use cudafor
-    integer,parameter :: i0 = nint(2.0*turb_r(1)/dx)
-    integer,parameter :: i2 = nint(1.0*turb_r(1)/dx)
-    integer,parameter :: i1 = nint(1.0*turb_r(1)/dy)
+    integer,parameter :: i0 = nint(3.0*turb_r(1)/dx)
+    integer,parameter :: i2 = nint(2.0*turb_r(1)/dx)
+    integer,parameter :: i1 = nint(2.0*turb_r(1)/dy)
     real(fp),dimension(3),parameter :: rpm_0_0_0 = (/2183.0,1405.7,1560.5/)
     real(fp),dimension(3),parameter :: rpm_25_15_0 = (/2113.39462885849,1666.10117077778,1744.22877040370/)
     contains
