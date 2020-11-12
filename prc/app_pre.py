@@ -170,6 +170,9 @@ def compute_vel(config):
     # correct for top bc
     u[:,:,-1]=u[:,:,-2]
 
+    u[:,:,config['nz']//2:]=u[0,0,config['nz']//2]
+    print(u[0,0,config['nz']//2])
+
     # RESHAPE
     if config['double_flag'] ==0:
         print('u,v,w: Single precision!')

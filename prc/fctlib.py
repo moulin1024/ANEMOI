@@ -258,7 +258,7 @@ def get_config(case_path):
     config['ts_tstart'] = int(config['ts_tstart'])
     config['ts_nx'] = config['ts_iend']-config['ts_istart']+1
     config['ts_ny'] = config['ts_jend']-config['ts_jstart']+1
-    config['ts_ns'] = int((config['nsteps']-config['ts_tstart']+1)/(config['c_count']))
+    config['ts_ns'] = int((config['nsteps']-config['ts_tstart']+1)/(config['c_count']*10))
 
     # exec
     config['nzb'] = int(config['nz'])//int(config['job_np'])

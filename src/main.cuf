@@ -317,7 +317,7 @@ program main
         rhsx_f  = rhsx 
         rhsy_f  = rhsy 
         rhsz_f  = rhsz 
-       
+
 #ifdef USE_NVTX    
     call nvtxEndRange
 #endif
@@ -356,13 +356,10 @@ program main
             call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
             if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
             if (log_umax>100) exit
-            if (t>5000) then
-                counter = counter + 1
-                ! if (me == 0) then
-                !     power_host = power
-                !     mean_power = mean_power + power_host
-                !     print *,mean_power/counter
-                ! end if
+
+            if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*10) == 0) then 
+                print *,'Write instant field:'
+                call write_ts1(u_host,v_host,w_host,me)
             end if
         end if
 
@@ -475,7 +472,7 @@ program main
         !-----------------------------------------------------------------------
         ! applying forcing to the rhs
         ! applying pressure gradient (not needed fror)
-        if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx)      
+        if (sim_flag < 3 .and. me == 0)   call const_pres_grad<<<grid, tBlock>>>(rhsx)      
         if (turb_flag == 1) then
             if (device_id == 0 ) then
 

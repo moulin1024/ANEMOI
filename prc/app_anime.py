@@ -64,27 +64,27 @@ def anime(PATH, case_name):
     if config['ta_flag'] > 0:
         result_3d = post.get_result_3d(src_inp_path, src_out_path, config)
 
-    f = h5py.File(out_path+'/'+case_name+'_ta.h5', 'w')
-    grp = f.create_group("data")
-    print(result_3d['u_avg_c'].shape)
-    dset = grp.create_dataset("u_avg", data=result_3d['u_avg_c'])
-    dset = grp.create_dataset("v_avg", data=result_3d['v_avg_c'])
-    dset = grp.create_dataset("w_avg", data=result_3d['w_avg_c'])
-    dset = grp.create_dataset("u_std", data=result_3d['u_std_c'])
-    dset = grp.create_dataset("v_std", data=result_3d['v_std_c'])
-    dset = grp.create_dataset("w_std", data=result_3d['w_std_c'])
+        f = h5py.File(out_path+'/'+case_name+'_ta.h5', 'w')
+        grp = f.create_group("data")
+        # print(result_3d['u_avg_c'].shape)
+        dset = grp.create_dataset("u_avg", data=result_3d['u_avg_c'])
+        dset = grp.create_dataset("v_avg", data=result_3d['v_avg_c'])
+        dset = grp.create_dataset("w_avg", data=result_3d['w_avg_c'])
+        dset = grp.create_dataset("u_std", data=result_3d['u_std_c'])
+        dset = grp.create_dataset("v_std", data=result_3d['v_std_c'])
+        dset = grp.create_dataset("w_std", data=result_3d['w_std_c'])
 
-    x_grid_unmask = space['x']
-    y_grid_unmask = space['y']
-    z_grid_unmask = space['z_c']
+        x_grid_unmask = space['x']
+        y_grid_unmask = space['y']
+        z_grid_unmask = space['z_c']
 
-    x = x_grid_unmask[config['ts_istart']-1:config['ts_iend']]
-    y = y_grid_unmask[config['ts_jstart']-1:config['ts_jend']]
-    z = z_grid_unmask[:config['ts_kend']-1]
+        x = x_grid_unmask[config['ts_istart']-1:config['ts_iend']]
+        y = y_grid_unmask[config['ts_jstart']-1:config['ts_jend']]
+        z = z_grid_unmask[:config['ts_kend']-1]
 
-    dset = grp.create_dataset("x", data=x)
-    dset = grp.create_dataset("y", data=y)
-    dset = grp.create_dataset("z", data=z)
+        dset = grp.create_dataset("x", data=x)
+        dset = grp.create_dataset("y", data=y)
+        dset = grp.create_dataset("z", data=z)
 
     # gridToVTK(
     #     out_path+'/'+case_name,
@@ -94,17 +94,17 @@ def anime(PATH, case_name):
     #     pointData={"u": result_3d['u_avg_c'],"v": result_3d['v_avg_c'],"w": result_3d['w_avg_c']}
     # )
 
-    for key, value in config.items():
-        grp.attrs[key]=value
+        for key, value in config.items():
+            grp.attrs[key]=value
 
-    f.close()
-
-    df = pd.read_csv(in_path+'/turb_loc.dat')
-    df_power = pd.read_csv(src_out_path+'/ta_power.dat',header=None)
-    df['power'] = df_power
-    print(df['power'])
-    print(np.sum(df_power.to_numpy()))
-    df.to_csv(out_path+'/ta_power.csv',index=False)
+        f.close()
+        if config['turb_flag'] > 0:
+            df = pd.read_csv(in_path+'/turb_loc.dat')
+            df_power = pd.read_csv(src_out_path+'/ta_power.dat',header=None)
+            df['power'] = df_power
+            print(df['power'])
+            print(np.sum(df_power.to_numpy()))
+            df.to_csv(out_path+'/ta_power.csv',index=False)
 
 
     #         # Spatial coorindates (masked)
@@ -122,8 +122,8 @@ def anime(PATH, case_name):
 
     # f = h5py.File(out_path+'/'+case_name+'_ts.h5', 'w')
 
-    # hub_k = int(config['turb_z']/config['dz'])+1
-    # print(hub_k)
+    hub_k = int(config['turb_z']/config['dz'])+1
+    print(hub_k)
 
     # u2 = u*u - np.mean(u,axis=0)*np.mean(u,axis=0)
     # v2 = v*v - np.mean(v,axis=0)*np.mean(v,axis=0)
@@ -202,28 +202,34 @@ def anime(PATH, case_name):
     # # np.save('u_mean.npy',u_mean)
     # # np.save('u2_mean.npy',u2_mean)
 
+    if config['ts_flag'] > 0:
+        result_4d = post.get_result_4d(src_out_path, config)
 
-    # fig, ax = plt.subplots(2,1)
-    # # i = 9
-    # def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
-    # #     zeniths = np.linspace(0, 0.5, 30)
-    # #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
-    #     values = u[i,:,:,hub_k]#np.random.random((azimuths.size, zeniths.size))
-    #     im1 = ax[0].imshow(values.T,origin='lower',aspect=config['dy']/config['dx'])
-    #     ax[0].set_xlabel('x')
-    #     ax[0].set_ylabel('y')
-    #     values = u[i,128,:,:]#np.random.random((azimuths.size, zeniths.size))
-    #     im2 = ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
-    #     # im2 = ax[1].quiver(v[i,300,1::4,1::4].T,w[i,300,1::4,1::4].T,scale=10)
-    #     # ax[1].scatter([63],[19],marker='+',color='r')
-    #     ax[1].set_xlabel('y')
-    #     ax[1].set_ylabel('z')
-    #     print(i)
-    #     # return
+        u = result_4d['u_inst_c']
+        v = result_4d['v_inst_c']
+        w = result_4d['w_inst_c']
+
+        fig, ax = plt.subplots(2,1)
+        # i = 9
+        def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
+        #     zeniths = np.linspace(0, 0.5, 30)
+        #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
+            values = u[i,:,:,hub_k]#np.random.random((azimuths.size, zeniths.size))
+            im1 = ax[0].imshow(values.T,origin='lower',aspect=config['dy']/config['dx'])
+            ax[0].set_xlabel('x')
+            ax[0].set_ylabel('y')
+            values = u[i,32,:,:]#np.random.random((azimuths.size, zeniths.size))
+            im2 = ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
+            # im2 = ax[1].quiver(v[i,300,1::4,1::4].T,w[i,300,1::4,1::4].T,scale=10)
+            # ax[1].scatter([63],[19],marker='+',color='r')
+            ax[1].set_xlabel('y')
+            ax[1].set_ylabel('z')
+            print(i)
+            # return
 
 
-    # # fig.colorbar(im1, ax=ax[0])
-    # # fig.colorbar(im2, ax=ax[1])
-    # # plt.savefig('force.png')
-    # anim = animation.FuncAnimation(fig, animate, frames=20)
-    # anim.save('animation.gif',writer='imagemagick', fps=20)
+        # fig.colorbar(im1, ax=ax[0])
+        # fig.colorbar(im2, ax=ax[1])
+        # plt.savefig('force.png')
+        anim = animation.FuncAnimation(fig, animate, frames=40)
+        anim.save(out_path+'/animation.gif',writer='imagemagick', fps=10)

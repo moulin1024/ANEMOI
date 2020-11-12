@@ -78,31 +78,32 @@ def post(PATH, case_name):
 
         ########################################################################
         # avg
-
-        plot_sl(space['x_'], space['y_'], result_3d['u_avg_c'][:,:,19], 'x', 'y', 'u_avg', 1, out_path)
+        hub_k = int(config['turb_z']/config['dz'])-1
+        print(hub_k)
+        plot_sl(space['x_'], space['y_'], result_3d['u_avg_c'][:,:,hub_k], 'x', 'y', 'u_avg', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['u_avg_c'][:,config['ny']//2,:], 'x', 'z', 'u_avg', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['u_avg_c'][config['nx']//2,:,:], 'y', 'z', 'u_avg', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['v_avg_c'][:,:,19], 'x', 'y', 'v_avg', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['v_avg_c'][:,:,hub_k], 'x', 'y', 'v_avg', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['v_avg_c'][:,config['ny']//2,:], 'x', 'z', 'v_avg', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['v_avg_c'][config['nx']//2,:,:], 'y', 'z', 'v_avg', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['w_avg_c'][:,:,19], 'x', 'y', 'w_avg', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['w_avg_c'][:,:,hub_k], 'x', 'y', 'w_avg', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['w_avg_c'][:,config['ny']//2,:], 'x', 'z', 'w_avg', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['w_avg_c'][config['nx']//2,:,:], 'y', 'z', 'w_avg', 1, out_path)
 
         ########################################################################
         # std
 
-        plot_sl(space['x_'], space['y_'], result_3d['u_std_c'][:,:,19], 'x', 'y', 'u_std', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['u_std_c'][:,:,hub_k], 'x', 'y', 'u_std', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['u_std_c'][:,config['ny']//2,:], 'x', 'z', 'u_std', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['u_std_c'][config['nx']//2,:,:], 'y', 'z', 'u_std', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['v_std_c'][:,:,19], 'x', 'y', 'v_std', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['v_std_c'][:,:,hub_k], 'x', 'y', 'v_std', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['v_std_c'][:,config['ny']//2,:], 'x', 'z', 'v_std', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['v_std_c'][config['nx']//2,:,:], 'y', 'z', 'v_std', 1, out_path)
 
-        plot_sl(space['x_'], space['y_'], result_3d['w_std_c'][:,:,19], 'x', 'y', 'w_std', 1, out_path)
+        plot_sl(space['x_'], space['y_'], result_3d['w_std_c'][:,:,hub_k], 'x', 'y', 'w_std', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['w_std_c'][:,config['ny']//2,:], 'x', 'z', 'w_std', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['w_std_c'][config['nx']//2,:,:], 'y', 'z', 'w_std', 1, out_path)
 
@@ -296,9 +297,9 @@ def plot_pr(z, var, z_name, var_name, out_path):
 def plot_sl(x, y, var, x_name, y_name, var_name, plot_flag, out_path):
     plt.figure()
     if plot_flag == 1:
-        plt.pcolormesh(x, y, var.T, cmap='bwr')
+        plt.pcolormesh(x, y, var.T)
     elif plot_flag == 2:
-        plt.contourf(x, y, var.T, 100, cmap='bwr')
+        plt.contourf(x, y, var.T, 30)
     plt.xlabel(x_name)
     plt.ylabel(y_name)
     plt.axes().set_aspect('equal')
@@ -393,7 +394,9 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     ax.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax.yaxis.set_major_locator(plt.MaxNLocator(4))
     plt.grid(b=True, which='both')
-    print(result_pr['u_avg_c'][19])
+
+    hub_k = int(config['turb_z']/config['dz'])-1
+    print(result_pr['u_avg_c'][hub_k])
 
     ax = plt.subplot(232)
     plt.plot(result_pr['v_avg_c']/config['u_fric'], space['z_c']/config['l_z'], 'g')
@@ -417,7 +420,7 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     plt.ylabel(r'$z/H$')
     ax.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax.yaxis.set_major_locator(plt.MaxNLocator(4))
-    print(result_pr['u_std_c'][19]/result_pr['u_avg_c'][19])
+    print(result_pr['u_std_c'][hub_k]/result_pr['u_avg_c'][hub_k])
     plt.grid(b=True, which='both')
 
     ax = plt.subplot(235)

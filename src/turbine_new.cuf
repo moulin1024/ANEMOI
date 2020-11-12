@@ -55,9 +55,9 @@ module turbine
     
     real(fp), dimension(n_turb), parameter :: dA_tower = [(2.d0*tow_r(i_turb)*dz,i_turb = 1,n_turb)]
     real(fp), dimension(n_turb), parameter :: dA_nacell = [(pi*nac_r(i_turb)**2.d0, i_turb=1,n_turb)]
-    real(fp), dimension(n_turb), parameter :: turb_i = ((/0.8,1.55,2.3/)/z_i)/dx
-    real(fp), dimension(n_turb), parameter :: turb_j = ((/0.4,0.4,0.4/)/z_i)/dy
-    real(fp),parameter :: hub_tower_gap = turb_r(1)*0  ! The gap between the tower and the hub (2 cm for WiRE-01)
+    real(fp), dimension(n_turb), parameter :: turb_i = ((/3.2,3.95,4.7/)/z_i)/dx
+    real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.8,0.8/)/z_i)/dy
+    real(fp),parameter :: hub_tower_gap = turb_r(1)/3  ! The gap between the tower and the hub (2 cm for WiRE-01)
     contains
     
     Subroutine turbine_force(Fx,Fy,Fz,power,u,v,w,turb_loc,t)
@@ -89,7 +89,7 @@ module turbine
         !---------------------------------------------------------------------------
         ! compute models
         if(turbine_model == 1)then
-            call tower(fx,fy,fz,u,v,w,turb_loc,t) ! Somehow it do more harms than good for power prediction!
+            ! call tower(fx,fy,fz,u,v,w,turb_loc,t) ! Somehow it do more harms than good for power prediction!
             call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
             call controller_fix(turb_rpm,u,turb_loc,t)
             call admryaw(fx,fy,fz,power,u,v,w,turb_loc,turb_rpm,t,me,nall)
