@@ -10,10 +10,10 @@ double_flag = 0     # 0 = single precision, 1 = double precision
 interp_case	= case_interp	# interp case name
 
 # warmup
-warmup_case	= warmup-fine	# warmup case name
+warmup_case	= test-buffer	# warmup case name
 
 # prec
-prec_case	= pre-fine	# prec case name
+prec_case	= prec-buffer	# prec case name
 
 ########################################################################################################################
 # space (lx/z_i=2*pi, lx=2*pi*z_i, lx/ly=l_r, ly=2*pi*z_i/l_r)
@@ -26,9 +26,9 @@ z_i		= 1000.0	# normalization height
 l_r		= 1		# ratio of streamwise to spanwise dimensions
 
 # custom
-lx		= 3.2		# length of dom in the streamwise dir
-ly		= 0.8		# length of dom in the spanwise dir
-lz		= 0.39375	# length of dom in the wall-normal dir
+lx		= 6.4		# length of dom in the streamwise dir
+ly		= 1.6		# length of dom in the spanwise dir
+lz		= 0.7875	# length of dom in the wall-normal dir
 
 nx		= 256		# number of grid points in the streamwise dir
 ny		= 64		# number of grid points in the spanwise dir
@@ -43,9 +43,9 @@ time_flag	= 1		# 0 = native, 1 = custom
 dt		= 0.001		# non-dim timestep (dt=dtr*u_star/z_i)
 
 # custom
-dtr		= 0.00015		# dim. timestep (dt=dtr*u_star/z_i)
+dtr		= 0.00025		# dim. timestep (dt=dtr*u_star/z_i)
 
-nsteps		= 49001		# number of timesteps
+nsteps		= 19001		# number of timesteps
 
 ########################################################################################################################
 # bc
@@ -91,7 +91,7 @@ inflow_count	= 10		# frequency of sgs coefficients update
 # output
 ########################################################################################################################
 c_count		= 10		# frequency of ta/ts_output sampling
-p_count		= 45000		# frequency of ta_output and averaging period (must be multiple of c_count)
+p_count		= 15000		# frequency of ta_output and averaging period (must be multiple of c_count)
 
 # log_output (1d each time step, global quantity)
 log_flag	= 1		# 0 = no log_output, 1= log_output
@@ -115,10 +115,10 @@ ts_iend		= 32		# i end of ta_output if ts_mask
 ts_jstart	= 1		# j start of ta_output if ts_mask
 ts_jend		= 32		# j end of ta_output if ts_mask
 ts_kend		= 32		# k end of ta_output if ts_mask
-ts_tstart	= 90001		# t start of ts_output (ts_tstart-1 must be multiple of c_count)
+ts_tstart	= 4001		# t start of ts_output (ts_tstart-1 must be multiple of c_count)
 
 ########################################################################################################################
 # exec
 ########################################################################################################################
-job_np		= 1		# numer of processors (<= nz/2!, nz2=nz/nprocs+2)
+job_np		= 2		# numer of processors (<= nz/2!, nz2=nz/nprocs+2)
 job_time	= 01:00:00	# duration of job

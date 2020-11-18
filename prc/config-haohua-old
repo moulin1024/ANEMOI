@@ -45,7 +45,7 @@ dt		= 0.001		# non-dim timestep (dt=dtr*u_star/z_i)
 # custom
 dtr		= 0.00015		# dim. timestep (dt=dtr*u_star/z_i)
 
-nsteps		= 19001		# number of timesteps
+nsteps		= 49001		# number of timesteps
 
 ########################################################################################################################
 # bc
@@ -72,7 +72,7 @@ turb_r          = 0.075         # turbine radius
 turb_x          = (/1.92/)        # turbine i loc
 turb_y          = (/0.48/)        # turbine j loc
 turb_z          = 0.125         # turbine hub height
-turb_w          = (/2183.0,1405.7,1560.5/)         # turbine rotational speed
+turb_w          = $turb_w         # turbine rotational speed
 tow_r           = 0.0025        # tower radius
 tow_c           = 4.0           # tower drag coeff
 nac_r           = 0.01        #  nacelle radius
@@ -91,7 +91,7 @@ inflow_count	= 10		# frequency of sgs coefficients update
 # output
 ########################################################################################################################
 c_count		= 10		# frequency of ta/ts_output sampling
-p_count		= 15000		# frequency of ta_output and averaging period (must be multiple of c_count)
+p_count		= 45000		# frequency of ta_output and averaging period (must be multiple of c_count)
 
 # log_output (1d each time step, global quantity)
 log_flag	= 1		# 0 = no log_output, 1= log_output
@@ -120,5 +120,5 @@ ts_tstart	= 90001		# t start of ts_output (ts_tstart-1 must be multiple of c_cou
 ########################################################################################################################
 # exec
 ########################################################################################################################
-job_np		= 2		# numer of processors (<= nz/2!, nz2=nz/nprocs+2)
+job_np		= 1		# numer of processors (<= nz/2!, nz2=nz/nprocs+2)
 job_time	= 01:00:00	# duration of job

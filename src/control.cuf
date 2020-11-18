@@ -52,7 +52,7 @@ module control
 
         ! turb_rpm_host = CTUin
         ! print *,turb_rpm_host
-
+        
     end subroutine controller
 
     subroutine controller_lambda(turb_rpm,u,turb_loc,t)
@@ -89,7 +89,7 @@ module control
             if (t>2000) then
                 CTUin(i_turb) = 0.5*CTUin_old(i_turb) + 0.5* CTUin(i_turb)
             end if
-            turb_rpm(i_turb) = 3.5*CTUin(i_turb)/0.075*60/(2*pi)
+            turb_rpm(i_turb) = 3.5*CTUin(i_turb)*cos(turb_loc(i_turb,4))/0.075*60/(2*pi)
             CTUin_old(i_turb) = CTUin(i_turb)
             ! if (t>2000) then
             !     turb_rpm(i_turb) = 0.5*turb_rpm(i_turb) + 0.5*turb_rpm_old(i_turb)
@@ -97,8 +97,8 @@ module control
             ! turb_rpm_old(i_turb) = turb_rpm(i_turb)
         end do
 
-        turb_rpm_host = turb_rpm
-        print *,turb_rpm_host
+        ! turb_rpm_host = CTUin_old
+        ! print *,turb_rpm_host
 
     end subroutine controller_lambda
 
@@ -123,13 +123,13 @@ module control
 
         save CTUin_old,CTUin!,CTUin_old
     
-        if (t == 1) allocate(CTUin_old(n_turb),CTUin(n_turb))
-        !$cuf kernel do(1) <<<*,*>>>
-        do i_turb = 1,n_turb
-            CTUin(i_turb) = 0._fp
-        end do
+        ! if (t == 1) allocate(CTUin_old(n_turb),CTUin(n_turb))
+        ! !$cuf kernel do(1) <<<*,*>>>
+        ! do i_turb = 1,n_turb
+        !     CTUin(i_turb) = 0._fp
+        ! end do
 
-        call get_inflow<<<grid,tblock>>>(CTUin,u,turb_loc)
+        ! call get_inflow<<<grid,tblock>>>(CTUin,u,turb_loc)
 
         !$cuf kernel do(1) <<<*,*>>>
         do i_turb = 1,n_turb
@@ -148,10 +148,12 @@ module control
         real(fp),intent(in) :: torque,gamma
         real(fp) rpm_wire01_iter,tmp
         
-        tmp = torque/cos(gamma)**2*1000
+        tmp = torque*1000!/cos(gamma)**3
         
-        rpm_wire01_iter = 45.07334043*tmp**3 -518.57547463*tmp**2 + 1669.73419381*tmp + 515.6707689
-
+        ! rpm_wire01_iter = 35.97698271*tmp**3 -455.40326056*tmp**2 + 1570.2171082*tmp + 517.27358118
+        rpm_wire01_iter = 93.19827328*tmp**3 - 703.36136467*tmp**2 + 1865.74678682*tmp + 454.11093393
+        ! rpm_wire01_iter =228.74468102*tmp**3 -1150.02774605*tmp**2 +  2207.23563161*tmp +  416.38441579
+        ! rpm_wire01_iter  = -274.88366026**2+ 1223.47915421  725.72537886
     end function rpm_wire01_iter
 
     attributes(device) function rpm_v80(u_inflow)

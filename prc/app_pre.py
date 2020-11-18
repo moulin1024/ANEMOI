@@ -225,7 +225,7 @@ def post_prec(prec_path, config,var_name,i):
     print(' * proc_id: ' + str(i))
     print(' * var_id : ' + var_name)
     print('   read...')
-    inflow_u = fctlib.load_4d('p'+ str(i).zfill(3) + '_inflow_' + var_name, config['nsteps']//2, config['inflow_nx'],  config['ny'],  config['nzb'],  os.path.join(prec_path, 'inflow_data'))
+    inflow_u = fctlib.load_4d('p'+ str(i).zfill(3) + '_inflow_' + var_name, config['nsteps']//config['inflow_count'], config['inflow_nx'],  config['ny'],  config['nzb'],config['double_flag'],  os.path.join(prec_path, 'inflow_data'))
     # os.system('rm ' +os.path.join(prec_data_path,'p'+ str(i).zfill(2) + '_inflow_' + var_name + '.bin'))
     print('   compute...')
     ta_u= np.mean(inflow_u, axis = 0)
