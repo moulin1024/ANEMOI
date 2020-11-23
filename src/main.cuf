@@ -25,7 +25,7 @@ program main
     !---------------------------------------------------------------------------
     ! iterator
     integer*4 t
-    integer i,j,k,REQUEST,i_turb
+    integer i,j,k,REQUEST
     !---------------------------------------------------------------------------
     ! flow
     real(fp),dimension(nx,ny):: zo_host,ustar_host,m_host
