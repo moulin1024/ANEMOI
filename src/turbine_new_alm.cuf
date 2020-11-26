@@ -291,8 +291,8 @@ module turbine
         
         real(fp) :: tmp3
         integer istat
-        real(fp),parameter :: sigma_x  = dx!2*dx!nac_r(1)
-        real(fp),parameter :: sigma_yz = dx!1.d0*nac_r(1)
+        real(fp),parameter :: sigma_x  = nac_r(1)
+        real(fp),parameter :: sigma_yz = nac_r(1)
         real(fp),parameter :: tmp1  = 1.d0/(sigma_yz**2*sigma_x*dsqrt(pi)**3)
         integer,parameter :: i1 = nint(2.0*turb_r(1)/dx)
     !----------------------------------------------------------------------------
@@ -681,8 +681,8 @@ module turbine
 
                 ! Apply gaussian smoothing kernel
                 
-                sigma_x  = sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
-                sigma_yz = sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_x  = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_yz = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
@@ -759,8 +759,8 @@ module turbine
                 ! cos_CTangz = ((coord_y+coord_x*tan(turb_loc(i_turb,4)))*cos(turb_loc(i_turb,4)))/(r_w+1e-16)
                 cos_CTangz = ((coord_y)/cos(turb_loc(i_turb,4)))/(r_w+1e-16)
 
-                sigma_x  = sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
-                sigma_yz = sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_x  = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_yz = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
