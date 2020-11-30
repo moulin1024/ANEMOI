@@ -59,7 +59,7 @@ module turbine
     real(fp), dimension(n_turb), parameter :: dA_nacell = [(pi*nac_r(i_turb)**2.d0, i_turb=1,n_turb)]
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/3.2,3.95,4.7/)/z_i)/dx
 
-    real(fp), dimension(n_turb), parameter :: turb_i = ((/2.56,3.31,4.06/)/z_i)/dx
+    real(fp), dimension(n_turb), parameter :: turb_i = ((/0.64,3.31,4.06/)/z_i)/dx
     real(fp), dimension(n_turb), parameter :: turb_j = ((/0.64,0.64,0.64/)/z_i)/dy
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/0.53,1.28,2.03/)/z_i)/dx
     ! real(fp), dimension(n_turb), parameter :: turb_j = ((/0.64,0.64,0.64/)/z_i)/dy
@@ -96,7 +96,7 @@ module turbine
         ! compute models
         if(turbine_model == 1)then
             ! call tower(fx,fy,fz,u,v,w,turb_loc,t) ! Somehow it do more harms than good for power prediction!
-            call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
+            ! call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
             call controller_fix(turb_rpm,u,turb_loc,t)
             call almyaw(fx,fy,fz,power,u,v,w,turb_loc,turb_rpm,t,me,nall)
             ! power = turb_rpm
@@ -617,16 +617,16 @@ module turbine
             call compute_cl_cd(CTCL,CTCD,AOA,turb_aerodyn)
             
     !         ! Tip loss factor correction
-    !         ! f1 = 0.5_fp*3._fp*(turb_r(i_turb)-r(i_r,i_turb))/(r(i_r,i_turb)*sin_CTphi)
-    !         ! g = 1.0!exp(-0.125*(3*3.5-21))+0.1
-    !         ! f2 = 2._fp/pi*acos(exp(-g*f1))
+            f1 = 0.5_fp*3._fp*(turb_r(i_turb)-r(i_r,i_turb))/(r(i_r,i_turb)*sin_CTphi)
+            g = 1.0!exp(-0.125*(3*3.5-21))+0.1
+            f2 = 2._fp/pi*acos(exp(-g*f1))
     !         ! Impose a stronger restriction: necessary for yawed turbine
             ! Basically igore the case with weird AoA
             if (AoA > -10 .and. AoA < 50) then 
                 ! Normal force
-                CTF(blade,i_r,i_turb,1) = 0.5_fp*(CTUrel**2)*chord_length(i_r,i_turb)*dr(i_turb)/(dx*dy*dz)*(CTCL*cos_CTphi+CTCD*sin_CTphi)
+                CTF(blade,i_r,i_turb,1) = 0.5_fp*(CTUrel**2)*chord_length(i_r,i_turb)*dr(i_turb)/(dx*dy*dz)*(CTCL*cos_CTphi+CTCD*sin_CTphi)*f2
                 ! Tangential force
-                CTF(blade,i_r,i_turb,2) = 0.5_fp*(CTUrel**2)*chord_length(i_r,i_turb)*dr(i_turb)/(dx*dy*dz)*(CTCL*sin_CTphi-CTCD*cos_CTphi)
+                CTF(blade,i_r,i_turb,2) = 0.5_fp*(CTUrel**2)*chord_length(i_r,i_turb)*dr(i_turb)/(dx*dy*dz)*(CTCL*sin_CTphi-CTCD*cos_CTphi)*f2
             end if
 
             istat = atomicadd(power(i_turb),CTF(blade,i_r,i_turb,2)*r(i_r,i_turb)*turb_rpm(i_turb)/60*2*pi*(dx*dy*dz)*z_i**3)
@@ -681,8 +681,8 @@ module turbine
 
                 ! Apply gaussian smoothing kernel
                 
-                sigma_x  = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
-                sigma_yz = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_x  = chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_yz = chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
@@ -759,8 +759,8 @@ module turbine
                 ! cos_CTangz = ((coord_y+coord_x*tan(turb_loc(i_turb,4)))*cos(turb_loc(i_turb,4)))/(r_w+1e-16)
                 cos_CTangz = ((coord_y)/cos(turb_loc(i_turb,4)))/(r_w+1e-16)
 
-                sigma_x  = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
-                sigma_yz = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_x  = chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_yz = chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
