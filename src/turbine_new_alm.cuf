@@ -59,11 +59,11 @@ module turbine
     real(fp), dimension(n_turb), parameter :: dA_nacell = [(pi*nac_r(i_turb)**2.d0, i_turb=1,n_turb)]
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/3.2,3.95,4.7/)/z_i)/dx
 
-    real(fp), dimension(n_turb), parameter :: turb_i = ((/0.64,3.31,4.06/)/z_i)/dx
-    real(fp), dimension(n_turb), parameter :: turb_j = ((/0.64,0.64,0.64/)/z_i)/dy
+    real(fp), dimension(n_turb), parameter :: turb_i = ((/0.85,1.6,2.35/)/z_i)/dx
+    real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.8,0.8/)/z_i)/dy
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/0.53,1.28,2.03/)/z_i)/dx
     ! real(fp), dimension(n_turb), parameter :: turb_j = ((/0.64,0.64,0.64/)/z_i)/dy
-    real(fp),parameter :: hub_tower_gap = turb_r(1)/3 ! The gap between the tower and the hub (2 cm for WiRE-01)
+    real(fp),parameter :: hub_tower_gap = turb_r(1)*0 ! The gap between the tower and the hub (2 cm for WiRE-01)
     contains
     
     Subroutine turbine_force(Fx,Fy,Fz,power,u,v,w,turb_loc,t)
@@ -560,7 +560,7 @@ module turbine
         real(fp) :: CTphi,sin_CTphi,cos_CTphi
         real(fp) :: CTU,CTV,CTW,CTUrel,AoA
         real(fp) :: CTCL,CTCD,CTU_origin,CTV_origin,CTW_origin
-        !     real(fp) :: f1,f2,g
+        real(fp) :: f1,f2,g
         !     real(fp) :: cos_Tang
         integer :: i_turb,blade,i_r,istat,blade_ijk(4)
         !----------------------------------------------------------------------------
@@ -681,8 +681,8 @@ module turbine
 
                 ! Apply gaussian smoothing kernel
                 
-                sigma_x  = chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
-                sigma_yz = chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_x  = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_yz = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
@@ -759,8 +759,8 @@ module turbine
                 ! cos_CTangz = ((coord_y+coord_x*tan(turb_loc(i_turb,4)))*cos(turb_loc(i_turb,4)))/(r_w+1e-16)
                 cos_CTangz = ((coord_y)/cos(turb_loc(i_turb,4)))/(r_w+1e-16)
 
-                sigma_x  = chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
-                sigma_yz = chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_x  = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_yz = 0.5*chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp

@@ -81,19 +81,23 @@ def post(PATH, case_name):
         hub_k = int(config['turb_z']/config['dz'])-1
         print(hub_k)
         plot_sl(space['x_'], space['y_'], result_3d['u_avg_c'][:,:,hub_k], 'x', 'y', 'u_avg', 1, out_path)
-        plot_sl(space['x_'], space['z_n'], result_3d['u_avg_c'][:,config['ny']//2,:], 'x', 'z', 'u_avg', 1, out_path)
-        plot_sl(space['y_'], space['z_n'], result_3d['u_avg_c'][config['nx']//2,:,:], 'y', 'z', 'u_avg', 1, out_path)
+        plot_sl(space['x_'], space['z_n'], result_3d['u_avg_c'][:,config['ny']//2-1,:], 'x', 'z', 'u_avg', 1, out_path)
+        plot_sl(space['y_'], space['z_n'], result_3d['u_avg_c'][config['nx']//2-1,:,:], 'y', 'z', 'u_avg', 1, out_path)
 
         plot_sl(space['x_'], space['y_'], result_3d['v_avg_c'][:,:,hub_k], 'x', 'y', 'v_avg', 1, out_path)
-        plot_sl(space['x_'], space['z_n'], result_3d['v_avg_c'][:,config['ny']//2,:], 'x', 'z', 'v_avg', 1, out_path)
-        plot_sl(space['y_'], space['z_n'], result_3d['v_avg_c'][config['nx']//2,:,:], 'y', 'z', 'v_avg', 1, out_path)
+        plot_sl(space['x_'], space['z_n'], result_3d['v_avg_c'][:,config['ny']//2-1,:], 'x', 'z', 'v_avg', 1, out_path)
+        plot_sl(space['y_'], space['z_n'], result_3d['v_avg_c'][config['nx']//2-1,:,:], 'y', 'z', 'v_avg', 1, out_path)
 
         plot_sl(space['x_'], space['y_'], result_3d['w_avg_c'][:,:,hub_k], 'x', 'y', 'w_avg', 1, out_path)
-        plot_sl(space['x_'], space['z_n'], result_3d['w_avg_c'][:,config['ny']//2,:], 'x', 'z', 'w_avg', 1, out_path)
-        plot_sl(space['y_'], space['z_n'], result_3d['w_avg_c'][config['nx']//2,:,:], 'y', 'z', 'w_avg', 1, out_path)
+        plot_sl(space['x_'], space['z_n'], result_3d['w_avg_c'][:,config['ny']//2-1,:], 'x', 'z', 'w_avg', 1, out_path)
+        plot_sl(space['y_'], space['z_n'], result_3d['w_avg_c'][config['nx']//2-1,:,:], 'y', 'z', 'w_avg', 1, out_path)
 
         ########################################################################
         # std
+
+        inflow_avg = np.mean(np.mean(result_3d['u_avg_c'][30:50,:,hub_k],axis=0),axis=0)
+        inflow_ti = np.mean(np.mean(result_3d['u_std_c'][30:50,:,hub_k],axis=0),axis=0)/inflow_avg
+        print(inflow_avg,inflow_ti)
 
         plot_sl(space['x_'], space['y_'], result_3d['u_std_c'][:,:,hub_k], 'x', 'y', 'u_std', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['u_std_c'][:,config['ny']//2,:], 'x', 'z', 'u_std', 1, out_path)

@@ -81,8 +81,8 @@ module dimen
     integer, parameter :: turbine_model = 1
     integer, parameter :: nacelle_model = 1
     integer, parameter :: tower_model = 1
-    integer, parameter :: n_phi = 32    ! Don't change it! (because of cuda kernel)
-    integer, parameter :: n_r = 32      ! Don't change it! (because of cuda kernel)
+    integer, parameter :: n_phi = 64    ! Don't change it! (because of cuda kernel)
+    integer, parameter :: n_r = 16      ! Don't change it! (because of cuda kernel)
     integer, parameter :: n_r_s = 3
 
     !-------------------------------------------------------------------------------

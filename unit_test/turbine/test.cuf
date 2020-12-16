@@ -94,7 +94,32 @@ t = 1
 
     alpha_cl_cd_gpu = alpha_cl_cd
 
-    call turbine_force(Fx,Fy,Fz,u,v,w,alpha_cl_cd_gpu,t)
+        !---------------------------------------------------------------------------
+    ! load turbine aero data
+    !---------------------------------------------------------------------------
+
+    if (turb_flag > 0) then
+        open(unit=199,file='input/turb_loc.dat')
+        read(199,*)
+        do k=1,n_turb
+            read(199,*) turb_loc_host(k,1:4)
+        end do
+        close(199)
+    end if
+
+    do i_turb=1,n_turb
+        turb_loc_host(i_turb,1) = turb_loc_host(i_turb,1)/z_i
+        turb_loc_host(i_turb,2) = turb_loc_host(i_turb,2)/z_i
+        turb_loc_host(i_turb,3) = turb_loc_host(i_turb,3)/z_i
+        turb_loc_host(i_turb,4) = turb_loc_host(i_turb,4)/180*pi
+    end do
+    print *,turb_loc_host
+    ! stop
+    ! Copy to device
+    turb_loc = turb_loc_host
+
+    ! call turbine_force(Fx,Fy,Fz,u,v,w,alpha_cl_cd_gpu,t)
+    call turbine_force(fx,fy,fz,power,u,v,w,turb_loc,t)
     
     Fx_host1 = Fx
     Fy_host1 = Fy
