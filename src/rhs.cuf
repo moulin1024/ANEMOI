@@ -27,7 +27,7 @@ contains
 
     end subroutine rhs_assemble
 
-    attributes(global) subroutine const_pres_grad(rhs)
+    attributes(global) subroutine const_pres_grad(rhs,device_id)
 
     !---------------------------------------------------------------------------
     ! declaration
@@ -36,16 +36,21 @@ contains
     implicit none
 
     real(fp), dimension(nx,ny,nz2), intent(inout) :: rhs
+    integer,value,intent(in) :: device_id
     integer :: i,j,k
+    real(fp) global_height
 
     i = (blockIdx%x - 1) * blockDim%x + threadIdx%x
     j = (blockIdx%y - 1) * blockDim%y + threadIdx%y
     k = (blockIdx%z - 1) * blockDim%z + threadIdx%z
+
+    global_height = (device_id*nzb+k-1.5d0)*dz
     !---------------------------------------------------------------------------
     ! main code
     !---------------------------------------------------------------------------
-
-     rhs(i,j,k)=rhs(i,j,k)+pres_force
+    if( global_height <= bl_height/z_i ) then
+        rhs(i,j,k)=rhs(i,j,k)+pres_force
+    end if
 
     end subroutine const_pres_grad
 

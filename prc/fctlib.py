@@ -189,6 +189,7 @@ def get_config(case_path):
     # physic
     config['zo'] = float(config['zo'])
     config['u_fric'] = float(config['u_fric'])
+    config['bl_height'] = float(config['bl_height'])
 
     # sgs
     config['model'] = int(config['model'])
@@ -355,12 +356,12 @@ def node2center_1d(var_n):
 
 def center2node_4d(var_c):
     var_n = np.copy(var_c)
-    var_n[:,:,:,0] = 0.0
+    var_n[:,:,:,0] = var_c[:,:,:,0]
     var_n[:,:,:,1:] = 0.5*(var_c[:,:,:,:-1]+var_c[:,:,:,1:])
     return var_n
 
 def center2node_3d(var_c):
     var_n = np.copy(var_c)
-    var_n[:,:,0] = 0.0
+    var_n[:,:,0] = var_c[:,:,0]
     var_n[:,:,1:] = 0.5*(var_c[:,:,:-1]+var_c[:,:,1:])
     return var_n

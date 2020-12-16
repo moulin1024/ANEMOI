@@ -29,6 +29,7 @@ l_r		= 1		# ratio of streamwise to spanwise dimensions
 lx		= 3.2		# length of dom in the streamwise dir
 ly		= 0.8		# length of dom in the spanwise dir
 lz		= 0.39375	# length of dom in the wall-normal dir
+bl_height = 0.4         # sqrt wall shear = sqrt(tau_0)
 
 nx		= 256		# number of grid points in the streamwise dir
 ny		= 64		# number of grid points in the spanwise dir

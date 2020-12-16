@@ -473,7 +473,7 @@ program main
         !-----------------------------------------------------------------------
         ! applying forcing to the rhs
         ! applying pressure gradient (not needed fror)
-        if (sim_flag < 3 .and. me == 0)   call const_pres_grad<<<grid, tBlock>>>(rhsx)      
+        if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx,device_id)      
         if (turb_flag == 1) then
             ! u = 5
             ! v = 0

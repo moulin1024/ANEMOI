@@ -92,8 +92,8 @@ module turbine
         !---------------------------------------------------------------------------
         ! compute models
         if(turbine_model == 1)then
-            ! call tower(fx,fy,fz,u,v,w,turb_loc,t) ! Somehow it do more harms than good for power prediction!
-            ! call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
+            call tower(fx,fy,fz,u,v,w,turb_loc,t) ! Somehow it do more harms than good for power prediction!
+            call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
             call controller_fix(turb_rpm,u,turb_loc,t)
             call admryaw(fx,fy,fz,power,u,v,w,turb_loc,turb_rpm,t,me,nall)
             ! power = turb_rpm
