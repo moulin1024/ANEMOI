@@ -231,5 +231,5 @@ def anime(PATH, case_name):
         # fig.colorbar(im1, ax=ax[0])
         # fig.colorbar(im2, ax=ax[1])
         # plt.savefig('force.png')
-        anim = animation.FuncAnimation(fig, animate, frames=40)
+        anim = animation.FuncAnimation(fig, animate, frames=10)
         anim.save(out_path+'/animation.gif',writer='imagemagick', fps=10)

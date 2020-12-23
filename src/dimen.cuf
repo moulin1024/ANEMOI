@@ -130,6 +130,7 @@ module dimen
     !-------------------------------------------------------------------------------
     real(fp), parameter :: dx=2.0_fp*pi/nx, dy=2.0_fp*pi/ny/l_r, dz=(l_z/z_i)/(nz-1)
     real(fp), parameter :: delta=(fgr*dx*fgr*dy*dz)**(1./3.)
+    real(fp), parameter :: delta_grid=(dx*dy*dz)**(1./3.)
     real(fp), parameter :: idx=1.0/dx, idy=1.0/dy, idz=1.0/dz
     real(fp), parameter :: inxny=1.0/(nx*ny), iny=1.0/ny
     real(fp), parameter :: pres_force =(u_s/u_scale)**2/(bl_height/z_i)

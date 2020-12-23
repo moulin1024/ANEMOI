@@ -95,8 +95,8 @@ def post(PATH, case_name):
         ########################################################################
         # std
 
-        inflow_avg = np.mean(np.mean(result_3d['u_avg_c'][30:50,:,hub_k],axis=0),axis=0)
-        inflow_ti = np.mean(np.mean(result_3d['u_std_c'][30:50,:,hub_k],axis=0),axis=0)/inflow_avg
+        inflow_avg = 0.5*(np.mean(np.mean(result_3d['u_avg_c'][30:50,:,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_avg_c'][30:50,:,hub_k+1],axis=0),axis=0))
+        inflow_ti =  0.5*(np.mean(np.mean(result_3d['u_std_c'][30:50,:,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_std_c'][30:50,:,hub_k+1],axis=0),axis=0))/inflow_avg
         print(inflow_avg,inflow_ti)
 
         plot_sl(space['x_'], space['y_'], result_3d['u_std_c'][:,:,hub_k], 'x', 'y', 'u_std', 1, out_path)
