@@ -586,8 +586,8 @@ module turbine
                 coord_z_w = coord_z_u - 0.5*dz
 
                 ! Apply gaussian smoothing kernel
-                sigma_x  = 3*sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
-                sigma_yz = 3*sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_x  = dx!sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_yz = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
@@ -760,8 +760,8 @@ module turbine
                 ! cos_CTangz = ((coord_y+coord_x*tan(turb_loc(i_turb,4)))*cos(turb_loc(i_turb,4)))/(r_w+1e-16)
                 cos_CTangz = cos_Tang(i_phi)!((coord_y)/cos(turb_loc(i_turb,4)))/(r_w+1e-16)
 
-                sigma_x  = 3*sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
-                sigma_yz = 3*sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_x  = dx!sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_yz = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
