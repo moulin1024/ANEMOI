@@ -1019,8 +1019,7 @@ subroutine read_inflow(u,v,w,t,me)
             prec_v(:,cyc_pt+1:ny,:) = v_batch(:,1:(ny-cyc_pt),:,i_batch)
             prec_w(:,cyc_pt+1:ny,:) = w_batch(:,1:(ny-cyc_pt),:,i_batch)
         end if
-
-        call force_inflow<<<tblock,grid>>>(u,v,w,prec_u,prec_v,prec_w)
+        call force_inflow<<<grid,tblock>>>(u,v,w,prec_u,prec_v,prec_w)
     end if
 
 
