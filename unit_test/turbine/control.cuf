@@ -102,12 +102,12 @@ module control
 
     end subroutine controller_lambda
 
-    subroutine controller_fix(turb_rpm,u,turb_loc,t)
+    subroutine controller_fix(turb_rpm,CTUin,u,turb_loc,t)
         implicit none
         ! Interface variables
-        real(fp),dimension(n_turb),intent(out),device  :: turb_rpm
+        real(fp),dimension(n_turb),intent(out),device  :: turb_rpm,CTUin
         real(fp),dimension(n_turb)  :: debug
-        real(fp),dimension(:),allocatable,device  :: CTUin,CTUin_old
+        real(fp),dimension(:),allocatable,device  :: CTUin_old
         real(fp),dimension(n_turb)  :: turb_rpm_host
         ! real(fp),dimension(:),allocatable,device  :: turb_rpm_old
         real(fp),dimension(nx,ny,nz2),intent(in),device   :: u
@@ -121,19 +121,23 @@ module control
         tblock = dim3(i1,i2,1)
         grid = dim3(n_turb,1,1)
 
-        save CTUin_old,CTUin!,CTUin_old
+        save CTUin_old!,CTUin_old
     
-        ! if (t == 1) allocate(CTUin_old(n_turb),CTUin(n_turb))
-        ! !$cuf kernel do(1) <<<*,*>>>
-        ! do i_turb = 1,n_turb
-        !     CTUin(i_turb) = 0._fp
-        ! end do
+        if (t == 1) allocate(CTUin_old(n_turb))
+        !$cuf kernel do(1) <<<*,*>>>
+        do i_turb = 1,n_turb
+            CTUin(i_turb) = 0._fp
+        end do
 
-        ! call get_inflow<<<grid,tblock>>>(CTUin,u,turb_loc)
+        call get_inflow<<<grid,tblock>>>(CTUin,u,turb_loc)
 
         !$cuf kernel do(1) <<<*,*>>>
         do i_turb = 1,n_turb
+            if (t>2000) then
+                CTUin(i_turb) = 0.5*CTUin_old(i_turb) + 0.5* CTUin(i_turb)
+            end if
             turb_rpm(i_turb) = turb_w(i_turb)!rpm_wire01(CTUin(i_turb))
+            CTUin_old(i_turb) = CTUin(i_turb)
         end do
 
     end subroutine controller_fix

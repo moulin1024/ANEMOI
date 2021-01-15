@@ -16,7 +16,7 @@ PRECISION=-DDOUBLE
 # OBJ, PROG
 ################################################################################
 
-OBJ = precision.o dimen.o turbine_lib_cpu.o turbine_cpu.o control.o turbine_gpu_new.o\
+OBJ = precision.o dimen.o control.o turbine_new_alm_check.o\
 	  test.o \
 
 PROG = wireles
@@ -26,10 +26,10 @@ build:
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/precision.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c dimen.cuf
 	# $(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c turbine_gpu.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c turbine_lib_cpu.f90
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c turbine_cpu.f90
+	# $(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c turbine_lib_cpu.f90
+	# $(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c turbine_cpu.f90
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c control.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c turbine_gpu_new.cuf
+	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c turbine_new_alm_check.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c test.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(OBJ) -o $(PROG).run $(LIBS)
 

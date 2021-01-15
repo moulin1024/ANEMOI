@@ -24,15 +24,16 @@ module dimen
     !-------------------------------------------------------------------------------
     ! space
     !-------------------------------------------------------------------------------
-    integer, parameter :: nx=128, ny=128, nz=64
-    real(fp), parameter :: z_i=0.12732395447351627_fp, l_z=0.39375_fp
-    integer, parameter :: l_r=1
+    integer, parameter :: nx=256, ny=512, nz=256
+    real(fp), parameter :: z_i=0.509295817894_fp, l_z=0.796875_fp
+    integer, parameter :: l_r=2
+    real(fp), parameter :: bl_height=0.3_fp
 
     !-------------------------------------------------------------------------------
     ! time
     !-------------------------------------------------------------------------------
     integer, parameter :: nsteps=500
-    real(fp), parameter :: dt=0.0007853981633974483
+    real(fp), parameter :: dt=0.000294524311274
 
     !-----------------------------------------------------------------------------
     ! physic
@@ -50,7 +51,7 @@ module dimen
     !-------------------------------------------------------------------------------
     ! turbine
     !-------------------------------------------------------------------------------
-    ! integer :: i_turb,i_phi,i_r
+    integer :: i_turb,i_phi,i_r
     integer :: idx1,idx3,idx2
     integer, parameter :: turb_flag = 1
     integer, parameter :: n_turb = 1
@@ -62,7 +63,7 @@ module dimen
     real(fp), parameter, dimension(n_turb) :: turb_y = (/0.4/)/z_i
     real(fp), parameter, dimension(n_turb) :: turb_r = 0.075/z_i
     real(fp), parameter, dimension(n_turb) :: turb_z = 0.125/z_i
-    real(fp), parameter, dimension(n_turb) :: turb_w = 253.3
+    real(fp), parameter, dimension(n_turb) :: turb_w = 2183
     real(fp), parameter, dimension(n_turb) :: nac_r = 0.011/z_i
     real(fp), parameter, dimension(n_turb) :: tow_r = 0.0024/z_i
     real(fp), parameter, dimension(n_turb) :: nac_c = 0.85
@@ -138,7 +139,7 @@ module dimen
     !-------------------------------------------------------------------------------
     ! exec
     !-------------------------------------------------------------------------------
-    integer, parameter :: nzb=64, nz2=66, nprocs=1
+    integer, parameter :: nzb=256, nz2=258, nprocs=1
     integer job_np, me, nall, ierr, status2(MPI_STATUS_SIZE)
 
     !-------------------------------------------------------------------------------
