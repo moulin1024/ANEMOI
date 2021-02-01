@@ -183,8 +183,8 @@ module control
         hub_x = nint(turb_loc(i_turb,1)/dx)
         hub_y = nint(turb_loc(i_turb,2)/dy)
         hub_z = nint(turb_loc(i_turb,3)/dz) + 1
-        
-        istat = atomicadd(CTUin(i_turb),u(hub_x-i0+i,hub_y+j,hub_z)/(i1*i2))
+
+        istat = atomicadd(CTUin(i_turb),0.5*(u(hub_x-i0+i,hub_y+j,hub_z  )/(i1*i2)+u(hub_x-i0+i,hub_y+j,hub_z+1)/(i1*i2)))
         call syncthreads() 
     end subroutine get_inflow
 end module control 
