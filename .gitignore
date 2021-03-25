@@ -12,5 +12,7 @@ job/*
 *.npy
 *.txt
 *.csv
+*.bin
 turb_loc.dat
 post/*
+unit_test/*

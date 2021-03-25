@@ -475,15 +475,9 @@ subroutine open_turb(me)
     integer me,nall
 
     if (me == 0 ) then
-        open (unit=(71000),file=('output/turb_thrust.bin'), status='unknown', &
-            form='unformatted', access='stream')
-        open (unit=(72000),file=('output/turb_power.bin'), status='unknown', &
-            form='unformatted', access='stream')
         open (unit=(73000),file=('output/turb_fx.bin'), status='unknown', &
             form='unformatted', access='stream')
         open (unit=(74000),file=('output/turb_ft.bin'), status='unknown', &
-            form='unformatted', access='stream')
-        open (unit=(75000),file=('output/turb_omega.bin'), status='unknown', &
             form='unformatted', access='stream')
     end if
 
@@ -623,20 +617,18 @@ subroutine write_log(log_ustar,log_umax,me)
 
 end subroutine write_log
 
-! subroutine write_turb(CTFx,CTFt,omega,me)
+subroutine write_turb(CTF,me)
 
-!     implicit none
-!     integer me,nall
-!     real(fp), dimension(n_phi,n_r,n_turb) , intent(in):: CTFx,CTFt
-!     real(fp), dimension(n_turb) , intent(in):: omega
+    implicit none
+    integer me,nall
+    real(fp), dimension(n_phi,n_r,n_turb,2) , intent(in):: CTF
     
-!     if (me == 0) then
-!         write (73000) CTFx*dx*dy*dz*z_i**2
-!         write (74000) CTFt*dx*dy*dz*z_i**2
-!         write (75000) omega
-!     end if
+    if (me == 0) then
+        write (73000) CTF(:,:,:,1)*dx*dy*dz*z_i**2
+        write (74000) CTF(:,:,:,2)*dx*dy*dz*z_i**2
+    end if
 
-! end subroutine write_turb
+end subroutine write_turb
 
 
 !-------------------------------------------------------------------------------

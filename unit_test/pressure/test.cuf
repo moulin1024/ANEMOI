@@ -56,13 +56,13 @@
     rhs_p = rhs_p_host+me
     
     ! Initial variable
-    call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,1,plan_batch)
+    ! call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,1,plan_batch)
     
-    dpdx_host1 = dpdx
+    ! dpdx_host1 = dpdx
 
-    call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,0)
-    call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,1)
-    print *,maxval(dpdx_host(:,:,2:nzb+1)-dpdx_host1(:,:,2:nzb+1))
+    ! call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,0)
+    ! call press(p_host,rhs_p_host,dpdx_host,dpdy_host,me,nall,1)
+    ! print *,maxval(dpdx_host(:,:,2:nzb+1)-dpdx_host1(:,:,2:nzb+1))
 
 
     call MPI_finalize(ierr)

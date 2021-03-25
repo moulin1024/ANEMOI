@@ -42,7 +42,7 @@ module turbine
     real(fp), dimension(n_phi), parameter :: cos_Tang = [(cos(dble(i_phi-1)*dang), i_phi=1,n_phi)]
     real(fp), dimension(n_phi), parameter :: sin_Tang = [(sin(dble(i_phi-1)*dang), i_phi=1,n_phi)]
 
-    integer, parameter :: mask_x = 8
+    integer, parameter :: mask_x = 16
     integer, parameter :: mask_y = 32
     integer, parameter :: mask_z = 32
 
@@ -54,10 +54,13 @@ module turbine
     real(fp), dimension(n_turb), parameter :: dA_nacell = [(pi*nac_r(i_turb)**2.d0, i_turb=1,n_turb)]
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/1.28,2.03,2.78/)/z_i)/dx
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/2.45,3.2,3.95/)/z_i)/dx
+    ! real(fp), dimension(n_turb), parameter :: turb_i = ((/3.2,3.95,4.7/)/z_i)/dx
     real(fp), dimension(n_turb), parameter :: turb_i = ((/0.85,1.6,2.35/)/z_i)/dx
+    ! real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.85,0.9/)/z_i)/dy
     real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.8,0.8/)/z_i)/dy
-    ! real(fp), dimension(n_turb), parameter :: turb_j = ((/0.4,0.4,0.4/)/z_i)/dy
-    real(fp),parameter :: hub_tower_gap = turb_r(1)*0 ! The gap between the tower and the hub (2 cm for WiRE-01)
+    ! real(fp), dimension(n_turb), parameter :: turb_j = ((/1.6,1.6,1.6/)/z_i)/dy
+    real(fp),parameter :: hub_tower_gap = 0!turb_r(1)/3 ! The gap between the tower and the hub (2 cm for WiRE-01)
+    real(fp),parameter :: hub_tower_gap1 = turb_r(1)/3 ! The gap between the tower and the hub (2 cm for WiRE-01)
     contains
     
     Subroutine turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
@@ -325,8 +328,8 @@ module turbine
         i_global = int(turb_i(i_turb)) + i - ker_d_x/2
         j_global = int(turb_j(i_turb)) + j - ker_d_y/2 
 
-        coord_x = i_global*dx-(turb_i(i_turb)*dx)
-        coord_y = j_global*dy-(turb_j(i_turb)*dy)
+        coord_x = i_global*dx-(turb_i(i_turb)*dx+hub_tower_gap1*cos(turb_loc(i_turb,4)))
+        coord_y = j_global*dy-(turb_j(i_turb)*dy+hub_tower_gap1*sin(turb_loc(i_turb,4)))
 
         ! Formulate the gaussian kernel
         tmp3 = -0.5_fp*((coord_x/sigma_x)**2 +(coord_y/sigma_y)**2)
@@ -368,7 +371,9 @@ module turbine
             i_global = int(turb_i(i_turb)) + i - ker_d_x/2
             j_global = int(turb_j(i_turb)) + j - ker_d_y/2 
             k_global = k + 1  
-            CTU = u(nint(turb_i(i_turb))-i0,nint(turb_j(i_turb)),k_global)
+
+            CTU = u(nint((turb_i(i_turb)*dx+hub_tower_gap1*cos(turb_loc(i_turb,4)))/dx),nint((turb_j(i_turb)*dy+hub_tower_gap1*sin(turb_loc(i_turb,4)))/dy),k_global)
+            
             ! Drag force of the nacelle
             CTFx = 0.5d0*(CTU**2.d0)*tow_c(i_turb)*dA_tower(i_turb)/(dx*dy*dz)
             ! Apply 

@@ -94,10 +94,10 @@ def post(PATH, case_name):
 
         ########################################################################
         # std
-
-        inflow_avg = 0.5*(np.mean(np.mean(result_3d['u_avg_c'][30:50,:,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_avg_c'][30:50,:,hub_k+1],axis=0),axis=0))
-        inflow_ti =  0.5*(np.mean(np.mean(result_3d['u_std_c'][30:50,:,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_std_c'][30:50,:,hub_k+1],axis=0),axis=0))/inflow_avg
-        print(inflow_avg,inflow_ti)
+        print(hub_k)
+        inflow_avg = 0.5*(np.mean(np.mean(result_3d['u_avg_c'][25:28,:,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_avg_c'][25:28,:,hub_k+1],axis=0),axis=0))
+        inflow_ti =  0.5*(np.mean(np.mean(result_3d['u_std_c'][25:28,:,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_std_c'][25:28,:,hub_k+1],axis=0),axis=0))/inflow_avg
+        print('inflow',inflow_avg,inflow_ti)
 
         plot_sl(space['x_'], space['y_'], result_3d['u_std_c'][:,:,hub_k], 'x', 'y', 'u_std', 1, out_path)
         plot_sl(space['x_'], space['z_n'], result_3d['u_std_c'][:,config['ny']//2,:], 'x', 'z', 'u_std', 1, out_path)
@@ -157,10 +157,10 @@ def get_turb(src_out_path, config):
 
     turb = {}
     # turb['thrust'] = fctlib.load_1d('turb_thrust', config['ts_ns']*config['turb_nb'], config['double_flag'], src_out_path).reshape(config['ts_ns'],config['turb_nb'])
-    turb['dt']  = config['dtr']*config['c_count']
-    turb['Omega']  = fctlib.load_1d('turb_omega', config['ts_ns']*config['turb_nb'], config['double_flag'], src_out_path).reshape(config['ts_ns'],config['turb_nb'])
-    turb['CTFx']  = fctlib.load_4d('turb_fx', config['ts_ns'],40,30,config['turb_nb'], config['double_flag'], src_out_path)
-    turb['CTFt']  = fctlib.load_4d('turb_ft', config['ts_ns'],40,30,config['turb_nb'], config['double_flag'], src_out_path)
+    # turb['dt']  = config['dtr']*config['c_count']
+    # turb['Omega']  = fctlib.load_1d('turb_omega', config['ts_ns']*config['turb_nb'], config['double_flag'], src_out_path).reshape(config['ts_ns'],config['turb_nb'])
+    # turb['fx']  = fctlib.load_4d('turb_fx', config['ts_ns'],64,16,config['turb_nb'], config['double_flag'], src_out_path)
+    # turb['ft']  = fctlib.load_4d('turb_ft', config['ts_ns'],64,16,config['turb_nb'], config['double_flag'], src_out_path)
 
     return turb
 
@@ -227,10 +227,29 @@ def get_result_3d(src_inp_path, src_out_path, config):
 
 def get_result_4d(src_out_path, config):
 
-    result_4d= {}
-    result_4d['u_inst_c'] = fctlib.load_4d('ts_u', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
-    result_4d['v_inst_c'] = fctlib.load_4d('ts_v', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
-    result_4d['w_inst_c'] = node2center_4d(fctlib.load_4d('ts_w', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path))
+    if config['ts_mask'] == 0:
+        result_4d= {}
+        result_4d['u_inst_c'] = fctlib.load_4d('ts_u', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
+        result_4d['v_inst_c'] = fctlib.load_4d('ts_v', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
+        result_4d['w_inst_c'] = node2center_4d(fctlib.load_4d('ts_w', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path))
+    else:
+        result_4d= {}
+        result_4d['u_inst_c'] = fctlib.load_4d('ts_u', config['ts_ns'], 
+                                                       config['ts_iend']-config['ts_istart']+1,
+                                                       config['ts_jend']-config['ts_jstart']+1, 
+                                                       config['ts_kend'], 
+                                                       config['double_flag'], src_out_path)[:,:,:,:-1]
+        result_4d['v_inst_c'] = fctlib.load_4d('ts_v', config['ts_ns'], 
+                                                       config['ts_iend']-config['ts_istart']+1,
+                                                       config['ts_jend']-config['ts_jstart']+1, 
+                                                       config['ts_kend'], 
+                                                       config['double_flag'], src_out_path)[:,:,:,:-1]
+        result_4d['w_inst_c'] = node2center_4d(fctlib.load_4d('ts_w', config['ts_ns'], 
+                                                       config['ts_iend']-config['ts_istart']+1,
+                                                       config['ts_jend']-config['ts_jstart']+1, 
+                                                       config['ts_kend'], 
+                                                       config['double_flag'], src_out_path))
+
     # result_4d['fx_inst_c'] = fctlib.load_4d('ts_fx', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
     # result_4d['fy_inst_c'] = fctlib.load_4d('ts_fy', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
     # result_4d['fz_inst_c'] = fctlib.load_4d('ts_fz', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]

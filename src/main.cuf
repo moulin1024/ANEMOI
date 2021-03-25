@@ -16,6 +16,7 @@ program main
     use turbine
     use convection
     use sgs
+    use sgs_mgm
     use time
 #ifdef USE_NVTX
     use nvtx 
@@ -52,8 +53,10 @@ program main
     !---------------------------------------------------------------------------
     ! turbine
     real(fp), dimension(:,:,:),allocatable,device :: fx,fy,fz 
-    real(fp),dimension(:),allocatable,device    :: power
-    real(fp),dimension(n_turb)     :: power_host,mean_power
+    real(fp),dimension(:),allocatable,device    :: power,thrust,CTU_local
+    real(fp),dimension(n_turb)     :: power_host,mean_power,sum_power,CTU_local_host
+    real(fp),dimension(:,:,:,:),allocatable,device     :: CTF  !< Force on the blade element (CTFx,CTFt)
+    real(fp),dimension(n_phi,n_r,n_turb,2) :: CTF_host  !< Force on the blade element (CTFx,CTFt)
     ! real(fp), dimension(3,181) :: alpha_cl_cd_host
     ! real(fp), dimension(3,181),device :: alpha_cl_cd
 
@@ -71,10 +74,13 @@ program main
     real(fp), dimension(:,:,:),allocatable,device ::  ta_u,ta_v,ta_w,&
                                                 ta_u2,ta_v2,ta_w2 
 
+    real(fp), device :: d_avg1,d_avg2
+
     !---------------------------------------------------------------------------
     ! fft plan
     type(c_ptr) plan_batch(2),plan_2d(2)
     integer istat
+    integer :: count
     !---------------------------------------------------------------------------
     ! cuda variable
     REAL(fp), POINTER, DIMENSION(:) :: null_ptr => NULL ()
@@ -154,7 +160,8 @@ program main
              rhs_p(nx,ny,nz2),&               ! Poisson eq rhs
              lm_old(nx,ny,nz2),mm_old(nx,ny,nz2),&
              qn_old(nx,ny,nz2),nn_old(nx,ny,nz2),cs2(nx,ny,nz2),&
-             fx(nx,ny,nz2),fy(nx,ny,nz2),fz(nx,ny,nz2),power(n_turb),&
+             fx(nx,ny,nz2),fy(nx,ny,nz2),fz(nx,ny,nz2),power(n_turb),thrust(n_turb),CTU_local(n_turb),&
+             CTF(n_phi,n_r,n_turb,2),&
              ta_u(nx,ny,nzb),ta_v(nx,ny,nzb),ta_w(nx,ny,nzb),&
              ta_u2(nx,ny,nzb),ta_v2(nx,ny,nzb),ta_w2(nx,ny,nzb) )
     !---------------------------------------------------------------------------
@@ -347,21 +354,24 @@ program main
         call update_w_async(dwdx,request,me,nall)
         call update_w_async(dwdy,request,me,nall)
 
-        if (mod(t,c_count*10)==0) then
+        if (mod(t,c_count*2)==0) then
 
             u_host = u
             v_host = v 
             w_host = w 
 
             ustar_host = ustar 
+            ! stop
             call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
-            if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
+            ! if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
             if (log_umax>100) exit
-
-            if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*10) == 0) then 
+            if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*2) == 0) then 
                 print *,'Write instant field:'
                 call write_ts1(u_host,v_host,w_host,me)
+                CTF_host = CTF
+                call write_turb(CTF_host,me)
             end if
+            ! print *,mean_power,power_host
         end if
 
         !-----------------------------------------------------------------------
@@ -401,6 +411,26 @@ program main
         if (nprocs >= 2) call mpi_wait(REQUEST,STATUS2,IERR)
         
         if (me==0) then
+
+            ! Porte-agel 2000 JFM correction
+	        !$cuf kernel do(2) <<<(*,*),(16,16)>>>
+            do i = 1, nx
+                do j = 1, ny
+                    d_avg1 = d_avg1 + dudz(i,j,3) ! Plane average
+                    d_avg2 = d_avg2 + dvdz(i,j,3) ! Plane average
+                end do
+            end do
+
+            ! ! Special treate ment for nzb == 1
+            ! if (nzb > 1 .and. me == 0) then
+            !     k_corr = 3
+            ! elseif (nzb == 1 .and. me == 1) then
+            !     k_corr = 2
+            ! endif
+
+            call ddz_uv_corr<<<grid_2d, tBlock_2d>>>(dudz,d_avg1,3)
+            call ddz_uv_corr<<<grid_2d, tBlock_2d>>>(dvdz,d_avg2,3)
+
             call wall_stress(txz,tyz,dudz,dvdz,ustar,m,u,v,zo,t,plan_2d)
         end if
 
@@ -433,10 +463,18 @@ program main
                                 LM_old,MM_old,QN_old,NN_old,cs2,&
                                 t,me,nall)
 
-            call update_w(txz,me,nall)
-            call update_w(tyz,me,nall)
-            call update_uv(tzz,me,nall)
+        else if (model == 4) then
+
+            call sgs_stag(txx,txy,txz,&
+                        tyy,tyz,tzz,&
+                        dudx,dudy,dudz,&
+                        dvdx,dvdy,dvdz,&
+                        dwdx,dwdy,dwdz,me)
         end if
+
+        call update_w(txz,me,nall)
+        call update_w(tyz,me,nall)
+        call update_uv(tzz,me,nall)
         !-----------------------------------------------------------------------
         ! top bc
          if (me==nprocs-1) then
@@ -479,7 +517,16 @@ program main
             ! v = 0
             ! w = 0
             if (device_id == 0 ) then
-                if (mod(t-1,turb_count)==0) call turbine_force(fx,fy,fz,power,u,v,w,turb_loc,t)
+                if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
+                ! if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,power,u,v,w,turb_loc,t)
+                ! if (mod(t-1,turb_count)==0) call turbine_force(fx,fy,fz,CTF,power,thrust,CTU_local,u,v,w,turb_loc,t)
+                ! if (t>4000) then
+                !     power_host = CTU_local
+                !     sum_power = sum_power+power_host
+                !     mean_power = sum_power/counter 
+                !     print *,mean_power
+                !     counter = counter + 1
+                ! end if
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
@@ -694,7 +741,7 @@ program main
     !---------------------------------------------------------------------------
     ! close turb
     !---------------------------------------------------------------------------
-    ! if(turb_flag > 0) call close_turb(me)
+    if(turb_flag > 0) call close_turb(me)
 
     !---------------------------------------------------------------------------
     ! save variables

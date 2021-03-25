@@ -155,7 +155,6 @@ module pressure
         j = (blockIdx%y - 1) * blockDim%y + threadIdx%y;
     
         if (i<=nx/2+1) then
-            ! TODO: JUST FOR ONE GPU!!!!!!
             j_global = j + device_id*nj
             jj = j_global - 1
             i_global=i! + (mei-1)*ni

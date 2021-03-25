@@ -78,9 +78,9 @@ def anime(PATH, case_name):
         y_grid_unmask = space['y']
         z_grid_unmask = space['z_c']
 
-        x = x_grid_unmask[config['ts_istart']-1:config['ts_iend']]
-        y = y_grid_unmask[config['ts_jstart']-1:config['ts_jend']]
-        z = z_grid_unmask[:config['ts_kend']-1]
+        x = x_grid_unmask[:]
+        y = y_grid_unmask[:]
+        z = z_grid_unmask[:-1]
 
         dset = grp.create_dataset("x", data=x)
         dset = grp.create_dataset("y", data=y)
@@ -202,34 +202,143 @@ def anime(PATH, case_name):
     # # np.save('u_mean.npy',u_mean)
     # # np.save('u2_mean.npy',u2_mean)
 
+    # result_4d = post.get_result_4d(src_out_path, config)
+
+    # u = result_4d['u_inst_c']
+    # v = result_4d['v_inst_c']
+    # w = result_4d['w_inst_c']
+
+    # u2 = u - np.mean(u,axis=0)
+    # v2 = v*v - np.mean(v,axis=0)*np.mean(v,axis=0)
+    # w2 = w*w - np.mean(w,axis=0)*np.mean(w,axis=0)
+    
+    # uv = u*v - np.mean(u,axis=0)*np.mean(v,axis=0)
+    # vw = v*w - np.mean(v,axis=0)*np.mean(w,axis=0)
+    # uw = u*w - np.mean(u,axis=0)*np.mean(w,axis=0)
+
+    # # fig, ax = plt.subplots(1,1)
+    # # v_comp = v[9,32,:,:]
+    # # w_comp = w[9,32,:,:]
+    # # # plt.quiver(v_comp,w_comp)
+    # # # plt.ylim([100,160])
+    # # # plt.xlim([0,40])
+    # mean_plot = np.mean(uv,axis=0)
+    # plt.imshow(mean_plot[70,:,:].T,origin='lower',aspect=config['dy']/config['dz'])
+    # plt.imshow(mean_plot[:,:,hub_k].T,origin='lower',aspect=config['dy']/config['dz'])
+    # # # ax[0].set_xlabel('x')
+    # # # ax[0].set_ylabel('y')
+    # plt.savefig('test.png')
+
     if config['ts_flag'] > 0:
         result_4d = post.get_result_4d(src_out_path, config)
 
+        turb_force = post.get_turb(src_out_path, config)
+        # fx = turb_force['fx']
+        # ft = turb_force['ft']
+        
         u = result_4d['u_inst_c']
         v = result_4d['v_inst_c']
         w = result_4d['w_inst_c']
 
-        fig, ax = plt.subplots(2,1)
-        # i = 9
-        def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
-        #     zeniths = np.linspace(0, 0.5, 30)
-        #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
-            values = u[i,:,:,hub_k]#np.random.random((azimuths.size, zeniths.size))
-            im1 = ax[0].imshow(values.T,origin='lower',aspect=config['dy']/config['dx'])
-            ax[0].set_xlabel('x')
-            ax[0].set_ylabel('y')
-            values = u[i,64,:,:]#np.random.random((azimuths.size, zeniths.size))
-            im2 = ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
-            # im2 = ax[1].quiver(v[i,300,1::4,1::4].T,w[i,300,1::4,1::4].T,scale=10)
-            # ax[1].scatter([63],[19],marker='+',color='r')
-            ax[1].set_xlabel('y')
-            ax[1].set_ylabel('z')
-            print(i)
-            # return
+        x_grid_unmask = space['x']
+        y_grid_unmask = space['y']
+        z_grid_unmask = space['z_c']
+
+        x = x_grid_unmask[config['ts_istart']-1:config['ts_iend']]
+        y = y_grid_unmask[config['ts_jstart']-1:config['ts_jend']]
+        z = z_grid_unmask[:config['ts_kend']-1]
+
+        f = h5py.File(out_path+'/'+case_name+'_ts.h5', 'w')
+        grp = f.create_group("data")
+
+        dset = grp.create_dataset("u", data=u)
+        dset = grp.create_dataset("v", data=v)
+        dset = grp.create_dataset("w", data=w)
+
+        # dset = grp.create_dataset("fx", data=turb_force['fx'])
+        # dset = grp.create_dataset("ft", data=turb_force['ft'])
+
+        dset = grp.create_dataset("x", data=x)
+        dset = grp.create_dataset("y", data=y)
+        dset = grp.create_dataset("z", data=z)
+
+        f.close()
+
+        # fig, ax = plt.subplots(2,1)
+        # # i = 9
+        # def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
+        # #     zeniths = np.linspace(0, 0.5, 30)
+        # #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
+        #     values = u[i,:,:,hub_k]#np.random.random((azimuths.size, zeniths.size))
+        #     im1 = ax[0].imshow(values.T,origin='lower',aspect=config['dy']/config['dx'])
+        #     ax[0].set_xlabel('x')
+        #     ax[0].set_ylabel('y')
+        #     values = u[i,:,32,:]#np.random.random((azimuths.size, zeniths.size))
+        #     im2 = ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dx'])
+        #     # im2 = ax[1].quiver(v[i,300,1::4,1::4].T,w[i,300,1::4,1::4].T,scale=10)
+        #     # ax[1].scatter([63],[19],marker='+',color='r')
+        #     ax[1].set_xlabel('y')
+        #     ax[1].set_ylabel('z')
+        #     print(i)
+        #     # return
 
 
-        # fig.colorbar(im1, ax=ax[0])
-        # fig.colorbar(im2, ax=ax[1])
-        # plt.savefig('force.png')
-        anim = animation.FuncAnimation(fig, animate, frames=10)
-        anim.save(out_path+'/animation.gif',writer='imagemagick', fps=10)
+        # # fig.colorbar(im1, ax=ax[0])
+        # # fig.colorbar(im2, ax=ax[1])
+        # # plt.savefig('force.png')
+        # anim = animation.FuncAnimation(fig, animate, frames=49)
+        # anim.save(out_path+'/animation.gif',writer='imagemagick', fps=25)
+        # fig, ax = plt.subplots(2,3,subplot_kw=dict(projection='polar'))
+        # azimuths = np.radians(np.linspace(0, 360, 64))
+        # zeniths = np.linspace(0, 0.5, 16)
+        # theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
+        # def animate(i):    
+        #     for k in range(3):
+        #         im1 = ax[0,k].contourf(theta,r,fx[i,:,:,k],40)
+        #         im2 = ax[1,k].contourf(theta,r,ft[i,:,:,k],40)
+                
+        #     print(i)
+
+        # anim = animation.FuncAnimation(fig, animate, frames=19)
+        # anim.save(out_path+'/animation_turb.gif',writer='imagemagick', fps=10)
+
+
+        # fig, ax = plt.subplots(2,3)
+        # azimuths = np.radians(np.linspace(0, 360, 64))
+        # zeniths = np.linspace(0, 0.5, 16)
+        # theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
+        # def animate(i):    
+        #     for k in range(3):
+        #         im1 = ax[0,k].contourf(theta,r,fx[i,:,:,k],40)
+        #         im2 = ax[1,k].contourf(theta,r,ft[i,:,:,k],40)
+        #     print(i)
+
+        # anim = animation.FuncAnimation(fig, animate, frames=19)
+        # anim.save(out_path+'/animation_turb2.gif',writer='imagemagick', fps=10)
+        # fig = plt.figure()
+        # ax = plt.axes(xlim=(0, 0.075), ylim=(0, 0.002))
+        # line, = ax.plot([], [], lw=2)
+
+        # def init():
+        #     line.set_data([], [])
+        #     return line,
+        # # i = 9
+        # def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
+        # #     zeniths = np.linspace(0, 0.5, 30)
+        # #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
+        #     print(i)
+        #     x = np.arange(64)*0.15/64
+        #     y = turb_fx[i,0,:,0]
+        #     line.set_data(x,y)
+
+        #     # ax.plot(turb_fx[500+i,0,:,0])
+        #     # plt.cla()
+        #     return line,
+ 
+        # # fig.colorbar(im1, ax=ax[0])
+        # # fig.colorbar(im2, ax=ax[1])
+        # # plt.savefig('force.png')
+        # anim = animation.FuncAnimation(fig, animate, init_func=init,frames=100, interval=20, blit=True)
+        # anim.save(out_path+'/animation_force.gif',writer='imagemagick', fps=60)
+
+        

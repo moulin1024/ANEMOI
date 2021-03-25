@@ -7,6 +7,7 @@ module control
     integer,parameter :: i1 = nint(2.0*turb_r(1)/dy)
     real(fp),dimension(3),parameter :: rpm_0_0_0 = (/2183.0,1405.7,1560.5/)
     real(fp),dimension(3),parameter :: rpm_25_15_0 = (/2113.39462885849,1666.10117077778,1744.22877040370/)
+    
     contains
     subroutine controller(turb_rpm,u,turb_loc,t)
         implicit none
@@ -184,7 +185,8 @@ module control
         hub_y = nint(turb_loc(i_turb,2)/dy)
         hub_z = nint(turb_loc(i_turb,3)/dz) + 1
 
-        istat = atomicadd(CTUin(i_turb),0.5*(u(hub_x-i0+i,hub_y+j,hub_z  )/(i1*i2)+u(hub_x-i0+i,hub_y+j,hub_z+1)/(i1*i2)))
+        istat = atomicadd(CTUin(i_turb),0.5*(u(hub_x-i0+i,hub_y+j,hub_z)/(i1*i2)+&
+                                             u(hub_x-i0+i,hub_y+j,hub_z+1)/(i1*i2)))
         call syncthreads() 
     end subroutine get_inflow
 end module control 

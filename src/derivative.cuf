@@ -113,6 +113,28 @@ attributes(global) subroutine ddz (dfdz,f,stagger_flag)
     end if
 end subroutine ddz
 
+attributes(global) subroutine ddz_uv_corr (dfdz,d_avg,k_corr)
+	    !---------------------------------------------------------------------------
+	    ! declaration
+	    !---------------------------------------------------------------------------
+	    implicit none
+	    real(fp), dimension(nx,ny,nz2), intent(inout):: dfdz
+	    real(fp), parameter :: fr1 = 1._fp/log(3._fp)-1._fp
+	    real(fp),device,intent(inout) :: d_avg
+	    integer,value, intent(in) :: k_corr
+	    integer :: i,j
+	
+	    !---------------------------------------------------------------------------
+	    ! main code
+	    !---------------------------------------------------------------------------
+	
+	    i = (blockIdx%x - 1) * blockDim%x + threadIdx%x
+	    j = (blockIdx%y - 1) * blockDim%y + threadIdx%y
+	    
+	    dfdz(i,j,k_corr)= dfdz(i,j,k_corr) + fr1*d_avg*inxny
+	    d_avg = 0._fp
+end subroutine ddz_uv_corr
+
 end module derivative
 
     

@@ -35,9 +35,8 @@ PROG = wireles_src
 DEP0  =   precision.o
 DEP1  =   dimen.o cufft_m.o
 DEP2  =   update.o convection.o derivative.o filter.o io.o pressure.o rhs.o time.o control.o
-DEP3  =   divergence.o turbine_new.o
-DEP4  =   sgs.o wall.o
-
+DEP3  =   divergence.o turbine_new_test_nacelle_gap.o
+DEP4  =   sgs.o sgs_mgm.o wall.o
 
 
 ifdef USE_NVTX
@@ -47,7 +46,6 @@ endif
 
 DEPS  = $(DEP0) $(DEP1) $(DEP2) $(DEP3) $(DEP4) 
 OBJ   = $(DEPS) main.o
-
 
 
 # --- link ---
