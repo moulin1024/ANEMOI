@@ -17,6 +17,7 @@ import app_post as post
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import h5py
 import os.path
 import math
@@ -86,14 +87,6 @@ def anime(PATH, case_name):
         dset = grp.create_dataset("y", data=y)
         dset = grp.create_dataset("z", data=z)
 
-    # gridToVTK(
-    #     out_path+'/'+case_name,
-    #     x,
-    #     y,
-    #     z,
-    #     pointData={"u": result_3d['u_avg_c'],"v": result_3d['v_avg_c'],"w": result_3d['w_avg_c']}
-    # )
-
         for key, value in config.items():
             grp.attrs[key]=value
 
@@ -105,22 +98,6 @@ def anime(PATH, case_name):
             print(df['power'])
             print(np.sum(df_power.to_numpy()))
             df.to_csv(out_path+'/ta_power.csv',index=False)
-
-
-    #         # Spatial coorindates (masked)
-
-
-    #     XX,YY = np.meshgrid(x,y,indexing='ij')
-    #     YY2,ZZ = np.meshgrid(y,z,indexing='ij')
-    #     u = result_3d['u_avg_c']
-    #     v = result_3d['v_avg_c']
-    #     w = result_3d['w_avg_c']
-
-    #     # result_pr = post.get_result_pr(result_3d, config)
-    # if config['ts_flag'] > 0:
-    #     result_4d = post.get_result_4d(src_out_path, config)
-
-    # f = h5py.File(out_path+'/'+case_name+'_ts.h5', 'w')
 
     hub_k = int(config['turb_z']/config['dz'])+1
     print(hub_k)
@@ -233,61 +210,75 @@ def anime(PATH, case_name):
         result_4d = post.get_result_4d(src_out_path, config)
 
         turb_force = post.get_turb(src_out_path, config)
-        # fx = turb_force['fx']
-        # ft = turb_force['ft']
+        fx = turb_force['fx']
+        ft = turb_force['ft']
+
+        np.save('fx.npy',fx)
+        np.save('ft.npy',ft)
+        print(fx.shape)
         
-        u = result_4d['u_inst_c']
-        v = result_4d['v_inst_c']
-        w = result_4d['w_inst_c']
+        # u = result_4d['u_inst_c']
+        # v = result_4d['v_inst_c']
+        # w = result_4d['w_inst_c']
 
-        x_grid_unmask = space['x']
-        y_grid_unmask = space['y']
-        z_grid_unmask = space['z_c']
+        # x_grid_unmask = space['x']
+        # y_grid_unmask = space['y']
+        # z_grid_unmask = space['z_c']
 
-        x = x_grid_unmask[config['ts_istart']-1:config['ts_iend']]
-        y = y_grid_unmask[config['ts_jstart']-1:config['ts_jend']]
-        z = z_grid_unmask[:config['ts_kend']-1]
+        # x = x_grid_unmask[config['ts_istart']-1:config['ts_iend']]
+        # y = y_grid_unmask[config['ts_jstart']-1:config['ts_jend']]
+        # z = z_grid_unmask[:config['ts_kend']-1]
 
-        f = h5py.File(out_path+'/'+case_name+'_ts.h5', 'w')
+        f = h5py.File(out_path+'/'+case_name+'_turb.h5', 'w')
         grp = f.create_group("data")
 
-        dset = grp.create_dataset("u", data=u)
-        dset = grp.create_dataset("v", data=v)
-        dset = grp.create_dataset("w", data=w)
+        # dset = grp.create_dataset("u", data=u)
+        # dset = grp.create_dataset("v", data=v)
+        # dset = grp.create_dataset("w", data=w)
 
-        # dset = grp.create_dataset("fx", data=turb_force['fx'])
-        # dset = grp.create_dataset("ft", data=turb_force['ft'])
+        dset = grp.create_dataset("fx", data=turb_force['fx'])
+        dset = grp.create_dataset("ft", data=turb_force['ft'])
 
-        dset = grp.create_dataset("x", data=x)
-        dset = grp.create_dataset("y", data=y)
-        dset = grp.create_dataset("z", data=z)
+        # dset = grp.create_dataset("x", data=x)
+        # dset = grp.create_dataset("y", data=y)
+        # dset = grp.create_dataset("z", data=z)
 
         f.close()
 
-        # fig, ax = plt.subplots(2,1)
+        # print(fx.shpae)
+        # print(hub_k)
+        # fig, ax = plt.subplots(1,1)
+
         # # i = 9
         # def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
         # #     zeniths = np.linspace(0, 0.5, 30)
         # #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
-        #     values = u[i,:,:,hub_k]#np.random.random((azimuths.size, zeniths.size))
-        #     im1 = ax[0].imshow(values.T,origin='lower',aspect=config['dy']/config['dx'])
-        #     ax[0].set_xlabel('x')
-        #     ax[0].set_ylabel('y')
-        #     values = u[i,:,32,:]#np.random.random((azimuths.size, zeniths.size))
-        #     im2 = ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dx'])
+        #     # i = 19
+        #     values = u[i,64,:,:]#np.random.random((azimuths.size, zeniths.size))
+        #     im1 = ax.imshow(values.T,origin='lower',aspect=config['dy']/config['dz'])
+
+        #     # fig.colorbar(im1)
+        #     ax.set_xlabel('x')
+        #     ax.set_ylabel('y')
+        #     # values = u[i,32,:,:]#np.random.random((azimuths.size, zeniths.size))
+        #     # im2 = ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dx'])
+                
         #     # im2 = ax[1].quiver(v[i,300,1::4,1::4].T,w[i,300,1::4,1::4].T,scale=10)
         #     # ax[1].scatter([63],[19],marker='+',color='r')
-        #     ax[1].set_xlabel('y')
-        #     ax[1].set_ylabel('z')
+        #     # ax[1].set_xlabel('y')
+        #     # ax[1].set_ylabel('z')
+        #     # ax[1].colorbar()
+            
         #     print(i)
+
         #     # return
 
 
-        # # fig.colorbar(im1, ax=ax[0])
-        # # fig.colorbar(im2, ax=ax[1])
-        # # plt.savefig('force.png')
-        # anim = animation.FuncAnimation(fig, animate, frames=49)
-        # anim.save(out_path+'/animation.gif',writer='imagemagick', fps=25)
+        # # # fig.colorbar(im1, ax=ax[0])
+        # # # fig.colorbar(im2, ax=ax[1])
+        # # # plt.savefig('force.png')
+        # anim = animation.FuncAnimation(fig, animate, frames=50)
+        # anim.save(out_path+'/animation.gif',writer='imagemagick', fps=10)
         # fig, ax = plt.subplots(2,3,subplot_kw=dict(projection='polar'))
         # azimuths = np.radians(np.linspace(0, 360, 64))
         # zeniths = np.linspace(0, 0.5, 16)
@@ -315,30 +306,31 @@ def anime(PATH, case_name):
 
         # anim = animation.FuncAnimation(fig, animate, frames=19)
         # anim.save(out_path+'/animation_turb2.gif',writer='imagemagick', fps=10)
-        # fig = plt.figure()
-        # ax = plt.axes(xlim=(0, 0.075), ylim=(0, 0.002))
-        # line, = ax.plot([], [], lw=2)
+        fig = plt.figure()
+        ax = plt.axes(xlim=(0, 64), ylim=(0, 6000))
+        line, = ax.plot([], [], lw=2)
 
-        # def init():
-        #     line.set_data([], [])
-        #     return line,
+        def init():
+            line.set_data([], [])
+            return line,
         # # i = 9
-        # def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
-        # #     zeniths = np.linspace(0, 0.5, 30)
-        # #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
-        #     print(i)
-        #     x = np.arange(64)*0.15/64
-        #     y = turb_fx[i,0,:,0]
-        #     line.set_data(x,y)
+        def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
+        #     zeniths = np.linspace(0, 0.5, 30)
+        #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
+            print(i)
+            x = np.arange(64)*63/64
+            y = fx[i,0,:,0]
+            line.set_data(x,y)
+            plt.cla()
+            ax.plot(x,fx[i,0,:,0],'o')
+            # ax.set_ylim([0,6000])
 
-        #     # ax.plot(turb_fx[500+i,0,:,0])
-        #     # plt.cla()
-        #     return line,
+            return line,
  
-        # # fig.colorbar(im1, ax=ax[0])
-        # # fig.colorbar(im2, ax=ax[1])
-        # # plt.savefig('force.png')
-        # anim = animation.FuncAnimation(fig, animate, init_func=init,frames=100, interval=20, blit=True)
-        # anim.save(out_path+'/animation_force.gif',writer='imagemagick', fps=60)
+        # fig.colorbar(im1, ax=ax[0])
+        # fig.colorbar(im2, ax=ax[1])
+        # plt.savefig('force.png')
+        anim = animation.FuncAnimation(fig, animate, init_func=init,frames=10, interval=20, blit=True)
+        anim.save(out_path+'/animation_force.gif',writer='imagemagick', fps=10)
 
         

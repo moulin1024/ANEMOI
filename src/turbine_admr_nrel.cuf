@@ -55,9 +55,12 @@ module turbine
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/1.28,2.03,2.78/)/z_i)/dx
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/2.45,3.2,3.95/)/z_i)/dx
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/3.2,3.95,4.7/)/z_i)/dx
-    real(fp), dimension(n_turb), parameter :: turb_i = ((/624,1024,1424/)/z_i)/dx
+    real(fp), dimension(n_turb), parameter :: turb_i = ((/400,1024,1536/)/z_i)/dx
     ! real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.85,0.9/)/z_i)/dy
-    real(fp), dimension(n_turb), parameter :: turb_j = ((/512,512,512/)/z_i)/dy
+    real(fp), dimension(n_turb), parameter :: turb_j = ((/400,1024,1024/)/z_i)/dy
+    ! real(fp), dimension(n_turb), parameter :: turb_i = ((/0.85,1.6,2.35/)/z_i)/dx
+    ! real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.85,0.9/)/z_i)/dy
+    ! real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.8,0.8/)/z_i)/dy
     ! real(fp), dimension(n_turb), parameter :: turb_j = ((/1.6,1.6,1.6/)/z_i)/dy
     real(fp),parameter :: hub_tower_gap = 0!turb_r(1)/3 ! The gap between the tower and the hub (2 cm for WiRE-01)
     real(fp),parameter :: hub_tower_gap1 = turb_r(1)/3 ! The gap between the tower and the hub (2 cm for WiRE-01)
@@ -207,6 +210,7 @@ module turbine
         integer,intent(in)                                 :: t,me,nall
         ! Internal variables
         real(fp),dimension(:,:,:,:,:),allocatable,device   :: coeff       !< Interpoltaion coefficient
+        real(fp),dimension(n_phi,n_r,n_turb,2,8)   :: coeff_host       !< Interpoltaion coefficient
         real(fp),dimension(:,:,:,:),allocatable,device     :: sum_ker     !< Normalization for the smearing kernel 
         integer,dimension(:,:,:,:),allocatable,device      :: blade_ijk   !< Closest grid point for a blade element
         ! real(fp),dimension(:,:,:,:),allocatable,device     :: CTF         !< Force on the blade element (CTFx,CTFt)
@@ -218,6 +222,8 @@ module turbine
         real(fp),dimension(:),allocatable,device            :: turb_rpm_new,torque
         real(fp),dimension(n_turb) :: turb_rpm_host
         real(fp),dimension(:,:),allocatable                :: turb_aerodyn_host,turb_geo_host,CL_NREL_host,CD_NREL_host
+        real(fp),dimension(:,:),allocatable,device         :: turb_aerodyn_nrel
+        real(fp),dimension(:,:),allocatable                :: turb_aerodyn_nrel_host
         integer :: i,j,k,me_k,index,i_global,hub_node,nlines,io,iter
         ! Cuda variables
         type(dim3) :: grid_be,tBlock_be,grid_full,tBlock_full
@@ -228,7 +234,7 @@ module turbine
         tBlock_full = dim3(mask_x,mask_y,1)
         grid_full   = dim3(n_phi,n_r,nzb)
         
-        save coeff,blade_ijk,twist_angle,solidity,sum_ker,turb_aerodyn,CD_nrel,CL_nrel,turb_geo,turb_rpm_new,torque
+        save coeff,blade_ijk,twist_angle,solidity,sum_ker,turb_aerodyn,turb_aerodyn_nrel,CD_nrel,CL_nrel,turb_geo,turb_rpm_new,torque
     !----------------------------------------------------------------------------
     ! code
     !----------------------------------------------------------------------------
@@ -247,11 +253,8 @@ module turbine
             allocate(turb_geo(3,nlines))
             allocate(turb_aerodyn_host(3,181))
             allocate(turb_aerodyn(3,181))
-
-            allocate(CL_nrel_host(6,181))
-            allocate(CD_nrel_host(6,181))
-            allocate(CL_nrel(6,181))
-            allocate(CD_nrel(6,181))
+            allocate(turb_aerodyn_nrel_host(12,181))
+            allocate(turb_aerodyn_nrel(12,181))
             ! Reading twice, any better idea?
             open(unit=101,file='input/turb_geo.dat')
                 DO k=1,nlines
@@ -265,32 +268,36 @@ module turbine
             allocate(twist_dat(nlines))
             allocate(chord_dat(nlines))
 
+            allocate(CL_nrel_host(6,361))
+            allocate(CD_nrel_host(6,361))
+            allocate(CL_nrel(6,361))
+            allocate(CD_nrel(6,361))
+
             radius_dat = turb_geo(1,:)
             twist_dat = turb_geo(2,:)
             chord_dat = turb_geo(3,:)
 
             ! load turbine aerodynamic files (lift and drag)
             if(turb_flag > 0)then
-                ! open(unit=99,file='input/turb_aerodyn.dat')
-                ! do k=1,181
-                !     read(99,*)turb_aerodyn_host(1:3,k)
-                ! end do
-                ! close(99)
-
-                open(unit=99,file='input/CD_NREL.csv')
+                open(unit=99,file='input/turb_aerodyn.dat')
                 do k=1,181
-                    read(99,*)CD_NREL_host(1:6,k)
+                    read(99,*)turb_aerodyn_host(1:3,k)
                 end do
                 close(99)
 
-                open(unit=99,file='input/CL_NREL.csv')
+                open(unit=99,file='input/turb_aerodyn_nrel.csv')
                 do k=1,181
-                    read(99,*)CL_NREL_host(1:6,k)
+                    read(99,*)turb_aerodyn_nrel_host(1:12,k)
                 end do
                 close(99)
+
             endif
-
+            ! print *,turb_aerodyn_host_nrel
+            ! stop
+            ! print *,CL_NREL_host(1,:)
+            ! stop
             turb_aerodyn = turb_aerodyn_host ! Copy to device
+            turb_aerodyn_nrel = turb_aerodyn_nrel_host ! Copy to device
             CL_NREL = CL_NREL_host
             CD_NREL = CD_NREL_host
             ! device array allocation
@@ -312,7 +319,7 @@ module turbine
 
             call force_compute<<<grid_be,tBlock_be>>>(CTF,power,&
                                                       u,v,w,coeff,blade_ijk,twist_angle,solidity,&
-                                                      turb_rpm,CTUin,turb_loc,CL_NREL,CD_NREL)
+                                                      turb_rpm,CTUin,turb_loc,turb_aerodyn,turb_aerodyn_nrel)
 
         call force_projection<<<grid_full,tBlock_full>>>(fx,fy,fz,CTF,sum_ker,turb_loc)
     end Subroutine admryaw
@@ -549,6 +556,7 @@ module turbine
         ! NOTICE: Interpolation at o for w node needs to be treated differently
         call get_interp_coeff(c_uv_1d,blade_ii,blade_jj,blade_kk_uv) 
         call get_interp_coeff(c_w_1d,blade_ii,blade_jj,blade_kk_w)
+        
         coeff(i_phi,i_r,i_turb,1,:) = c_uv_1d(:)
         coeff(i_phi,i_r,i_turb,2,:) = c_w_1d(:)
 
@@ -618,7 +626,7 @@ module turbine
 
     attributes(global) subroutine force_compute(CTF,power,&
                                                 u,v,w,coeff,blade_ijk,twist_angle,solidity,&
-                                                turb_rpm,CTUin,turb_loc,CL_NREL,CD_NREL)
+                                                turb_rpm,CTUin,turb_loc,turb_aerodyn,turb_aerodyn_nrel)
     !----------------------------------------------------------------------------
     ! Declaration
     !----------------------------------------------------------------------------
@@ -632,13 +640,15 @@ module turbine
         real(fp),dimension(n_r,n_turb),intent(in)           :: twist_angle,solidity
         real(fp),dimension(n_turb),intent(in)               :: turb_rpm,CTUin
         real(fp),dimension(n_turb,4),intent(in)             :: turb_loc
-        real(fp),dimension(6,181),intent(in)                :: CL_NREL,CD_NREL
+        real(fp),dimension(3,181),intent(in)                :: turb_aerodyn
+        real(fp),dimension(12,181),intent(in)                :: turb_aerodyn_nrel
         ! Internal variables
         real(fp) :: c_w_1d(8),c_uv_1d(8)
         real(fp) :: CTphi,sin_CTphi,cos_CTphi
         real(fp) :: CTU,CTV,CTW,CTUrel,AoA
         real(fp) :: CTCL,CTCD,CTU_origin,CTV_origin,CTW_origin
         real(fp) :: f1_tip,f2_tip,f1_hub,f2_hub,g
+        ! real(fp),dimension(3,181)                :: turb_aerodyn_test
         integer :: i_turb,i_phi,i_r,istat
     !----------------------------------------------------------------------------
     ! code
@@ -673,9 +683,9 @@ module turbine
             CTW = CTW_origin
             ! Compute the tangential velocity relative to the rotating blade                   
             CTV = CTW*cos_Tang(i_phi)-CTV*sin_Tang(i_phi) + turb_rpm(i_turb)/60*2*pi*(r(i_r,i_turb)*z_i)
-
+            ! if (i_turb == 1 ) print *,c_uv_1d(0),c_uv_1d(1),c_uv_1d(2)
             ! Find the attack angle and relative inflow velocity for the blade element
-            CTphi     = atan(CTU/CTV)
+            CTphi = atan(CTU/CTV)
             sin_CTphi = sin(CTphi)
             cos_CTphi = cos(CTphi)
             ! Convert to degree
@@ -688,10 +698,13 @@ module turbine
             elseif (AoA > 90._fp) then
                 AoA = 90._fp
             endif
-
-            call compute_cl_cd_nrel(CTCL,CTCD,AOA,CL_NREL,CD_NREL,r(i_r,i_turb)*z_i)
             ! call compute_cl_cd(CTCL,CTCD,AOA,turb_aerodyn)
+            call compute_cl_cd_nrel(CTCL,CTCD,AOA,turb_aerodyn_nrel,r(i_r,i_turb)*z_i)
+
+            ! call compute_cl_cd_nrel(CTCL,CTCD,AOA,turb_aerodyn_nrel,r(i_r,i_turb)*z_i)
+            ! print *,CTCL,CTCD
             
+            ! print *,CL_NREL(1,180),CD_NREL(1,180)
             ! Tip loss factor correction
             f1_tip = 3._fp*(turb_r(i_turb)-r(i_r,i_turb))/(2.0*r(i_r,i_turb)*sin_CTphi)
             g = 1.0!exp(-0.125*(3*tsp-21))+0.1
@@ -815,8 +828,7 @@ module turbine
             l(i,2) = dble(blade_point(i)-int(blade_point(i)))
             ! if (i == 1) print *,i,l(i,1),l(i,2)
         end do
-        
-            ! Get the coefficient
+        ! Get the coefficient
         counter = 1
         do i = 1,2
             do j = 1,2
@@ -864,21 +876,79 @@ module turbine
         CTCD = dble(x-floor(x))*turb_aerodyn(3,j)+dble(ceiling(x)-x)*turb_aerodyn(3,i)
     end subroutine compute_cl_cd
 
-    attributes(device) subroutine compute_cl_cd_nrel(CTCL,CTCD,&
-                                                     AOA,CL_NREL,CD_NREL,radius)
-        implicit none
-        real(fp),intent(out) :: CTCL,CTCD
-        real(fp),intent(in) :: AoA
-        real(fp),intent(in),dimension(6,181) :: CL_NREL,CD_NREL
-        real(fp),intent(in) :: radius
-        integer  i,j,section
+    attributes(device) subroutine compute_cl_cd_nrel(CTCL,CTCD,x,turb_aerodyn_nrel,radius)
+    implicit none
+    real(fp) x,compute_cl,CTCL,CTCD,radius
+    real(fp),dimension(12,181) :: turb_aerodyn_nrel
+    integer  i,j,section
 
-        i=floor(AoA)+91
-        j=ceiling(AoA)+91
+    i=floor(x)+91
+    j=ceiling(x)+91
 
-        CTCL = dble(AoA-floor(AoA))*CL_NREL(section,j)+dble(ceiling(AoA)-AoA)*CL_NREL(section,i)
-        CTCD = dble(AoA-floor(AoA))*CD_NREL(section,j)+dble(ceiling(AoA)-AoA)*CD_NREL(section,i)
+    if (radius < 8.333 ) then
+        CTCL = 0
+        CTCD = 0.5            
+    else if (radius >= 8.333 .and. radius < 11.75) then
+        CTCL = 0
+        CTCD = 0.35
+    else if ( radius >= 11.75 .and. radius < 15.85 ) then
+        section = 1
+    else if ( radius >= 15.85 .and. radius < 24.05 ) then
+        section = 2 
+    else if ( radius >= 24.05 .and. radius < 28.15 ) then
+        section = 3
+    else if ( radius >= 28.15 .and. radius < 36.35 ) then
+        section = 4 
+    else if ( radius >= 36.35 .and. radius < 44.55 ) then
+        section = 5
+    else if ( radius >= 44.55 ) then
+        section = 6
+    end if
+
+    CTCL = dble(x-floor(x))*turb_aerodyn_nrel(section*2-1,j)+dble(ceiling(x)-x)*turb_aerodyn_nrel(section*2-1,i)
+    CTCD = dble(x-floor(x))*turb_aerodyn_nrel(section*2,j)+dble(ceiling(x)-x)*turb_aerodyn_nrel(section*2,i)
     end subroutine compute_cl_cd_nrel
+
+    ! attributes(device) subroutine compute_cl_cd_nrel(CTCL,CTCD,&
+    !                                                  AOA,CL_NREL,CD_NREL,radius)
+    !     implicit none
+    !     real(fp),intent(out) :: CTCL,CTCD
+    !     real(fp),intent(in) :: AoA
+    !     real(fp),intent(in),dimension(6,361) :: CL_NREL,CD_NREL
+    !     real(fp),intent(in) :: radius
+    !     integer  i,j,section
+
+    !     i=floor(AoA)+181
+    !     j=ceiling(AoA)+181
+
+    !     ! if (radius < 8.333 ) then
+    !     !     CTCL = 0
+    !     !     CTCD = 0.5            
+    !     ! else if (radius >= 8.333 .and. radius < 11.75) then
+    !     !     CTCL = 0
+    !     !     CTCD = 0.35
+    !     ! else if ( radius >= 11.75 .and. radius < 15.85 ) then
+    !     !     section = 1
+    !     ! else if ( radius >= 15.85 .and. radius < 24.05 ) then
+    !     !     section = 2 
+    !     ! else if ( radius >= 24.05 .and. radius < 28.15 ) then
+    !     !     section = 3
+    !     ! else if ( radius >= 28.15 .and. radius < 36.35 ) then
+    !     !     section = 4 
+    !     ! else if ( radius >= 36.35 .and. radius < 44.55 ) then
+    !     !     section = 5
+    !     ! else if ( radius >= 44.55 ) then
+    !     !     section = 6
+    !     ! end if
+
+    !     section = 6
+
+    !     CTCL = dble(AoA-floor(AoA))*CL_NREL(section,j)+dble(ceiling(AoA)-AoA)*CL_NREL(section,i)
+    !     CTCD = dble(AoA-floor(AoA))*CD_NREL(section,j)+dble(ceiling(AoA)-AoA)*CD_NREL(section,i)
+
+
+    !     ! print *,radius,section,CL_NREL(section,j)
+    ! end subroutine compute_cl_cd_nrel
     
     attributes(device) subroutine itp1D(xData,yData,array_size,xVal,yVal)
         implicit none
@@ -889,7 +959,7 @@ module turbine
         integer ::  dataIndex
         real(fp) :: minXdata,maxXdata,xRange,weight
     
-        minXData = xData(1)
+        minXData = xData(1) 
         maxXData = xData(size(xData))
     
         if (xVal<minXData .or. xVal>maxXData) then

@@ -55,8 +55,9 @@ program main
     real(fp), dimension(:,:,:),allocatable,device :: fx,fy,fz 
     real(fp),dimension(:),allocatable,device    :: power,thrust,CTU_local
     real(fp),dimension(n_turb)     :: power_host,mean_power,sum_power,CTU_local_host
-    real(fp),dimension(:,:,:,:),allocatable,device     :: CTF  !< Force on the blade element (CTFx,CTFt)
-    real(fp),dimension(n_phi,n_r,n_turb,2) :: CTF_host  !< Force on the blade element (CTFx,CTFt)
+    real(fp),dimension(:,:,:,:),allocatable,device :: CTF,CTF_alm  !< Force on the blade element (CTFx,CTFt)    
+    real(fp),dimension(n_phi,n_r,n_turb,2)         :: CTF_host !< Force on the blade element (CTFx,CTFt)
+    real(fp),dimension(3,n_r,n_turb,2)             :: CTF_alm_host     !< Force on the blade element (CTFx,CTFt)
     ! real(fp), dimension(3,181) :: alpha_cl_cd_host
     ! real(fp), dimension(3,181),device :: alpha_cl_cd
 
@@ -161,6 +162,7 @@ program main
              lm_old(nx,ny,nz2),mm_old(nx,ny,nz2),&
              qn_old(nx,ny,nz2),nn_old(nx,ny,nz2),cs2(nx,ny,nz2),&
              fx(nx,ny,nz2),fy(nx,ny,nz2),fz(nx,ny,nz2),power(n_turb),thrust(n_turb),CTU_local(n_turb),&
+             CTF_alm(3,n_r,n_turb,2),&
              CTF(n_phi,n_r,n_turb,2),&
              ta_u(nx,ny,nzb),ta_v(nx,ny,nzb),ta_w(nx,ny,nzb),&
              ta_u2(nx,ny,nzb),ta_v2(nx,ny,nzb),ta_w2(nx,ny,nzb) )
@@ -241,8 +243,6 @@ program main
         turb_loc_host(i_turb,3) = turb_loc_host(i_turb,3)/z_i
         turb_loc_host(i_turb,4) = turb_loc_host(i_turb,4)/180*pi
     end do
-    print *,turb_loc_host
-    ! stop
     ! Copy to device
     turb_loc = turb_loc_host
 
@@ -354,7 +354,7 @@ program main
         call update_w_async(dwdx,request,me,nall)
         call update_w_async(dwdy,request,me,nall)
 
-        if (mod(t,c_count*2)==0) then
+        if (mod(t,c_count*10)==0) then
 
             u_host = u
             v_host = v 
@@ -365,11 +365,11 @@ program main
             call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
             ! if(log_flag > 0) call write_log(log_ustar,log_umax,me)               
             if (log_umax>100) exit
-            if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*2) == 0) then 
+            if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*10) == 0) then 
                 print *,'Write instant field:'
                 call write_ts1(u_host,v_host,w_host,me)
-                CTF_host = CTF
-                call write_turb(CTF_host,me)
+                CTF_alm_host = CTF_alm
+                call write_turb(CTF_alm_host,me)
             end if
             ! print *,mean_power,power_host
         end if
@@ -513,12 +513,12 @@ program main
         ! applying pressure gradient (not needed fror)
         if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx,device_id)      
         if (turb_flag == 1) then
-            ! u = 5
+            ! u = 9
             ! v = 0
             ! w = 0
             if (device_id == 0 ) then
-                if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
-                ! if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,power,u,v,w,turb_loc,t)
+                ! if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
+                if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,CTF_alm,power,u,v,w,turb_loc,t)
                 ! if (mod(t-1,turb_count)==0) call turbine_force(fx,fy,fz,CTF,power,thrust,CTU_local,u,v,w,turb_loc,t)
                 ! if (t>4000) then
                 !     power_host = CTU_local

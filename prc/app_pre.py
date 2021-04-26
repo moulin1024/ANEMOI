@@ -125,6 +125,7 @@ def pre(PATH, case_name):
 
     if config['turb_flag'] == 1:
         os.system('cp ' +os.path.join(case_path, 'input/*.dat')+ ' '+ os.path.join(case_path, 'src', 'input'))
+        os.system('cp ' +os.path.join(case_path, 'input/*.csv')+ ' '+ os.path.join(case_path, 'src', 'input'))
 
     # write zo and zs. Must be here to allow for changes beween prec/main
 

@@ -162,8 +162,8 @@ def get_turb(src_out_path, config):
     # turb['thrust'] = fctlib.load_1d('turb_thrust', config['ts_ns']*config['turb_nb'], config['double_flag'], src_out_path).reshape(config['ts_ns'],config['turb_nb'])
     # turb['dt']  = config['dtr']*config['c_count']
     # turb['Omega']  = fctlib.load_1d('turb_omega', config['ts_ns']*config['turb_nb'], config['double_flag'], src_out_path).reshape(config['ts_ns'],config['turb_nb'])
-    # turb['fx']  = fctlib.load_4d('turb_fx', config['ts_ns'],64,16,config['turb_nb'], config['double_flag'], src_out_path)
-    # turb['ft']  = fctlib.load_4d('turb_ft', config['ts_ns'],64,16,config['turb_nb'], config['double_flag'], src_out_path)
+    turb['fx']  = fctlib.load_4d('turb_fx', config['ts_ns'],3,64,config['turb_nb'], config['double_flag'], src_out_path)
+    turb['ft']  = fctlib.load_4d('turb_ft', config['ts_ns'],3,64,config['turb_nb'], config['double_flag'], src_out_path)
 
     return turb
 
