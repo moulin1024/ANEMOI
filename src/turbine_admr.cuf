@@ -749,7 +749,6 @@ module turbine
                 r_w  = sqrt((coord_y/cos(turb_loc(i_turb,4)))**2 + coord_z_w**2)
                 ! Phase angle of the grid point
                 sin_CTangx = coord_z_u/(r_u+1e-16)
-                ! cos_CTangz = ((coord_y+coord_x*tan(turb_loc(i_turb,4)))*cos(turb_loc(i_turb,4)))/(r_w+1e-16)
                 cos_CTangz = ((coord_y)/cos(turb_loc(i_turb,4)))/(r_w+1e-16)
 
                 sigma_x  = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)

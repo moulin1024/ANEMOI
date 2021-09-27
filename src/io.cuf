@@ -315,7 +315,8 @@ end subroutine load_surface
 !-------------------------------------------------------------------------------
 
 subroutine initialize_ta1(ta_u, ta_v, ta_w,&
-                          ta_u2,ta_v2,ta_w2)
+                          ta_u2,ta_v2,ta_w2,&
+                          ta_uv)
 
     !---------------------------------------------------------------------------
     ! declaration
@@ -325,7 +326,7 @@ subroutine initialize_ta1(ta_u, ta_v, ta_w,&
     integer me,nall
 
     real(fp), dimension(ta_nx,ta_ny,nzb), intent (inout),device:: ta_u,ta_v,ta_w,&
-                                                          ta_u2,ta_v2,ta_w2
+                                                          ta_u2,ta_v2,ta_w2,ta_uv
 
     !---------------------------------------------------------------------------
     ! main
@@ -338,6 +339,7 @@ subroutine initialize_ta1(ta_u, ta_v, ta_w,&
         ta_u2 = 0._fp
         ta_v2 = 0._fp
         ta_w2 = 0._fp
+        ta_uv = 0._fp
     ! end if
 
 end subroutine initialize_ta1
@@ -385,6 +387,7 @@ subroutine open_ta1(me)
         open (unit=(14000+me),file=('output/p'//trim(fme)//'_'//'ta_u2.bin'), status='unknown', form='unformatted', access='stream')
         open (unit=(15000+me),file=('output/p'//trim(fme)//'_'//'ta_v2.bin'), status='unknown', form='unformatted', access='stream')
         open (unit=(16000+me),file=('output/p'//trim(fme)//'_'//'ta_w2.bin'), status='unknown', form='unformatted', access='stream')
+        open (unit=(17000+me),file=('output/p'//trim(fme)//'_'//'ta_uv.bin'), status='unknown', form='unformatted', access='stream')
     end if
 
 end subroutine open_ta1
@@ -489,13 +492,13 @@ end subroutine open_turb
 
 attributes(global) subroutine compute_ta1(u,v,w,&
                                           ta_u,ta_v,ta_w,&
-                                          ta_u2,ta_v2,ta_w2)
+                                          ta_u2,ta_v2,ta_w2,ta_uv)
     implicit none
     integer me,nall
 
     real(fp), dimension(nx,ny,nz2), intent (in):: u,v,w
     real(fp), dimension(nx,ny,nzb), intent (inout):: ta_u,ta_v,ta_w,&
-                                                          ta_u2,ta_v2,ta_w2
+                                                          ta_u2,ta_v2,ta_w2,ta_uv
     integer :: i,j,k
     ! TODO: Replace with cublas routine?
     i = (blockIdx%x - 1)* blockDim%x + threadIdx%x
@@ -509,6 +512,7 @@ attributes(global) subroutine compute_ta1(u,v,w,&
     ta_u2(i,j,k) = ta_u2(i,j,k) + u(i,j,k+1)**2
     ta_v2(i,j,k) = ta_v2(i,j,k) + v(i,j,k+1)**2
     ta_w2(i,j,k) = ta_w2(i,j,k) + w(i,j,k+1)**2
+    ta_uv(i,j,k) = ta_uv(i,j,k) + u(i,j,k+1)*v(i,j,k+1)
 
 end subroutine compute_ta1
 
@@ -548,12 +552,12 @@ end subroutine compute_ta1
 !-------------------------------------------------------------------------------
 
 subroutine write_ta1(ta_u_host,ta_v_host,ta_w_host,&
-                    ta_u2_host,ta_v2_host,ta_w2_host,me)
+                    ta_u2_host,ta_v2_host,ta_w2_host,ta_uv_host,me)
 
     implicit none
     integer me,nall
     real(fp), dimension(ta_nx,ta_ny,nzb), intent(in) :: ta_u_host,ta_v_host,ta_w_host,&
-                                                        ta_u2_host,ta_v2_host,ta_w2_host
+                                                        ta_u2_host,ta_v2_host,ta_w2_host,ta_uv_host
     real(fp) :: ta_fr != real(c_count)/ real(p_count)
 
     if (me <= ta_kend/nzb -1 ) then
@@ -565,6 +569,7 @@ subroutine write_ta1(ta_u_host,ta_v_host,ta_w_host,&
         write (14000+me) ta_fr*ta_u2_host
         write (15000+me) ta_fr*ta_v2_host
         write (16000+me) ta_fr*ta_w2_host
+        write (17000+me) ta_fr*ta_uv_host
     end if
 
 end subroutine write_ta1
@@ -624,6 +629,7 @@ subroutine write_turb(CTF,me)
     real(fp), dimension(3,n_r,n_turb,2) , intent(in):: CTF
     
     if (me == 0) then
+        ! print *,CTF(1,50,1,1)*dx*dy*dz*z_i**2
         write (73000) CTF(:,:,:,1)*dx*dy*dz*z_i**2
         write (74000) CTF(:,:,:,2)*dx*dy*dz*z_i**2
     end if
@@ -647,6 +653,7 @@ subroutine close_ta1(me)
         close (unit=(14000+me))
         close (unit=(15000+me))
         close (unit=(16000+me))
+        close (unit=(17000+me))
     end if
 
 end subroutine close_ta1
@@ -739,6 +746,7 @@ subroutine recompose_ta1(me)
     call recompose_ta('ta_u2.bin', me)
     call recompose_ta('ta_v2.bin', me)
     call recompose_ta('ta_w2.bin', me)
+    call recompose_ta('ta_uv.bin', me)
 
 end subroutine recompose_ta1
 

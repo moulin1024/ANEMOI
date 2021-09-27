@@ -55,8 +55,8 @@ module turbine
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/1.28,2.03,2.78/)/z_i)/dx
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/3.2,3.95,4.7/)/z_i)/dx
     real(fp), dimension(n_turb), parameter :: turb_i = ((/0.85,1.6,2.35/)/z_i)/dx
+    real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.85,0.9/)/z_i)/dy
     ! real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.8,0.8/)/z_i)/dy
-    real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.8,0.8/)/z_i)/dy
     real(fp), dimension(n_turb), parameter :: ct_pre = (/1.364587128,1.13E+00,1.19E+00/)
     ! real(fp), dimension(n_turb), parameter :: ct_pre = (/1.325746312,1.22E+00,1.30E+00/)
     ! real(fp), dimension(n_turb), para meter :: turb_j = ((/0.4,0.4,0.4/)/z_i)/dy
@@ -104,13 +104,14 @@ module turbine
             call admryaw(fx,fy,fz,CTF,power,u,v,w,turb_loc,turb_rpm,CTU_local,CTUin,t,me,nall)
             ! if (t>4000) then
             turb_rpm_host = turb_rpm
-            CTUin_host = CTUin
-            do i_turb = 1,n_turb
-                tsp = (turb_rpm_host(i_turb)/60*2*pi*turb_r(i_turb))/CTUin_host(i_turb)
-                ct = -0.01772839*tsp**2 + 0.17479856*tsp**1 + 0.4567472 + -0.01774664*CTUin_host(i_turb)
-            end do
-            counter = counter + 1
+            CTUin_host = power
+            ! do i_turb = 1,n_turb
+            !     tsp = (turb_rpm_host(i_turb)/60*2*pi*turb_r(i_turb))/CTUin_host(i_turb)
+            !     ct = -0.01772839*tsp**2 + 0.17479856*tsp**1 + 0.4567472 + -0.01774664*CTUin_host(i_turb)
+            ! end do
             mean_CTUin = mean_CTUin + CTUin_host
+            print *,mean_CTUin/counter
+            counter = counter + 1
         end if
         
     end Subroutine turbine_force
@@ -331,6 +332,7 @@ module turbine
                                                     u,v,w,coeff,blade_ijk,twist_angle,solidity,&
                                                     turb_rpm,CTU_local_,CTUin,turb_loc,turb_aerodyn)
 
+
         call force_projection<<<grid_full,tBlock_full>>>(fx,fy,fz,CTF,sum_ker,turb_loc)
     end Subroutine admryaw
 
@@ -433,7 +435,7 @@ module turbine
         
         real(fp) :: tmp3
         integer istat
-        real(fp),parameter :: sigma_x  = 2*nac_r(1)!dx!nac_r(1)
+        real(fp),parameter :: sigma_x  = 1*nac_r(1)!dx!nac_r(1)
         real(fp),parameter :: sigma_yz = 1*nac_r(1)!dx!1.d0*nac_r(1)
         real(fp),parameter :: tmp1  = 1.d0/(sigma_yz**2*sigma_x*dsqrt(pi)**3)
         integer,parameter :: i1 = nint(2.0*turb_r(1)/dx)
@@ -749,13 +751,18 @@ module turbine
             CTV = CTV_origin*cos(turb_loc(i_turb,4))-CTU_origin*sin(turb_loc(i_turb,4))
             CTW = CTW_origin
 
-            tsp = (turb_rpm(i_turb)/60*2*pi*turb_r(i_turb))/CTUin(i_turb)
+            tsp = 3.8!(turb_rpm(i_turb)/60*2*pi*turb_r(i_turb))/CTUin(i_turb)
 
-            ct = -0.01772839*tsp**2 + 0.17479856*tsp**1 + 0.4567472 + -0.01774664*CTUin(i_turb)
+            ct = -0.01772839*tsp**2 + 0.17479856*tsp**1 + 0.4567472 - 0.01774664*CTUin(i_turb)
+
             a = 0.5*(1-(1-ct)**0.5)
             ! CTF(i_phi,i_r,i_turb,1) = 0.5_fp*(CTUin(i_turb))**2*ct*dA(i_r,i_turb)/(dx*dy*dz)
             
             CTF(i_phi,i_r,i_turb,1) = 0.5_fp*(CTU_local_(i_turb)/(1-a))**2*ct*dA(i_r,i_turb)/(dx*dy*dz)
+            ! print *,CTU_local_(1),CTU_local_(2),CTU_local_(3)
+            power(i_turb) = CTU_local_(i_turb)/(1-a)
+            ! print *,power(i_turb)
+            ! if (i_turb == 3) print *,ct,CTU_local_(i_turb)/(1-a)
             ! Tangential force
             CTF(i_phi,i_r,i_turb,2) = 0
 

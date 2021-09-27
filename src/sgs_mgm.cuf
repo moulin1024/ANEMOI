@@ -5,7 +5,7 @@ use dimen
 real(fp),parameter :: ryx2 = (dy/dx)**2
 real(fp),parameter :: rzx2 = (dz/(dx*(fgr)))**2
 real(fp),parameter :: eps = 1e-6
-real(fp),parameter :: Ce_const = 1.0
+real(fp),parameter :: Ce_const = 3._fp*sqrt(dz/(dx*(fgr)))!1.0
 contains
 
 attributes(global) subroutine mgm(txx,txy,txz,&

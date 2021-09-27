@@ -216,11 +216,11 @@ module pressure
     attributes(device) SUBROUTINE tridag(a,b,c,r,u,n)
         ! Thomas algorithm for tridiag matrix
         ! Reused from Numerical recipe
-        INTEGER*4 n,NMAX
+        INTEGER*4 n
         real(fp) a(n),b(n),c(n),r(n),u(n)
-        PARAMETER (NMAX=500)
+        ! PARAMETER (NMAX=nz)
         INTEGER*4 j
-        real(fp) bet,gam(NMAX)
+        real(fp) bet,gam(nz)
     
         bet=b(1)
         u(1)=r(1)/bet

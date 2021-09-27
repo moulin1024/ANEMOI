@@ -20,8 +20,8 @@ subroutine divstress(divt,tx,ty,tz,stagger_flag,plan)
     type(c_ptr),intent(in) :: plan(2)
     ! Cuda variable
     type(dim3) :: grid, tBlock
-    grid = dim3(nx/16,ny/16,nz2/2)
-    tBlock = dim3(16,16,2)
+    grid = dim3(nx/16,ny/16,nz2)
+    tBlock = dim3(16,16,1)
     integer :: stat_flag = 1
     save tdx,tdy,tdz,stat_flag
     !---------------------------------------------------------------------------

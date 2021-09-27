@@ -68,12 +68,12 @@ program main
     real(fp) :: t01
     real(fp) :: log_ustar, log_kemax, log_umax
     real(fp), dimension(nx,ny,nzb) :: ta_u_host,ta_v_host,ta_w_host,&
-                                      ta_u2_host,ta_v2_host,ta_w2_host!,&
+                                      ta_u2_host,ta_v2_host,ta_w2_host,ta_uv_host!,&
                                             ! ta_uw_host,ta_txz_host,ta_dudz_host
     real(fp), dimension(n_turb),device :: ta_power
     real(fp), dimension(n_turb) :: ta_power_host
     real(fp), dimension(:,:,:),allocatable,device ::  ta_u,ta_v,ta_w,&
-                                                ta_u2,ta_v2,ta_w2 
+                                                ta_u2,ta_v2,ta_w2,ta_uv 
 
     real(fp), device :: d_avg1,d_avg2
 
@@ -159,13 +159,17 @@ program main
              dwdx(nx,ny,nz2),dwdy(nx,ny,nz2),dwdz(nx,ny,nz2),&    
              dpdx(nx,ny,nz2),dpdy(nx,ny,nz2),dpdz(nx,ny,nz2),&    ! Pressure gradient
              rhs_p(nx,ny,nz2),&               ! Poisson eq rhs
-             lm_old(nx,ny,nz2),mm_old(nx,ny,nz2),&
-             qn_old(nx,ny,nz2),nn_old(nx,ny,nz2),cs2(nx,ny,nz2),&
              fx(nx,ny,nz2),fy(nx,ny,nz2),fz(nx,ny,nz2),power(n_turb),thrust(n_turb),CTU_local(n_turb),&
              CTF_alm(3,n_r,n_turb,2),&
              CTF(n_phi,n_r,n_turb,2),&
              ta_u(nx,ny,nzb),ta_v(nx,ny,nzb),ta_w(nx,ny,nzb),&
-             ta_u2(nx,ny,nzb),ta_v2(nx,ny,nzb),ta_w2(nx,ny,nzb) )
+             ta_u2(nx,ny,nzb),ta_v2(nx,ny,nzb),ta_w2(nx,ny,nzb),ta_uv(nx,ny,nzb) )
+
+
+    if (model == 3) then
+        allocate(lm_old(nx,ny,nz2),mm_old(nx,ny,nz2),&
+        qn_old(nx,ny,nz2),nn_old(nx,ny,nz2),cs2(nx,ny,nz2))
+    end if
     !---------------------------------------------------------------------------
     ! load variables
     !---------------------------------------------------------------------------
@@ -205,20 +209,22 @@ program main
         call load_variable(rhsy_host,'input/rhsy.bin',me,nall)
         call load_variable(rhsz_host,'input/rhsz.bin',me,nall)
         
-        call load_variable(lm_old_host,'input/lm_old.bin',me,nall)
-        call load_variable(mm_old_host,'input/mm_old.bin',me,nall)
-        call load_variable(qn_old_host,'input/qn_old.bin',me,nall)
-        call load_variable(nn_old_host,'input/nn_old.bin',me,nall)
-
         ! Copy to device
         rhsx  = rhsx_host
         rhsy  = rhsy_host
         rhsz  = rhsz_host
 
-        lm_old = lm_old_host
-        mm_old = mm_old_host
-        qn_old = qn_old_host
-        nn_old = nn_old_host
+        if (model == 3) then
+            call load_variable(lm_old_host,'input/lm_old.bin',me,nall)
+            call load_variable(mm_old_host,'input/mm_old.bin',me,nall)
+            call load_variable(qn_old_host,'input/qn_old.bin',me,nall)
+            call load_variable(nn_old_host,'input/nn_old.bin',me,nall)
+
+            lm_old = lm_old_host
+            mm_old = mm_old_host
+            qn_old = qn_old_host
+            nn_old = nn_old_host
+        end if
     endif
 
     call load_surface(zo_host,'input/zo.bin')
@@ -258,7 +264,7 @@ program main
     if (ta_flag > 0) then
         if (ta_flag == 1) then
             call initialize_ta1(ta_u,ta_v,ta_w,&
-                                ta_u2,ta_v2,ta_w2)
+                                ta_u2,ta_v2,ta_w2,ta_uv)
             call open_ta1(me)
         ! elseif (ta_flag == 2) then
         !     call initialize_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz)
@@ -368,11 +374,10 @@ program main
             if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*10) == 0) then 
                 print *,'Write instant field:'
                 call write_ts1(u_host,v_host,w_host,me)
-                CTF_alm_host = CTF_alm
-                call write_turb(CTF_alm_host,me)
             end if
             ! print *,mean_power,power_host
         end if
+
 
         !-----------------------------------------------------------------------
         ! bc top uv
@@ -446,7 +451,7 @@ program main
                                      dudy,dudz,&
                                      dvdx,dvdz,&
                                      dwdx,dwdy )
-        
+
         !-----------------------------------------------------------------------
         ! compute sgs: LASD model
         !-----------------------------------------------------------------------
@@ -513,25 +518,21 @@ program main
         ! applying pressure gradient (not needed fror)
         if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx,device_id)      
         if (turb_flag == 1) then
-            ! u = 9
-            ! v = 0
-            ! w = 0
+
             if (device_id == 0 ) then
                 ! if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
-                if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,CTF_alm,power,u,v,w,turb_loc,t)
-                ! if (mod(t-1,turb_count)==0) call turbine_force(fx,fy,fz,CTF,power,thrust,CTU_local,u,v,w,turb_loc,t)
-                ! if (t>4000) then
-                !     power_host = CTU_local
-                !     sum_power = sum_power+power_host
-                !     mean_power = sum_power/counter 
-                !     print *,mean_power
-                !     counter = counter + 1
-                ! end if
+                if (mod(t-1,turb_count)==0) then
+                    call turbine_force(Fx,Fy,Fz,CTF_alm,power,u,v,w,turb_loc,t)
+                    CTF_alm_host = CTF_alm
+                    call write_turb(CTF_alm_host,me)
+                end if
+
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
             end if
         end if
+    
         !-----------------------------------------------------------------------
         ! Time stepping
         !-----------------------------------------------------------------------        
@@ -635,7 +636,7 @@ program main
             if (ta_flag==1) then
                 call compute_ta1<<<grid1,tBlock1>>>(u,v,w,&
                                                     ta_u,ta_v,ta_w,&
-                                                    ta_u2,ta_v2,ta_w2 )
+                                                    ta_u2,ta_v2,ta_w2,ta_uv )
             ! elseif (ta_flag == 2) then
         !         call compute_ta2(u,v,w,txz,dudz,ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz,me)
             end if
@@ -653,11 +654,12 @@ program main
                 ta_u2_host = ta_u2 
                 ta_v2_host = ta_v2 
                 ta_w2_host = ta_w2 
+                ta_uv_host = ta_uv 
                 
                 call write_ta1(ta_u_host,ta_v_host,ta_w_host,&
-                               ta_u2_host,ta_v2_host,ta_w2_host,me)
+                               ta_u2_host,ta_v2_host,ta_w2_host,ta_uv_host,me)
                 call initialize_ta1(ta_u,ta_v,ta_w,&
-                                    ta_u2,ta_v2,ta_w2 )
+                                    ta_u2,ta_v2,ta_w2,ta_uv )
         !     elseif (ta_flag == 2) then
         !         call write_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz,me)
         !         call initialize_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz)
@@ -749,10 +751,7 @@ program main
     u_host = u
     v_host = v
     w_host = w
-    lm_old_host = lm_old
-    mm_old_host = mm_old
-    qn_old_host = qn_old
-    nn_old_host = nn_old
+
     rhsx_host = rhsx
     rhsy_host = rhsy
     rhsz_host = rhsz
@@ -760,14 +759,23 @@ program main
     call save_variable(u_host,'input/u.bin',me,nall)
     call save_variable(v_host,'input/v.bin',me,nall)
     call save_variable(w_host,'input/w.bin',me,nall)
-    call save_variable(lm_old_host,'input/lm_old.bin',me,nall)
-    call save_variable(mm_old_host,'input/mm_old.bin',me,nall)
-    call save_variable(qn_old_host,'input/qn_old.bin',me,nall)
-    call save_variable(nn_old_host,'input/nn_old.bin',me,nall)
+
     call save_variable(rhsx_host,'input/rhsx.bin',me,nall)
     call save_variable(rhsy_host,'input/rhsy.bin',me,nall)
     call save_variable(rhsz_host,'input/rhsz.bin',me,nall)
 
+    if (model == 3) then
+
+        lm_old_host = lm_old
+        mm_old_host = mm_old
+        qn_old_host = qn_old
+        nn_old_host = nn_old
+
+        call save_variable(lm_old_host,'input/lm_old.bin',me,nall)
+        call save_variable(mm_old_host,'input/mm_old.bin',me,nall)
+        call save_variable(qn_old_host,'input/qn_old.bin',me,nall)
+        call save_variable(nn_old_host,'input/nn_old.bin',me,nall)
+    end if
     ! !---------------------------------------------------------------------------
     ! ! save warmup data for precursor and main
     ! !---------------------------------------------------------------------------
