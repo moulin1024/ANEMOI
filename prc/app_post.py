@@ -57,8 +57,8 @@ def post(PATH, case_name):
     if config['ta_flag'] > 0:
         result_3d = get_result_3d(src_inp_path, src_out_path, config)
         result_pr = get_result_pr(result_3d, config)
-    if config['ts_flag'] > 0:
-        result_4d = get_result_4d(src_out_path, config)
+    # if config['ts_flag'] > 0:
+        # result_4d = get_result_4d(src_out_path, config)
 
     ############################################################################
     # PLOT
@@ -114,6 +114,10 @@ def post(PATH, case_name):
         plot_sl(space['x_'], space['z_n'], result_3d['w_std_c'][:,config['ny']//2,:], 'x', 'z', 'w_std', 1, out_path)
         plot_sl(space['y_'], space['z_n'], result_3d['w_std_c'][config['nx']//2,:,:], 'y', 'z', 'w_std', 1, out_path)
 
+        plot_sl(space['x_'], space['y_'], result_3d['uv_std_c'][:,:,hub_k], 'x', 'y', 'uv_std', 1, out_path)
+        plot_sl(space['x_'], space['z_n'], result_3d['uv_std_c'][:,config['ny']//2,:], 'x', 'z', 'uv_std', 1, out_path)
+        plot_sl(space['y_'], space['z_n'], result_3d['uv_std_c'][config['nx']//2,:,:], 'y', 'z', 'uv_std', 1, out_path)
+
     # if config['ts_flag'] > 0:
     #
     #     ########################################################################
@@ -162,8 +166,9 @@ def get_turb(src_out_path, config):
     # turb['thrust'] = fctlib.load_1d('turb_thrust', config['ts_ns']*config['turb_nb'], config['double_flag'], src_out_path).reshape(config['ts_ns'],config['turb_nb'])
     # turb['dt']  = config['dtr']*config['c_count']
     # turb['Omega']  = fctlib.load_1d('turb_omega', config['ts_ns']*config['turb_nb'], config['double_flag'], src_out_path).reshape(config['ts_ns'],config['turb_nb'])
-    turb['fx']  = fctlib.load_4d('turb_fx', config['ts_ns'],3,64,config['turb_nb'], config['double_flag'], src_out_path)
-    turb['ft']  = fctlib.load_4d('turb_ft', config['ts_ns'],3,64,config['turb_nb'], config['double_flag'], src_out_path)
+    int((config['nsteps']-1)/(config['turb_count']))
+    turb['fx']  = fctlib.load_4d('turb_fx', int((config['nsteps']-1)/(config['turb_count'])),3,64,config['turb_nb'], config['double_flag'], src_out_path)
+    turb['ft']  = fctlib.load_4d('turb_ft', int((config['nsteps']-1)/(config['turb_count'])),3,64,config['turb_nb'], config['double_flag'], src_out_path)
 
     return turb
 
@@ -180,6 +185,8 @@ def get_result_3d(src_inp_path, src_out_path, config):
     ta_uu  = fctlib.load_4d('ta_u2', config['ta_ns'], config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
     ta_vv  = fctlib.load_4d('ta_v2', config['ta_ns'], config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
     ta_ww = fctlib.load_4d('ta_w2', config['ta_ns'], config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
+    ta_uv = fctlib.load_4d('ta_uv', config['ta_ns'], config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
+    
     # ta_uw = fctlib.load_4d('ta_uw', config['ta_ns'], config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
 
     # ta_txz = fctlib.load_4d('ta_txz', config['ta_ns'], config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
@@ -200,6 +207,8 @@ def get_result_3d(src_inp_path, src_out_path, config):
     result_3d['v_std_n'] = center2node_3d(np.sqrt(ta_vv[-1,:,:,:]-ta_v[-1,:,:,:]*ta_v[-1,:,:,:]))
     result_3d['w_std_c'] = node2center_3d(np.sqrt(ta_ww[-1,:,:,:]-ta_w[-1,:,:,:]*ta_w[-1,:,:,:]))
     result_3d['w_std_n'] = np.sqrt(ta_ww[-1,:,:,:]-ta_w[-1,:,:,:]*ta_w[-1,:,:,:])
+    result_3d['uv_std_c'] = ta_uv[-1,:,:,:-1]-ta_u[-1,:,:,:-1]*ta_v[-1,:,:,:-1]
+    result_3d['uv_std_n'] = center2node_3d(ta_uv[-1,:,:,:]-ta_u[-1,:,:,:]*ta_v[-1,:,:,:])
 
     # result_3d['uw_cov_c'] = node2center_3d(ta_uw[-1,:,:,:]-result_3d['u_avg_n']*result_3d['w_avg_n'])
     # result_3d['uw_cov_n'] = ta_uw[-1,:,:,:]-result_3d['u_avg_n']*result_3d['w_avg_n']

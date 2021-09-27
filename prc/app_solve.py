@@ -19,4 +19,4 @@ from fctlib import get_case_path
 #################################################################################
 def solve(PATH, case_name):
     case_path = get_case_path(PATH, case_name)
-    os.system(' sbatch --partition=gpu --qos=gpu --gres=gpu:2' + os.path.join(case_path, 'src', case_name + '_src'))
+    os.system(' sbatch ' + os.path.join(case_path, 'src', case_name + '_src'))

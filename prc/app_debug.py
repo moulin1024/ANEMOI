@@ -49,3 +49,4 @@ def debug(PATH, case_name):
     os.system('make -j6')
     #os.system('make -j2')
     os.system('mpirun -np ' + str(config['job_np']) +' ./wireles_src')
+    # os.system('srun ./wireles_src')
