@@ -1025,6 +1025,71 @@ subroutine read_inflow(u,v,w,t,me)
 
 end subroutine read_inflow
 
+
+subroutine read_inflow_const(u,v,w,t,me)
+    use cudafor
+    implicit none
+    integer me,nall
+    real(fp),dimension(nx,ny,nz2),intent(inout),device :: u,v,w
+    real(fp),dimension(:,:,:,:),allocatable,device :: u_batch,v_batch,w_batch
+    real(fp),dimension(:,:,:,:),allocatable,pinned :: u_in,v_in,w_in
+    real(fp),dimension(:,:,:),allocatable,device :: prec_u,prec_v,prec_w
+    integer :: i,j,k,i_batch,t,counter,cyc_pt
+    type(dim3) :: grid, tBlock
+    tBlock = dim3(2,16,1)
+    grid = dim3(nzb/2,ny/16,1)
+
+    save u_in,v_in,w_in,u_batch,v_batch,w_batch,prec_u,prec_v,prec_w
+
+    if (t == 1) then
+        allocate(u_in(inflow_nx,ny,nzb,batch_size))
+        allocate(v_in(inflow_nx,ny,nzb,batch_size))
+        allocate(w_in(inflow_nx,ny,nzb,batch_size))
+
+        allocate(u_batch(inflow_nx,ny,nzb,batch_size)) 
+        allocate(v_batch(inflow_nx,ny,nzb,batch_size)) 
+        allocate(w_batch(inflow_nx,ny,nzb,batch_size))  
+        
+        allocate(prec_u(inflow_nx,ny,nzb))
+        allocate(prec_v(inflow_nx,ny,nzb))
+        allocate(prec_w(inflow_nx,ny,nzb))
+
+    end if
+
+
+    if (mod(t-1,c_count) == 0) then
+        ! read(91000+me) u_in
+        ! read(92000+me) v_in
+        ! read(93000+me) w_in
+        u_in = 10.0
+        v_in = 0.0
+        w_in = 0.0
+
+        u_batch = u_in
+        v_batch = v_in
+        w_batch = w_in
+    end if
+
+    if (mod(t-1,inflow_count)==0) then
+        i_batch = mod((t-1)/(inflow_count),batch_size) + 1
+        ! Cycling inflow section: 10 times per p_count
+        ! cyc_pt = mod((t-1)/(inflow_count*10),ny)+1
+        cyc_pt = ny
+        prec_u(:,1:cyc_pt,:)    = u_batch(:,(ny-cyc_pt+1):ny,:,i_batch)
+        prec_v(:,1:cyc_pt,:)    = v_batch(:,(ny-cyc_pt+1):ny,:,i_batch)
+        prec_w(:,1:cyc_pt,:)    = w_batch(:,(ny-cyc_pt+1):ny,:,i_batch)
+        if (cyc_pt < ny) then
+            prec_u(:,cyc_pt+1:ny,:) = u_batch(:,1:(ny-cyc_pt),:,i_batch)
+            prec_v(:,cyc_pt+1:ny,:) = v_batch(:,1:(ny-cyc_pt),:,i_batch)
+            prec_w(:,cyc_pt+1:ny,:) = w_batch(:,1:(ny-cyc_pt),:,i_batch)
+        end if
+        call force_inflow<<<grid,tblock>>>(u,v,w,prec_u,prec_v,prec_w)
+    end if
+
+
+end subroutine read_inflow_const
+
+
 !-------------------------------------------------------------------------------
 ! close prec
 !-------------------------------------------------------------------------------

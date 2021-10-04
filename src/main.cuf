@@ -516,7 +516,7 @@ program main
         !-----------------------------------------------------------------------
         ! applying forcing to the rhs
         ! applying pressure gradient (not needed fror)
-        if (sim_flag < 3)   call const_pres_grad<<<grid, tBlock>>>(rhsx,device_id)      
+        if (sim_flag == 1 .or. sim_flag == 2)   call const_pres_grad<<<grid, tBlock>>>(rhsx,device_id)      
         if (turb_flag == 1) then
 
             if (device_id == 0 ) then
@@ -629,6 +629,7 @@ program main
             call read_inflow(u,v,w,t,me)
         end if
 
+        call read_inflow_const(u,v,w,t,me)
         ! !-----------------------------------------------------------------------
         ! ! compute time average outputs (just the sum at this stage)
 

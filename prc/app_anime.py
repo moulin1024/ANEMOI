@@ -62,36 +62,36 @@ def anime(PATH, case_name):
     space = post.get_space(config)
     time = post.get_time(config)
 
-    if config['ta_flag'] > 0:
-        result_3d = post.get_result_3d(src_inp_path, src_out_path, config)
+    # if config['ta_flag'] > 0:
+    #     result_3d = post.get_result_3d(src_inp_path, src_out_path, config)
 
-        f = h5py.File(out_path+'/'+case_name+'_ta.h5', 'w')
-        grp = f.create_group("data")
-        # print(result_3d['u_avg_c'].shape)
-        dset = grp.create_dataset("u_avg", data=result_3d['u_avg_c'])
-        dset = grp.create_dataset("v_avg", data=result_3d['v_avg_c'])
-        dset = grp.create_dataset("w_avg", data=result_3d['w_avg_c'])
-        dset = grp.create_dataset("u_std", data=result_3d['u_std_c'])
-        dset = grp.create_dataset("v_std", data=result_3d['v_std_c'])
-        dset = grp.create_dataset("w_std", data=result_3d['w_std_c'])
-        dset = grp.create_dataset("uv_std", data=result_3d['uv_std_c'])
+    #     f = h5py.File(out_path+'/'+case_name+'_ta.h5', 'w')
+    #     grp = f.create_group("data")
+    #     # print(result_3d['u_avg_c'].shape)
+    #     dset = grp.create_dataset("u_avg", data=result_3d['u_avg_c'])
+    #     dset = grp.create_dataset("v_avg", data=result_3d['v_avg_c'])
+    #     dset = grp.create_dataset("w_avg", data=result_3d['w_avg_c'])
+    #     dset = grp.create_dataset("u_std", data=result_3d['u_std_c'])
+    #     dset = grp.create_dataset("v_std", data=result_3d['v_std_c'])
+    #     dset = grp.create_dataset("w_std", data=result_3d['w_std_c'])
+    #     dset = grp.create_dataset("uv_std", data=result_3d['uv_std_c'])
 
-        x_grid_unmask = space['x']
-        y_grid_unmask = space['y']
-        z_grid_unmask = space['z_c']
+    #     x_grid_unmask = space['x']
+    #     y_grid_unmask = space['y']
+    #     z_grid_unmask = space['z_c']
 
-        x = x_grid_unmask[:]
-        y = y_grid_unmask[:]
-        z = z_grid_unmask[:-1]
+    #     x = x_grid_unmask[:]
+    #     y = y_grid_unmask[:]
+    #     z = z_grid_unmask[:-1]
 
-        dset = grp.create_dataset("x", data=x)
-        dset = grp.create_dataset("y", data=y)
-        dset = grp.create_dataset("z", data=z)
+    #     dset = grp.create_dataset("x", data=x)
+    #     dset = grp.create_dataset("y", data=y)
+    #     dset = grp.create_dataset("z", data=z)
 
-        for key, value in config.items():
-            grp.attrs[key]=value
+    #     for key, value in config.items():
+    #         grp.attrs[key]=value
 
-        f.close()
+    #     f.close()
     #     if config['turb_flag'] > 0:
     #         df = pd.read_csv(in_path+'/turb_loc.dat')
     #         df_power = pd.read_csv(src_out_path+'/ta_power.dat',header=None)
@@ -206,16 +206,16 @@ def anime(PATH, case_name):
     # # # ax[0].set_xlabel('x')
     # # # ax[0].set_ylabel('y')
 
-    if config['turb_flag'] > 0:
-        turb_force = post.get_turb(src_out_path, config)
-        fx = turb_force['fx']
-        ft = turb_force['ft']
-        np.save('fx.npy',fx)
-        np.save('ft.npy',ft)
-        fx_tot = np.sum(np.sum(np.sum(fx,axis=-1),axis=-1),axis=-1)
-        print(fx_tot.shape)
-        plt.plot(fx_tot/1000)
-        plt.savefig('test.png')
+    # if config['turb_flag'] > 0:
+    #     # turb_force = post.get_turb(src_out_path, config)
+    #     # fx = turb_force['fx']
+    #     # ft = turb_force['ft']
+    #     # np.save('fx.npy',fx)
+    #     # np.save('ft.npy',ft)
+    #     # fx_tot = np.sum(np.sum(np.sum(fx,axis=-1),axis=-1),axis=-1)
+    #     # print(fx_tot.shape)
+    #     # plt.plot(fx_tot/1000)
+    #     # plt.savefig('test.png')
         
 
     if config['ts_flag'] > 0:
@@ -239,53 +239,53 @@ def anime(PATH, case_name):
         print(u.shape)
 
 
-        if config['turb_flag'] > 0:
-            aerodyn = pd.read_csv(in_path+'/turb_aerodyn_nrel.csv',header=None)
-            print(aerodyn.shape)
-            plt.figure()
-            # plt.plot(aerodyn.iloc[:,8])
-            # plt.plot(aerodyn.iloc[:,6])
-            # plt.plot(aerodyn.iloc[:,4])
-            # plt.plot(aerodyn.iloc[:,2])
-            plt.plot(aerodyn.iloc[:,0])
-            # plt.plot(aerodyn.iloc[:,9])
-            plt.plot(aerodyn.iloc[:,10])
-            # plt.plot(aerodyn.iloc[:,11])
-            plt.savefig('CLCD.png')
-            f = h5py.File(out_path+'/'+case_name+'_turb.h5', 'w')
-            grp = f.create_group("data")
+        # if config['turb_flag'] > 0:
+        #     aerodyn = pd.read_csv(in_path+'/turb_aerodyn_nrel.csv',header=None)
+        #     print(aerodyn.shape)
+        #     plt.figure()
+        #     # plt.plot(aerodyn.iloc[:,8])
+        #     # plt.plot(aerodyn.iloc[:,6])
+        #     # plt.plot(aerodyn.iloc[:,4])
+        #     # plt.plot(aerodyn.iloc[:,2])
+        #     plt.plot(aerodyn.iloc[:,0])
+        #     # plt.plot(aerodyn.iloc[:,9])
+        #     plt.plot(aerodyn.iloc[:,10])
+        #     # plt.plot(aerodyn.iloc[:,11])
+        #     plt.savefig('CLCD.png')
+        #     f = h5py.File(out_path+'/'+case_name+'_turb.h5', 'w')
+        #     grp = f.create_group("data")
 
-            dset = grp.create_dataset("fx", data=turb_force['fx'])
-            dset = grp.create_dataset("ft", data=turb_force['ft'])
+        #     dset = grp.create_dataset("fx", data=turb_force['fx'])
+        #     dset = grp.create_dataset("ft", data=turb_force['ft'])
 
-            f.close()
+        #     f.close()
 
-            fx = turb_force['fx']
-            plt.figure()
-            plt.plot(np.mean(fx[:,0,:,0],axis=0))
-            plt.savefig('fx.png')
+        #     fx = turb_force['fx']
+        #     plt.figure()
+        #     plt.plot(np.mean(fx[:,0,:,0],axis=0))
+        #     plt.savefig('fx.png')
 
-            ft = turb_force['ft']
-            plt.figure()
-            plt.plot(np.mean(ft[:,0,:,0],axis=0))
-            plt.savefig('ft.png')
+        #     ft = turb_force['ft']
+        #     plt.figure()
+        #     plt.plot(np.mean(ft[:,0,:,0],axis=0))
+        #     plt.savefig('ft.png')
 
-            fx_2D = fx[:,0,:,0]
-            ft_2D = ft[:,0,:,0]
+        #     fx_2D = fx[:,0,:,0]
+        #     ft_2D = ft[:,0,:,0]
 
-            np.savetxt("unit_test/elastic-alm/df_fx.csv",fx_2D, delimiter=",")
-            np.savetxt("unit_test/elastic-alm/df_ft.csv",ft_2D, delimiter=",")
+        #     np.savetxt("unit_test/elastic-alm/df_fx.csv",fx_2D, delimiter=",")
+        #     np.savetxt("unit_test/elastic-alm/df_ft.csv",ft_2D, delimiter=",")
 
-            time_data = np.asarray(range(ft_2D.shape[0]))*config['dtr']
-            np.savetxt("unit_test/elastic-alm/df_time.csv", time_data.T, delimiter=",")
+        #     time_data = np.asarray(range(ft_2D.shape[0]))*config['dtr']
+        #     np.savetxt("unit_test/elastic-alm/df_time.csv", time_data.T, delimiter=",")
 
-            dr = 63/64
-            radius_array = np.zeros(64)
+        #     dr = 63/64
+        #     radius_array = np.zeros(64)
 
-            for i in range(64):
-                radius_array[i] = (i+0.5)*dr
-            # print(radius_array)
-            np.savetxt("unit_test/elastic-alm/df_radius.csv", radius_array.T, delimiter=",")
+        #     for i in range(64):
+        #         radius_array[i] = (i+0.5)*dr
+        #     # print(radius_array)
+        #     np.savetxt("unit_test/elastic-alm/df_radius.csv", radius_array.T, delimiter=",")
             
             
         fig,ax = plt.subplots(1,1)
@@ -298,9 +298,9 @@ def anime(PATH, case_name):
         #     zeniths = np.linspace(0, 0.5, 30)
         #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
             # i = 19
-            values = u[i,:,:,30]#np.random.random((azimuths.size, zeniths.size))
+            values = w[i,64,:,:]#np.random.random((azimuths.size, zeniths.size))
             plt.cla()
-            im1 = ax.imshow(values.T,origin='lower',aspect=config['dy']/config['dx'])
+            im1 = ax.imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
             # 
             # fig.colorbar(im1)
             ax.set_xlabel('x')

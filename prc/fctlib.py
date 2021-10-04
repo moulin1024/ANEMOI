@@ -148,7 +148,7 @@ def get_config(case_path):
         if not os.path.isdir(os.path.join('job', config['warmup_case'])):
             print('ERROR: warmup case specifed does not exist')
             sys.exit()
-    if config['sim_flag'] > 2:
+    if config['sim_flag'] == 3:
         if not os.path.isdir(os.path.join('job', config['prec_case'])):
             print('ERROR:prec case specifed does not exist')
             sys.exit()
