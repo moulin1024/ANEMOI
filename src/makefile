@@ -35,7 +35,7 @@ PROG = wireles_src
 DEP0  =   precision.o
 DEP1  =   dimen.o cufft_m.o
 DEP2  =   update.o convection.o derivative.o filter.o io.o pressure.o rhs.o time.o control.o
-DEP3  =   divergence.o turbine_alm_nrel_tilt.o 
+DEP3  =   divergence.o turbine_alm_uae.o 
 DEP4  =   sgs.o sgs_mgm.o wall.o
 
 
