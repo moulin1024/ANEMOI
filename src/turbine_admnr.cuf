@@ -54,10 +54,10 @@ module turbine
     real(fp), dimension(n_turb), parameter :: dA_nacell = [(pi*nac_r(i_turb)**2.d0, i_turb=1,n_turb)]
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/1.28,2.03,2.78/)/z_i)/dx
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/3.2,3.95,4.7/)/z_i)/dx
-    real(fp), dimension(n_turb), parameter :: turb_i = ((/0.85,1.6,2.35/)/z_i)/dx
+    real(fp), dimension(n_turb), parameter :: turb_i = ((/0.8,1.6,2.35/)/z_i)/dx
     real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.85,0.9/)/z_i)/dy
     ! real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.8,0.8/)/z_i)/dy
-    real(fp), dimension(n_turb), parameter :: ct_pre = (/1.364587128,1.13E+00,1.19E+00/)
+    real(fp), dimension(n_turb), parameter :: ct_pre = (/1.364587128/)!,1.13E+00,1.19E+00/)
     ! real(fp), dimension(n_turb), parameter :: ct_pre = (/1.325746312,1.22E+00,1.30E+00/)
     ! real(fp), dimension(n_turb), para meter :: turb_j = ((/0.4,0.4,0.4/)/z_i)/dy
     
@@ -98,20 +98,20 @@ module turbine
         !---------------------------------------------------------------------------
         ! compute models
         if(turbine_model == 1)then
-            call tower(fx,fy,fz,u,v,w,turb_loc,t) ! Somehow it do more harms than good for power prediction!
-            call controller_fix(turb_rpm,CTUin,u,turb_loc,t)
-            call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
+            ! call tower(fx,fy,fz,u,v,w,turb_loc,t) ! Somehow it do more harms than good for power prediction!
+            ! call controller_fix(turb_rpm,CTUin,u,turb_loc,t)
+            ! call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
             call admryaw(fx,fy,fz,CTF,power,u,v,w,turb_loc,turb_rpm,CTU_local,CTUin,t,me,nall)
             ! if (t>4000) then
-            turb_rpm_host = turb_rpm
-            CTUin_host = power
+            ! turb_rpm_host = turb_rpm
+            ! CTUin_host = power
             ! do i_turb = 1,n_turb
             !     tsp = (turb_rpm_host(i_turb)/60*2*pi*turb_r(i_turb))/CTUin_host(i_turb)
             !     ct = -0.01772839*tsp**2 + 0.17479856*tsp**1 + 0.4567472 + -0.01774664*CTUin_host(i_turb)
             ! end do
-            mean_CTUin = mean_CTUin + CTUin_host
-            print *,mean_CTUin/counter
-            counter = counter + 1
+            ! mean_CTUin = mean_CTUin + CTUin_host
+            ! print *,mean_CTUin/counter
+            ! counter = counter + 1
         end if
         
     end Subroutine turbine_force
@@ -677,8 +677,8 @@ module turbine
                 coord_z_w = coord_z_u - 0.5*dz
 
                 ! Apply gaussian smoothing kernel
-                sigma_x  = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
-                sigma_yz = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_x  = dx!sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_yz = dx!sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
@@ -758,7 +758,7 @@ module turbine
             a = 0.5*(1-(1-ct)**0.5)
             ! CTF(i_phi,i_r,i_turb,1) = 0.5_fp*(CTUin(i_turb))**2*ct*dA(i_r,i_turb)/(dx*dy*dz)
             
-            CTF(i_phi,i_r,i_turb,1) = 0.5_fp*(CTU_local_(i_turb)/(1-a))**2*ct*dA(i_r,i_turb)/(dx*dy*dz)
+            CTF(i_phi,i_r,i_turb,1) = 0.5_fp*5**2*0.78*dA(i_r,i_turb)/(dx*dy*dz)
             ! print *,CTU_local_(1),CTU_local_(2),CTU_local_(3)
             power(i_turb) = CTU_local_(i_turb)/(1-a)
             ! print *,power(i_turb)
@@ -827,8 +827,8 @@ module turbine
                 ! cos_CTangz = ((coord_y+coord_x*tan(turb_loc(i_turb,4)))*cos(turb_loc(i_turb,4)))/(r_w+1e-16)
                 cos_CTangz = ((coord_y)/cos(turb_loc(i_turb,4)))/(r_w+1e-16)
 
-                sigma_x  = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
-                sigma_yz = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_x  = dx!sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_yz = dx!sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp

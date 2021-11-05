@@ -55,7 +55,7 @@ module turbine
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/1.28,2.03,2.78/)/z_i)/dx
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/2.45,3.2,3.95/)/z_i)/dx
     ! real(fp), dimension(n_turb), parameter :: turb_i = ((/3.2,3.95,4.7/)/z_i)/dx
-    real(fp), dimension(n_turb), parameter :: turb_i = ((/0.85,1.6,2.35/)/z_i)/dx
+    real(fp), dimension(n_turb), parameter :: turb_i = ((/0.8,1.6,2.35/)/z_i)/dx
     ! real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.85,0.9/)/z_i)/dy
     real(fp), dimension(n_turb), parameter :: turb_j = ((/0.8,0.8,0.8/)/z_i)/dy
     ! real(fp), dimension(n_turb), parameter :: turb_j = ((/1.6,1.6,1.6/)/z_i)/dy
@@ -93,9 +93,9 @@ module turbine
         !---------------------------------------------------------------------------
         ! compute models
         if(turbine_model == 1)then
-            call tower(fx,fy,fz,u,v,w,turb_loc,t) ! Somehow it do more harms than good for power prediction!
+            ! call tower(fx,fy,fz,u,v,w,turb_loc,t) ! Somehow it do more harms than good for power prediction!
             call controller_fix(turb_rpm,CTUin,u,turb_loc,t)
-            call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
+            ! call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
             call admryaw(fx,fy,fz,CTF,power,u,v,w,turb_loc,turb_rpm,CTUin,t,me,nall)
         end if
         
@@ -578,8 +578,8 @@ module turbine
                 coord_z_w = coord_z_u - 0.5*dz
 
                 ! Apply gaussian smoothing kernel
-                sigma_x  = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
-                sigma_yz = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_x  = dx!sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_yz = dx!sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
@@ -751,8 +751,8 @@ module turbine
                 sin_CTangx = coord_z_u/(r_u+1e-16)
                 cos_CTangz = ((coord_y)/cos(turb_loc(i_turb,4)))/(r_w+1e-16)
 
-                sigma_x  = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
-                sigma_yz = sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_x  = dx!sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
+                sigma_yz = dx!sqrt((r(i_r,i_turb)*dang)**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp

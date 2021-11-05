@@ -236,147 +236,33 @@ def anime(PATH, case_name):
         y = y_grid_unmask[config['ts_jstart']-1:config['ts_jend']]
         z = z_grid_unmask[:config['ts_kend']-1]
 
-        print(u.shape)
-
-
-        # if config['turb_flag'] > 0:
-        #     aerodyn = pd.read_csv(in_path+'/turb_aerodyn_nrel.csv',header=None)
-        #     print(aerodyn.shape)
-        #     plt.figure()
-        #     # plt.plot(aerodyn.iloc[:,8])
-        #     # plt.plot(aerodyn.iloc[:,6])
-        #     # plt.plot(aerodyn.iloc[:,4])
-        #     # plt.plot(aerodyn.iloc[:,2])
-        #     plt.plot(aerodyn.iloc[:,0])
-        #     # plt.plot(aerodyn.iloc[:,9])
-        #     plt.plot(aerodyn.iloc[:,10])
-        #     # plt.plot(aerodyn.iloc[:,11])
-        #     plt.savefig('CLCD.png')
-        #     f = h5py.File(out_path+'/'+case_name+'_turb.h5', 'w')
-        #     grp = f.create_group("data")
-
-        #     dset = grp.create_dataset("fx", data=turb_force['fx'])
-        #     dset = grp.create_dataset("ft", data=turb_force['ft'])
-
-        #     f.close()
-
-        #     fx = turb_force['fx']
-        #     plt.figure()
-        #     plt.plot(np.mean(fx[:,0,:,0],axis=0))
-        #     plt.savefig('fx.png')
-
-        #     ft = turb_force['ft']
-        #     plt.figure()
-        #     plt.plot(np.mean(ft[:,0,:,0],axis=0))
-        #     plt.savefig('ft.png')
-
-        #     fx_2D = fx[:,0,:,0]
-        #     ft_2D = ft[:,0,:,0]
-
-        #     np.savetxt("unit_test/elastic-alm/df_fx.csv",fx_2D, delimiter=",")
-        #     np.savetxt("unit_test/elastic-alm/df_ft.csv",ft_2D, delimiter=",")
-
-        #     time_data = np.asarray(range(ft_2D.shape[0]))*config['dtr']
-        #     np.savetxt("unit_test/elastic-alm/df_time.csv", time_data.T, delimiter=",")
-
-        #     dr = 63/64
-        #     radius_array = np.zeros(64)
-
-        #     for i in range(64):
-        #         radius_array[i] = (i+0.5)*dr
-        #     # print(radius_array)
-        #     np.savetxt("unit_test/elastic-alm/df_radius.csv", radius_array.T, delimiter=",")
-            
+        # print(u)
             
         fig,ax = plt.subplots(1,1)
-        # values = u[9,:,64,:]
-        # plt.imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
-        # plt.colorbar()
-        # plt.savefig('test.png')
-
+        # plt.rcParams['image.cmap']='Greys'
         def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
-        #     zeniths = np.linspace(0, 0.5, 30)
-        #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
-            # i = 19
-            values = w[i,64,:,:]#np.random.random((azimuths.size, zeniths.size))
+            values = w[i,:,64,:]#np.random.random((azimuths.size, zeniths.size))
             plt.cla()
             im1 = ax.imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
-            # 
-            # fig.colorbar(im1)
+            # plt.clim(0,10000)
             ax.set_xlabel('x')
             ax.set_ylabel('y')
-            # values = u[i,32,:,:]#np.random.random((azimuths.size, zeniths.size))
-            # im2 = ax[1].imshow(values.T,origin='lower',aspect=config['dz']/config['dx'])
-                
-        # #     # im2 = ax[1].quiver(v[i,300,1::4,1::4].T,w[i,300,1::4,1::4].T,scale=10)
-        # #     # ax[1].scatter([63],[19],marker='+',color='r')
-        # #     # ax[1].set_xlabel('y')
-        # #     # ax[1].set_ylabel('z')
-        # #     # ax[1].colorbar()
-            
+            # plt.xlim([100,150])
+            # plt.ylim([0,100])
             print(i)
-
             return
-
-
-        # # # # fig.colorbar(im1, ax=ax[0])
-        # # # # fig.colorbar(im2, ax=ax[1])
-        # # # # plt.savefig('force.png')
-        anim = animation.FuncAnimation(fig, animate, frames=10)
+        anim = animation.FuncAnimation(fig, animate, frames=20)
         anim.save(out_path+'/animation.gif',writer='pillow', fps=10)
-        # fig, ax = plt.subplots(2,3,subplot_kw=dict(projection='polar'))
-        # azimuths = np.radians(np.linspace(0, 360, 64))
-        # zeniths = np.linspace(0, 0.5, 16)
-        # theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
-        # def animate(i):    
-        #     for k in range(3):
-        #         im1 = ax[0,k].contourf(theta,r,fx[i,:,:,k],40)
-        #         im2 = ax[1,k].contourf(theta,r,ft[i,:,:,k],40)
-                
-        #     print(i)
 
-        # anim = animation.FuncAnimation(fig, animate, frames=19)
-        # anim.save(out_path+'/animation_turb.gif',writer='imagemagick', fps=10)
-
-
-        # fig, ax = plt.subplots(2,3)
-        # azimuths = np.radians(np.linspace(0, 360, 64))
-        # zeniths = np.linspace(0, 0.5, 16)
-        # theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
-        # def animate(i):    
-        #     for k in range(3):
-        #         im1 = ax[0,k].contourf(theta,r,fx[i,:,:,k],40)
-        #         im2 = ax[1,k].contourf(theta,r,ft[i,:,:,k],40)
-        #     print(i)
-
-        # anim = animation.FuncAnimation(fig, animate, frames=19)
-        # anim.save(out_path+'/animation_turb2.gif',writer='imagemagick', fps=10)
-        # fig = plt.figure()
-        # ax = plt.axes(xlim=(0, 64), ylim=(0, 6000))
-        # line, = ax.plot([], [], lw=2)
-
-        # def init():
-        #     line.set_data([], [])
-        #     return line,
-        # # # i = 9
-        # def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
-        # #     zeniths = np.linspace(0, 0.5, 30)
-        # #     theta,r = np.meshgrid(azimuths,zeniths,indexing='ij')
-        #     print(i)
-        #     x = np.arange(64)*63/64
-        #     y = fx[i,0,:,0]
-        #     line.set_data(x,y)
-        #     plt.cla()
-        #     ax.plot(x,fx[i,0,:,0],'o')
-        #     # ax.set_ylim([0,6000])
-
-        #     return line,
- 
-        # # fig.colorbar(im1, ax=ax[0])
-        # # fig.colorbar(im2, ax=ax[1])
-        # # plt.savefig('force.png')
-        # anim = animation.FuncAnimation(fig, animate, init_func=init,frames=10, interval=20, blit=True)
-        # print("write")
-        # anim.save('animation_force.gif',writer='imagemagick', fps=10)
-
+        root_moment_flap = pd.read_csv(case_path+'/src/output/root.csv',header=None).to_numpy()
         
+        fig,ax = plt.subplots(1,1)
+        plt.plot(root_moment_flap)
+        # fig,ax = plt.subplots(1,1)
+        # plt.rcParams['image.cmap']='Purples'
+        # value_plot = u[0,128,:,:].T
+        # plt.contourf(value_plot,100)
+        # ax.set_aspect(0.5)
+
+        # plt.clim(np.amin(value_plot),np.amax(value_plot)*1.6)
+        plt.savefig(out_path+'/force.png')

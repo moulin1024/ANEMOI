@@ -56,9 +56,11 @@ module dimen
     integer, parameter :: turb_flag = $turb_flag
     integer, parameter :: n_turb = $turb_nb
     integer, parameter :: turb_count=$turb_count
+    integer, parameter :: blade_num = 3      ! Don't change it! (because of cuda kernel)
     integer, parameter :: n_phi = 64    ! Don't change it! (because of cuda kernel)
-    integer, parameter :: n_r = 64      ! Don't change it! (because of cuda kernel)
-    integer, parameter :: n_r_s = 5
+    integer, parameter :: n_r = 32      ! Don't change it! (because of cuda kernel)
+    integer, parameter :: n_r_s = 1
+    
     !-------------------------------------------------------------------------------
     ! spec
     ! real(fp), parameter, dimension(n_turb) :: turb_x != ${turb_x}/z_i
