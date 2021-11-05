@@ -164,8 +164,8 @@ module turbine
             
             real(fp) :: tmp3
             integer istat
-            real(fp),parameter :: sigma_x  = tow_r(1)
-            real(fp),parameter :: sigma_y  = tow_r(1)
+            real(fp),parameter :: sigma_x  = 2*tow_r(1)
+            real(fp),parameter :: sigma_y  = 2*tow_r(1)
             real(fp),parameter :: tmp1  = 1._fp/(sigma_x*sigma_y*pi)
             integer,parameter :: i0 = 0!nint(2.0*turb_r(1)/dx)
             integer,parameter :: i1 = nint(1/6*turb_r(1)/dx)
@@ -294,8 +294,8 @@ module turbine
         
         real(fp) :: tmp3
         integer istat
-        real(fp),parameter :: sigma_x  = nac_r(1)
-        real(fp),parameter :: sigma_yz = nac_r(1)
+        real(fp),parameter :: sigma_x  = 2*nac_r(1)
+        real(fp),parameter :: sigma_yz = 2*nac_r(1)
         real(fp),parameter :: tmp1  = 1.d0/(sigma_yz**2*sigma_x*dsqrt(pi)**3)
         integer,parameter :: i1 = nint(2.0*turb_r(1)/dx)
     !----------------------------------------------------------------------------

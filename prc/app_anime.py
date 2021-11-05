@@ -241,9 +241,9 @@ def anime(PATH, case_name):
         fig,ax = plt.subplots(1,1)
         # plt.rcParams['image.cmap']='Greys'
         def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
-            values = w[i,:,64,:]#np.random.random((azimuths.size, zeniths.size))
+            values = u[i,:,64,:]#np.random.random((azimuths.size, zeniths.size))
             plt.cla()
-            im1 = ax.imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
+            im1 = ax.imshow(values.T,origin='lower',aspect=config['dz']/config['dy'],vmin=0)
             # plt.clim(0,10000)
             ax.set_xlabel('x')
             ax.set_ylabel('y')
