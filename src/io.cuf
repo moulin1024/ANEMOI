@@ -1061,7 +1061,7 @@ subroutine read_inflow_const(u,v,w,t,me)
         ! read(91000+me) u_in
         ! read(92000+me) v_in
         ! read(93000+me) w_in
-        u_in = 9.0
+        u_in = 10.0
         v_in = 0.0
         w_in = 0.0
 

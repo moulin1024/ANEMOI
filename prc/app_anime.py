@@ -241,9 +241,9 @@ def anime(PATH, case_name):
         fig,ax = plt.subplots(1,1)
         # plt.rcParams['image.cmap']='Greys'
         def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
-            values = u[i,:,32,:]#np.random.random((azimuths.size, zeniths.size))
+            values = u[i,:,:,45]#np.random.random((azimuths.size, zeniths.size))
             plt.cla()
-            im1 = ax.imshow(values.T,origin='lower',aspect=config['dz']/config['dy'],vmin=0)
+            im1 = ax.imshow(values.T,origin='lower',aspect=config['dx']/config['dy'],vmin=0)
             # plt.clim(0,10000)
             ax.set_xlabel('x')
             ax.set_ylabel('y')
@@ -251,13 +251,15 @@ def anime(PATH, case_name):
             # plt.ylim([0,100])
             print(i)
             return
-        anim = animation.FuncAnimation(fig, animate, frames=50)
+        anim = animation.FuncAnimation(fig, animate, frames=30)
         anim.save(out_path+'/animation.gif',writer='pillow', fps=10)
 
         root_moment_flap = pd.read_csv(case_path+'/src/output/root.csv',header=None).to_numpy()
         
         fig,ax = plt.subplots(1,1)
         plt.plot(root_moment_flap)
+        # plt.xlim([5000,10000])
+        plt.ylim([4e6,7e6])
         # fig,ax = plt.subplots(1,1)
         # plt.rcParams['image.cmap']='Purples'
         # value_plot = u[0,128,:,:].T
