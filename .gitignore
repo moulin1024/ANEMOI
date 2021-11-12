@@ -11,7 +11,6 @@ job/*
 *.x
 *.npy
 *.txt
-*.csv
 *.bin
 turb_loc.dat
 post/*

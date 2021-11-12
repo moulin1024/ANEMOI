@@ -82,7 +82,7 @@ module structural
                 S(i_blade,:,i_turb,:) = S_old
             end do
         end do
-        print *,M(1,2,1,1)
+        ! print *,M(1,2,1,1)
         write(111, '(E11.4)') M(1,2,1,1)
 
         do i_turb = 1,n_turb
