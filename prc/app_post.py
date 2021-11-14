@@ -331,14 +331,14 @@ def plot_pr(z, var, z_name, var_name, out_path):
 
 def plot_sl(x, y, var, x_name, y_name, var_name, plot_flag, out_path):
     plt.figure()
-    if plot_flag == 1:
-        plt.pcolormesh(x, y, var.T)
-    elif plot_flag == 2:
-        plt.contourf(x, y, var.T, 30)
-    plt.xlabel(x_name)
-    plt.ylabel(y_name)
-    plt.axes().set_aspect('equal')
-    plt.colorbar(orientation = 'horizontal', label= var_name, aspect=30)
+    # if plot_flag == 1:
+    plt.imshow(var.T,origin='lower')
+    # elif plot_flag == 2:
+    # plt.contourf(x, y, var.T, 30)
+    # plt.xlabel(x_name)
+    # plt.ylabel(y_name)
+    # plt.axes().set_aspect('equal')
+    # plt.colorbar(orientation = 'horizontal', label= var_name, aspect=30)
     plt.savefig(os.path.join(out_path, x_name + y_name + '_'+ var_name + '.png'), bbox_inches='tight')
     plt.close()
 

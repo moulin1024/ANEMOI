@@ -35,7 +35,7 @@ module turbine
     use structural
     use cudafor
 
-    real(fp),parameter :: tilt_angle = pi/180*5.0
+    real(fp),parameter :: tilt_angle = pi/180*0.0
     real(fp), parameter :: dang = 2.0_fp*pi/real(n_phi)
     real(fp), dimension(n_turb), parameter :: dr = [(turb_r(idx1)/real(n_r), idx1=1,n_turb)]
     real(fp), dimension(n_r,n_turb), parameter :: r  = reshape([((real(idx2-0.5_fp)*dr(idx1), idx2=1,n_r), idx1=1,n_turb)],(/n_r,n_turb/))
@@ -55,7 +55,7 @@ module turbine
     real(fp), dimension(n_turb), parameter :: dA_tower = [(2.d0*tow_r(i_turb)*dz,i_turb = 1,n_turb)]
     real(fp), dimension(n_turb), parameter :: dA_nacell = [(pi*nac_r(i_turb)**2.d0, i_turb=1,n_turb)]
     
-    real(fp), dimension(n_turb), parameter :: turb_i = ((/512,3.95,4.7/)/z_i)/dx
+    real(fp), dimension(n_turb), parameter :: turb_i = ((/1024,3.95,4.7/)/z_i)/dx
     real(fp), dimension(n_turb), parameter :: turb_j = ((/256,0.8,0.8/)/z_i)/dy
 
     real(fp),parameter :: hub_tower_gap = turb_r(1)*0.1 ! The gap between the tower and the hub (2 cm for WiRE-01)
@@ -104,6 +104,11 @@ module turbine
             call almyaw(fx,fy,fz,CTF,power,u,v,w,turb_loc,turb_rpm,deformation,t,me,nall)
             CTF_host = CTF
             power_host = power
+            OPEN(111, FILE='output/root.csv', FORM='formatted')
+
+            write(111, '(E11.4)') power_host
+
+            
             ! print *, power_host
             turb_rpm_host = turb_rpm
             call aeroelastic(deformation_host,displacement_host,velocity_host,CTF_host,turb_rpm_host,t)
@@ -499,9 +504,9 @@ module turbine
         !$cuf kernel do(1) <<<*,*>>>
         do i_turb = 1,n_turb
             ! Warning: update sequence matter! Update phase_angle(1,i_turb) at the end is a must.
-            phase_angle(2,i_turb) = mod(phase_angle(1,i_turb) - turb_rpm(i_turb)/60*2*pi*dt*z_i*turb_count,2*pi) - 2*pi/3
-            phase_angle(3,i_turb) = mod(phase_angle(1,i_turb) - turb_rpm(i_turb)/60*2*pi*dt*z_i*turb_count,2*pi) - 4*pi/3
-            phase_angle(1,i_turb) = mod(phase_angle(1,i_turb) - turb_rpm(i_turb)/60*2*pi*dt*z_i*turb_count,2*pi) 
+            phase_angle(2,i_turb) = mod(phase_angle(1,i_turb) + turb_rpm(i_turb)/60*2*pi*dt*z_i*turb_count,2*pi) - 2*pi/3
+            phase_angle(3,i_turb) = mod(phase_angle(1,i_turb) + turb_rpm(i_turb)/60*2*pi*dt*z_i*turb_count,2*pi) - 4*pi/3
+            phase_angle(1,i_turb) = mod(phase_angle(1,i_turb) + turb_rpm(i_turb)/60*2*pi*dt*z_i*turb_count,2*pi) 
         end do
 
         call force_compute_alm<<<grid_alm,tBlock_alm>>>(CTF,power,&
@@ -578,7 +583,7 @@ module turbine
         real(fp) :: c_w_1d(8),c_uv_1d(8)
         real(fp) :: blade_ii,blade_jj,blade_kk_uv,blade_kk_w  
         real(fp) :: CTphi,sin_CTphi,cos_CTphi
-        real(fp) :: CTU,CTV,CTW,CTU_tmp,CTV_tmp,CTW_tmp,CTUrel,AoA
+        real(fp) :: CTU,CTV,CT_edge,CTW,CTU_tmp,CTV_tmp,CTW_tmp,CTUrel,AoA
         real(fp) :: CTCL,CTCD,CTU_origin,CTV_origin,CTW_origin
         real(fp) :: f1_tip,f2_tip,f1_hub,f2_hub,g
         !     real(fp) :: cos_Tang
@@ -623,16 +628,18 @@ module turbine
             CTW = CTU_tmp*sin(tilt_angle) + CTW_tmp*cos(tilt_angle)
                 
             ! Compute the tangential velocity relative to the rotating blade                   
-            CTV = CTW*cos(phase_angle(blade,i_turb))-CTV*sin(phase_angle(blade,i_turb)) + turb_rpm(i_turb)/60*2*pi*(r(i_r,i_turb)*z_i)
+            CT_edge = -CTW*cos(phase_angle(blade,i_turb))+CTV*sin(phase_angle(blade,i_turb)) + turb_rpm(i_turb)/60*2*pi*(r(i_r,i_turb)*z_i)
             ! Find the attack angle and relative inflow velocity for the blade element
-            CTU = CTU*cos(deformation(blade,i_r,i_turb,1))
-            CTV = CTV*cos(deformation(blade,i_r,i_turb,2))
-            CTphi     = atan(CTU/CTV)
+            ! CTU = CTU*cos(deformation(blade,i_r,i_turb,1))
+            ! CTV = CTV*cos(deformation(blade,i_r,i_turb,2))
+            CTphi     = atan(CTU/CT_edge)
             sin_CTphi = sin(CTphi)
             cos_CTphi = cos(CTphi)
             ! Convert to degree
             AoA = CTphi*rad2deg-twist_angle(i_r,i_turb)
             CTUrel  = CTU/sin_CTphi
+
+            ! if (blade == 1 .and. i_r == 28) print *, phase_angle(blade,1)/pi*180,CTU,CTV,CTW,CT_edge
             
             ! compute cl/cd from AoA (assume one Re)
             if (AoA < -90._fp) then
@@ -658,7 +665,9 @@ module turbine
                 ! Tangential force
                 CTF(blade,i_r,i_turb,2) = 0.5_fp*(CTUrel**2)*chord_length(i_r,i_turb)*dr(i_turb)/(dx*dy*dz)*(CTCL*sin_CTphi-CTCD*cos_CTphi)*f2_tip!*f2_hub
             end if
-            istat = atomicadd(power(i_turb),CTF(blade,i_r,i_turb,2)*r(i_r,i_turb)*turb_rpm(i_turb)/60*2*pi*(dx*dy*dz)*z_i**3)
+            ! istat = atomicadd(power(i_turb),CTF(blade,i_r,i_turb,2)*r(i_r,i_turb)*turb_rpm(i_turb)/60*2*pi*(dx*dy*dz)*z_i**3)
+            if (blade == 1) istat = atomicadd(power(i_turb),CTF(blade,i_r,i_turb,2)*r(i_r,i_turb)*(dx*dy*dz)*z_i**3)
+            
             call syncthreads() 
         end if
     end subroutine force_compute_alm
@@ -804,10 +813,10 @@ module turbine
                 ker_w  = tmp1*exp(tmp2*tmp3)/sum_ker(blade,i_r,i_turb,2)
 
                 ! Rotate the force from the disk-normal reference to the original reference
-                CTFy        = CTF(blade,i_r,i_turb,2)*sin_CTangx
+                CTFy        = - CTF(blade,i_r,i_turb,2)*sin_CTangx
                 CTFx_origin = CTF(blade,i_r,i_turb,1)*cos(turb_loc(i_turb,4))-CTFy*sin(turb_loc(i_turb,4))
                 CTFy_origin = CTF(blade,i_r,i_turb,1)*sin(turb_loc(i_turb,4))+CTFy*cos(turb_loc(i_turb,4))
-                CTFz_origin = - CTF(blade,i_r,i_turb,2)*cos_CTangz
+                CTFz_origin = CTF(blade,i_r,i_turb,2)*cos_CTangz
                 
                 ! Project the force
                 istat = atomicAdd(Fx(i_global,j_global,k_global),CTFx_origin*ker_u)

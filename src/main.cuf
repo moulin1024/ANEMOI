@@ -361,11 +361,9 @@ program main
         call update_w_async(dwdy,request,me,nall)
 
         if (mod(t,c_count*10)==0) then
-
             u_host = u
             v_host = v 
             w_host = w 
-
             ustar_host = ustar 
 
             call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
@@ -514,7 +512,7 @@ program main
         !-----------------------------------------------------------------------
         ! applying forcing to the rhs
         ! applying pressure gradient (not needed fror)
-        if (sim_flag == 0 .or. sim_flag == 1)   call const_pres_grad<<<grid, tBlock>>>(rhsx,device_id)      
+        if (sim_flag == 0 .or. sim_flag == 1)   call const_pres_grad<<<grid, tBlock>>>(rhsx,device_id)
         if (turb_flag == 1) then
 
             if (device_id == 0 ) then
