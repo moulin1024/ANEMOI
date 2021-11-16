@@ -72,8 +72,8 @@ module turbine
         real(fp),dimension(n_turb),intent(out),device    :: power
         real(fp),dimension(n_turb)   :: power_host
         real(fp),dimension(nx,ny,nz2),intent(in),device :: u,v,w
-        real(fp),dimension(n_turb,4),intent(in),device :: turb_loc
-        real(fp),dimension(n_turb,4) :: turb_loc_host
+        real(fp),dimension(n_turb,5),intent(in),device :: turb_loc
+        real(fp),dimension(n_turb,5) :: turb_loc_host
         real(fp), dimension(:),allocatable,device :: CTUin,turb_rpm  
         real(fp),dimension(n_turb) :: CTUin_host,turb_rpm_host
         integer :: i,j,k,t,counter
@@ -117,7 +117,7 @@ module turbine
             ! Interface variables
             real(fp),dimension(nx,ny,nz2),intent(inout),device :: fx,fy,fz
             real(fp),dimension(nx,ny,nz2),intent(in),device    :: u,v,w
-            real(fp),dimension(n_turb,4),intent(in),device   :: turb_loc
+            real(fp),dimension(n_turb,5),intent(in),device   :: turb_loc
             integer*4,intent(in) :: t
             ! Internal variables
             real(fp),dimension(:,:,:),allocatable,device:: ker
@@ -159,7 +159,7 @@ module turbine
             ! Interface variables
             real(fp),dimension(ker_d_x,ker_d_y,n_turb),intent(inout) :: ker       
             real(fp),dimension(n_turb),intent(inout)                 :: sum_ker
-            real(fp),dimension(n_turb,4),intent(in)                  :: turb_loc    
+            real(fp),dimension(n_turb,5),intent(in)                  :: turb_loc    
             ! Internal variables
             integer :: i,j,i_turb                 !< Index from cuda kernel
             integer :: i_global,j_global          !< Global index in the nacelle masking area
@@ -204,7 +204,7 @@ module turbine
             real(fp),dimension(ker_d_x,ker_d_y,n_turb),intent(in) :: ker        
             real(fp),dimension(n_turb),intent(in)                 :: sum_ker    
             real(fp),dimension(nx,ny,nz2),intent(in)              :: u          
-            real(fp),dimension(n_turb,4),intent(in)               :: turb_loc   
+            real(fp),dimension(n_turb,5),intent(in)               :: turb_loc   
             ! Internal variables
             real(fp) :: CTFx,CTU,kk
     
@@ -245,7 +245,7 @@ module turbine
             real(fp), dimension(n_turb),intent(out),device     :: CTUin   
             real(fp), dimension(n_turb)    :: CTUin_host   
             real(fp),dimension(nx,ny,nz2),intent(in),device    :: u,v,w 
-            real(fp),dimension(n_turb,4),intent(in),device   :: turb_loc 
+            real(fp),dimension(n_turb,5),intent(in),device   :: turb_loc 
             integer,intent(in) :: t   
             ! Internal variables
             real(fp), dimension(:,:,:,:),allocatable,device :: ker
@@ -289,7 +289,7 @@ module turbine
         ! Interface variables
         real(fp),dimension(ker_d_x,ker_d_y,nzb,n_turb),intent(inout) :: ker       
         real(fp),dimension(n_turb),intent(inout)                     :: sum_ker
-        real(fp),dimension(n_turb,4),intent(in)                      :: turb_loc    
+        real(fp),dimension(n_turb,5),intent(in)                      :: turb_loc    
         ! Internal variables
         integer :: i,j,k,i_turb                 !< Index from cuda kernel
         integer :: i_global,j_global,k_global   !< Global index in the nacelle masking area
@@ -337,7 +337,7 @@ module turbine
         real(fp),dimension(ker_d_x,ker_d_y,nzb,n_turb),intent(in) :: ker        
         real(fp),dimension(n_turb),intent(in)                     :: sum_ker    
         real(fp),dimension(nx,ny,nz2),intent(in)                  :: u          
-        real(fp),dimension(n_turb,4),intent(in)                   :: turb_loc   
+        real(fp),dimension(n_turb,5),intent(in)                   :: turb_loc   
         ! Internal variables
         real(fp) :: CTFx,CTU
         real(fp) :: hub_kk
@@ -396,7 +396,7 @@ module turbine
             real(fp),dimension(blade_num,n_r,n_turb,2),intent(out),device  :: CTF         !< Force on the blade element (CTFx,CTFt)
             real(fp),dimension(n_turb),intent(out),device      :: power
             real(fp),dimension(nx,ny,nz2),intent(in),device    :: u,v,w     
-            real(fp),dimension(n_turb,4),intent(in),device     :: turb_loc 
+            real(fp),dimension(n_turb,5),intent(in),device     :: turb_loc 
             real(fp),dimension(n_turb),intent(inout),device    :: turb_rpm
             integer,intent(in)                                 :: t,me,nall
             ! Internal variables
@@ -519,7 +519,7 @@ module turbine
         implicit none
         ! Interface variables
         real(fp),dimension(n_r,n_turb),intent(out)            :: twist_angle,chord_length
-        real(fp),dimension(n_turb,4),intent(in)               :: turb_loc
+        real(fp),dimension(n_turb,5),intent(in)               :: turb_loc
         real(fp),dimension(:),intent(in)                      :: radius_dat,twist_dat,chord_dat
         ! Internal variables
         real(fp) :: tmp3
@@ -553,7 +553,7 @@ module turbine
         real(fp),dimension(n_turb),intent(out)             :: power
         real(fp),dimension(nx,ny,nz2),intent(in)           :: u,v,w
         real(fp),dimension(n_turb),intent(in)              :: turb_rpm
-        real(fp),dimension(n_turb,4),intent(in)            :: turb_loc
+        real(fp),dimension(n_turb,5),intent(in)            :: turb_loc
         real(fp),dimension(3,181),intent(in)               :: turb_aerodyn
         real(fp),dimension(blade_num,n_turb),intent(in)    :: phase_angle
         real(fp),dimension(n_r,n_turb),intent(in)          :: twist_angle,chord_length
@@ -653,7 +653,7 @@ module turbine
         implicit none
         ! Interface variables
         real(fp),dimension(blade_num,n_r,n_turb,2),intent(inout) :: sum_ker
-        real(fp),dimension(n_turb,4),intent(in)  :: turb_loc
+        real(fp),dimension(n_turb,5),intent(in)  :: turb_loc
         real(fp),dimension(blade_num,n_turb),intent(in)    :: phase_angle
         real(fp),dimension(n_r,n_turb),intent(in)          :: twist_angle,chord_length
         ! Internal variables
@@ -722,7 +722,7 @@ module turbine
         ! Interface variables
         real(fp),dimension(nx,ny,nz2),intent(inout)       :: Fx,Fy,Fz
         real(fp),dimension(blade_num,n_r,n_turb,2),intent(in) :: CTF,sum_ker
-        real(fp),dimension(n_turb,4),intent(in)           :: turb_loc
+        real(fp),dimension(n_turb,5),intent(in)           :: turb_loc
         real(fp),dimension(blade_num,n_turb),intent(in)    :: phase_angle
         real(fp),dimension(n_r,n_turb),intent(in)          :: twist_angle,chord_length
         ! Internal variables

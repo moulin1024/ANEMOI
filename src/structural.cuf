@@ -11,7 +11,8 @@ module structural
     integer, parameter :: simulation_type = 1
     real, parameter :: radius = 61.5
     real, parameter :: pitch = 0.0/180*3.1415926
-    real, parameter :: tilt = 0.0/180*3.1415926
+    real, parameter :: tilt = 5.0/180*3.1415926
+    real, parameter :: damping = 0.06!
     real, parameter :: r_start = 2.0
     real, parameter :: total_time_warmup = 10
     real, parameter :: delta_t = total_time_warmup/T_warmup
@@ -19,9 +20,9 @@ module structural
     integer,parameter :: T_split = int(dt*z_i/delta_t)
     contains
 
-    subroutine aeroelastic(deformation_host,displacement_host,velocity_host,CTF_host,turb_rpm_host,t)
+    subroutine aeroelastic(deformation_host,displacement_host,moment_host,CTF_host,turb_rpm_host,t)
         implicit none
-        real(fp),dimension(blade_num,n_r,n_turb,2),intent(out) :: deformation_host,displacement_host,velocity_host
+        real(fp),dimension(blade_num,n_r,n_turb,2),intent(out) :: deformation_host,displacement_host,moment_host
         real(fp),dimension(blade_num,n_r,n_turb,2),intent(in)  :: CTF_host
         real(fp),dimension(n_turb),intent(in) :: turb_rpm_host
         real(fp),dimension(N+2,2,2) :: EI
@@ -34,7 +35,6 @@ module structural
         real :: omega(n_turb)
         real,dimension(2) :: g, initial_phase
         real,dimension(N+2,2) :: F_a
-        real :: damping 
         integer :: j,i_blade,i_turb,i
         integer :: counter = 1
 
@@ -80,7 +80,6 @@ module structural
         
         do i_turb = 1,n_turb
             omega(i_turb) = turb_rpm_host(i_turb)/60*2*pi
-            damping = 0.05!
             do i_blade = 1,blade_num
                 V_old = V(i_blade,:,i_turb,:)
                 q_old = q(i_blade,:,i_turb,:)
@@ -123,7 +122,7 @@ module structural
             do i = 2, N+1
                 do i_blade = 1,blade_num
                     displacement_host(i_blade,i+N_start-2,i_turb,:) = q(i_blade,i,i_turb,:)
-                    velocity_host(i_blade,i+N_start-2,i_turb,:) = V(i_blade,i,i_turb,:)
+                    moment_host(i_blade,i+N_start-2,i_turb,:) = M(i_blade,i,i_turb,:)
                     deformation_host(i_blade,i+N_start-2,i_turb,:) = atan((q(i_blade,i,i_turb,:) - q(i_blade,i-1,i_turb,:))/delta_r)
                 end do
             end do

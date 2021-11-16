@@ -74,8 +74,8 @@ module turbine
         real(fp),dimension(nx,ny,nz2,2),intent(out),device :: CTF
         real(fp),dimension(n_turb),intent(out),device    :: power
         real(fp),dimension(nx,ny,nz2),intent(in),device :: u,v,w
-        real(fp),dimension(n_turb,4),intent(in),device :: turb_loc
-        real(fp),dimension(n_turb,4) :: turb_loc_host
+        real(fp),dimension(n_turb,5),intent(in),device :: turb_loc
+        real(fp),dimension(n_turb,5) :: turb_loc_host
         real(fp), dimension(:),allocatable,device :: CTUin,CTU_local,turb_rpm  
         real(fp), dimension(n_turb) :: CTUin_host,mean_CTUin
         real(fp), dimension(n_turb) :: turb_rpm_host
@@ -125,8 +125,8 @@ module turbine
         ! Interface variables
         real(fp),dimension(nx,ny,nz2),intent(inout),device :: fx,fy,fz
         real(fp),dimension(nx,ny,nz2),intent(in),device    :: u,v,w
-        real(fp),dimension(n_turb,4),inten
-        real(fp),dimension(n_turb,4),intent(in),device :: turb_loc
+        real(fp),dimension(n_turb,5),inten
+        real(fp),dimension(n_turb,5),intent(in),device :: turb_loc
         integer*4,intent(in) :: t
         ! Internal variables
         real(fp), dimension(:,:,:),allocatable,device:: ker
@@ -169,7 +169,7 @@ module turbine
         real(fp), dimension(n_turb),intent(out),device     :: CTUin   
         real(fp), dimension(n_turb)    :: CTUin_host   
         real(fp),dimension(nx,ny,nz2),intent(in),device    :: u,v,w 
-        real(fp),dimension(n_turb,4),intent(in),device   :: turb_loc 
+        real(fp),dimension(n_turb,5),intent(in),device   :: turb_loc 
         integer,intent(in) :: t   
         ! Internal variables
         real(fp), dimension(:,:,:,:),allocatable,device :: ker
@@ -219,7 +219,7 @@ module turbine
         real(fp),dimension(n_phi,n_r,n_turb,2),intent(out),device :: CTF 
         real(fp),dimension(n_turb),intent(out),device      :: power
         real(fp),dimension(nx,ny,nz2),intent(in),device    :: u,v,w     
-        real(fp),dimension(n_turb,4),intent(in),device     :: turb_loc 
+        real(fp),dimension(n_turb,5),intent(in),device     :: turb_loc 
         real(fp),dimension(n_turb),intent(inout),device    :: turb_rpm,CTU_local,CTUin
         integer,intent(in)                                 :: t,me,nall
         ! Internal variables
@@ -344,7 +344,7 @@ module turbine
         ! Interface variables
         real(fp),dimension(ker_d_x,ker_d_y,n_turb),intent(inout) :: ker       
         real(fp),dimension(n_turb),intent(inout)                 :: sum_ker
-        real(fp),dimension(n_turb,4),intent(in)                  :: turb_loc    
+        real(fp),dimension(n_turb,5),intent(in)                  :: turb_loc    
         ! Internal variables
         integer :: i,j,i_turb                 !< Index from cuda kernel
         integer :: i_global,j_global          !< Global index in the nacelle masking area
@@ -389,7 +389,7 @@ module turbine
         real(fp),dimension(ker_d_x,ker_d_y,n_turb),intent(in) :: ker        
         real(fp),dimension(n_turb),intent(in)                 :: sum_ker    
         real(fp),dimension(nx,ny,nz2),intent(in)              :: u          
-        real(fp),dimension(n_turb,4),intent(in)               :: turb_loc   
+        real(fp),dimension(n_turb,5),intent(in)               :: turb_loc   
         ! Internal variables
         real(fp) :: CTFx,CTU,kk
 
@@ -427,7 +427,7 @@ module turbine
         ! Interface variables
         real(fp),dimension(ker_d_x,ker_d_y,nzb,n_turb),intent(inout) :: ker       
         real(fp),dimension(n_turb),intent(inout)                     :: sum_ker
-        real(fp),dimension(n_turb,4),intent(in)                      :: turb_loc    
+        real(fp),dimension(n_turb,5),intent(in)                      :: turb_loc    
         ! Internal variables
         integer :: i,j,k,i_turb                 !< Index from cuda kernel
         integer :: i_global,j_global,k_global   !< Global index in the nacelle masking area
@@ -475,7 +475,7 @@ module turbine
         real(fp),dimension(ker_d_x,ker_d_y,nzb,n_turb),intent(in) :: ker        
         real(fp),dimension(n_turb),intent(in)                     :: sum_ker    
         real(fp),dimension(nx,ny,nz2),intent(in)                  :: u          
-        real(fp),dimension(n_turb,4),intent(in)                   :: turb_loc   
+        real(fp),dimension(n_turb,5),intent(in)                   :: turb_loc   
         ! Internal variables
         real(fp) :: CTFx,CTU
         real(fp) :: hub_kk
@@ -528,7 +528,7 @@ module turbine
         real(fp),dimension(n_phi,n_r,n_turb,2,8) ,intent(out) :: coeff    
         integer,dimension(n_phi,n_r,n_turb,4),intent(out)     :: blade_ijk
         real(fp),dimension(n_r,n_turb),intent(out)            :: twist_angle,solidity
-        real(fp),dimension(n_turb,4),intent(in)               :: turb_loc
+        real(fp),dimension(n_turb,5),intent(in)               :: turb_loc
         real(fp),dimension(:),intent(in)                      :: radius_dat,twist_dat,chord_dat
         ! Internal variables
         real(fp) :: c_w_1d(8),c_uv_1d(8)
@@ -587,7 +587,7 @@ module turbine
     integer,dimension(n_phi,n_r,n_turb,4),intent(in)    :: blade_ijk
     real(fp),dimension(n_r,n_turb),intent(in)           :: twist_angle,solidity
     real(fp),dimension(n_turb),intent(in)               :: turb_rpm
-    real(fp),dimension(n_turb,4),intent(in)             :: turb_loc
+    real(fp),dimension(n_turb,5),intent(in)             :: turb_loc
     real(fp),dimension(3,181),intent(in)                :: turb_aerodyn
     ! Internal variables
     real(fp) :: c_w_1d(8),c_uv_1d(8)
@@ -640,7 +640,7 @@ module turbine
         implicit none
         ! Interface variables
         real(fp),dimension(n_phi,n_r,n_turb,2),intent(inout) :: sum_ker
-        real(fp),dimension(n_turb,4),intent(in)  :: turb_loc
+        real(fp),dimension(n_turb,5),intent(in)  :: turb_loc
         ! Internal variables
         real(fp) :: sigma_x,sigma_yz,sigma,tmp1,tmp2,tmp3,ker_u,ker_w    
         real(fp) :: mu_x,mu_y,mu_z
@@ -710,7 +710,7 @@ module turbine
         integer,dimension(n_phi,n_r,n_turb,4),intent(in)    :: blade_ijk
         real(fp),dimension(n_r,n_turb),intent(in)           :: twist_angle,solidity
         real(fp),dimension(n_turb),intent(in)               :: turb_rpm,CTU_local_,CTUin
-        real(fp),dimension(n_turb,4),intent(in)             :: turb_loc
+        real(fp),dimension(n_turb,5),intent(in)             :: turb_loc
         real(fp),dimension(3,181),intent(in)                :: turb_aerodyn
         ! Internal variables
         real(fp) :: c_w_1d(8),c_uv_1d(8)
@@ -778,7 +778,7 @@ module turbine
         ! Interface variables
         real(fp),dimension(nx,ny,nz2),intent(inout)       :: Fx,Fy,Fz
         real(fp),dimension(n_phi,n_r,n_turb,2),intent(in) :: CTF,sum_ker
-        real(fp),dimension(n_turb,4),intent(in)           :: turb_loc
+        real(fp),dimension(n_turb,5),intent(in)           :: turb_loc
         ! Internal variables
         real(fp) :: sin_CTangx,cos_CTangz  
         real(fp) :: sigma,sigma_x,sigma_yz,tmp1,tmp2,tmp3

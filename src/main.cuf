@@ -58,11 +58,12 @@ program main
     real(fp),dimension(:,:,:,:),allocatable,device :: CTF,CTF_alm  !< Force on the blade element (CTFx,CTFt)    
     real(fp),dimension(n_phi,n_r,n_turb,2)         :: CTF_host !< Force on the blade element (CTFx,CTFt)
     real(fp),dimension(3,n_r,n_turb,2)             :: CTF_alm_host     !< Force on the blade element (CTFx,CTFt)
+    real(fp),dimension(blade_num,n_r,n_turb,2) :: displacement_host,moment_host
     ! real(fp), dimension(3,181) :: alpha_cl_cd_host
     ! real(fp), dimension(3,181),device :: alpha_cl_cd
 
-    real(fp), dimension(n_turb,4) :: turb_loc_host
-    real(fp), dimension(n_turb,4),device :: turb_loc
+    real(fp), dimension(n_turb,5) :: turb_loc_host
+    real(fp), dimension(n_turb,5),device :: turb_loc
     !---------------------------------------------------------------------------
     ! io
     real(fp) :: t01
@@ -238,16 +239,17 @@ program main
         open(unit=199,file='input/turb_loc.dat')
         read(199,*)
         do k=1,n_turb
-            read(199,*) turb_loc_host(k,1:4)
+            read(199,*) turb_loc_host(k,1:5)
         end do
         close(199)
     end if
 
     do i_turb=1,n_turb
-        turb_loc_host(i_turb,1) = turb_loc_host(i_turb,1)/z_i
-        turb_loc_host(i_turb,2) = turb_loc_host(i_turb,2)/z_i
-        turb_loc_host(i_turb,3) = turb_loc_host(i_turb,3)/z_i
-        turb_loc_host(i_turb,4) = turb_loc_host(i_turb,4)/180*pi
+        turb_loc_host(i_turb,1) = turb_loc_host(i_turb,1)/z_i       ! x
+        turb_loc_host(i_turb,2) = turb_loc_host(i_turb,2)/z_i       ! y
+        turb_loc_host(i_turb,3) = turb_loc_host(i_turb,3)/z_i       ! z
+        turb_loc_host(i_turb,4) = turb_loc_host(i_turb,4)/180*pi    ! yaw
+        turb_loc_host(i_turb,5) = turb_loc_host(i_turb,5)/180*pi    ! tilt
     end do
     ! Copy to device
     turb_loc = turb_loc_host
@@ -522,9 +524,9 @@ program main
             if (device_id == 0 ) then
                 ! if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
                 if (mod(t-1,turb_count)==0) then
-                    call turbine_force(Fx,Fy,Fz,CTF_alm,power,u,v,w,turb_loc,t)
+                    call turbine_force(Fx,Fy,Fz,CTF,power,displacement_host,moment_host,u,v,w,turb_loc,t)
                     CTF_alm_host = CTF_alm
-                    call write_turb(CTF_alm_host,me)
+                    call write_turb(CTF_alm_host,displacement_host,moment_host,me)
                 end if
 
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)

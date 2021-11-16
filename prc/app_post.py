@@ -169,6 +169,11 @@ def get_turb(src_out_path, config):
     int((config['nsteps']-1)/(config['turb_count']))
     turb['fx']  = fctlib.load_4d('turb_fx', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
     turb['ft']  = fctlib.load_4d('turb_ft', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
+    turb['displacement_flap']  = fctlib.load_4d('blade_displacement_flap', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
+    turb['displacement_edge']  = fctlib.load_4d('blade_displacement_edge', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
+    turb['moment_flap']  = fctlib.load_4d('blade_moment_flap', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
+    turb['moment_edge']  = fctlib.load_4d('blade_moment_edge', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
+    # turb['moment']  = fctlib.load_4d('blade_moment', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
 
     return turb
 
