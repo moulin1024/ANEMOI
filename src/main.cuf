@@ -361,6 +361,10 @@ program main
         call update_w_async(dwdy,request,me,nall)
 
         if (mod(t,c_count*10)==0) then
+            ! u_host = fx
+            ! v_host = fy 
+            ! w_host = fz 
+
             u_host = u
             v_host = v 
             w_host = w 

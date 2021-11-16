@@ -1009,8 +1009,8 @@ subroutine read_inflow(u,v,w,t,me)
     if (mod(t-1,inflow_count)==0) then
         i_batch = mod((t-1)/(inflow_count),batch_size) + 1
         ! Cycling inflow section: 10 times per p_count
-        cyc_pt = mod((t-1)/(inflow_count*10),ny)+1
-        ! cyc_pt = ny
+        ! cyc_pt = mod((t-1)/(inflow_count*10),ny)+1
+        cyc_pt = ny
         prec_u(:,1:cyc_pt,:)    = u_batch(:,(ny-cyc_pt+1):ny,:,i_batch)
         prec_v(:,1:cyc_pt,:)    = v_batch(:,(ny-cyc_pt+1):ny,:,i_batch)
         prec_w(:,1:cyc_pt,:)    = w_batch(:,(ny-cyc_pt+1):ny,:,i_batch)

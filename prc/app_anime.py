@@ -254,7 +254,7 @@ def anime(PATH, case_name):
             print(i)
             return
         anim = animation.FuncAnimation(fig, animate, frames=10)
-        anim.save(out_path+'/animation.gif',writer='pillow', fps=5)
+        anim.save(out_path+'/animation.gif',writer='pillow', fps=20)
 
 
         fig,ax = plt.subplots(1,1)
@@ -273,7 +273,7 @@ def anime(PATH, case_name):
             print(i)
             return
         anim = animation.FuncAnimation(fig, animate, frames=10)
-        anim.save(out_path+'/animation_xy.gif',writer='pillow', fps=5)
+        anim.save(out_path+'/animation_xy.gif',writer='pillow', fps=20)
 
         fig,ax = plt.subplots(1,1)
         # plt.rcParams['image.cmap']='Greys'
@@ -291,7 +291,7 @@ def anime(PATH, case_name):
             print(i)
             return
         anim = animation.FuncAnimation(fig, animate, frames=10)
-        anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=5)
+        anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=20)
 
         turb_result = post.get_turb(src_out_path, config)
         turb_fx =  turb_result['fx']
@@ -320,17 +320,17 @@ def anime(PATH, case_name):
         plt.savefig(out_path+'/force.png')
 
 
-        # root_moment_flap = pd.read_csv(case_path+'/src/output/root_moment.csv',header=None).to_numpy()
+        root_moment_flap = pd.read_csv(case_path+'/src/output/root_moment.csv',header=None).to_numpy()
         
+        fig,ax = plt.subplots(1,1)
+        plt.plot(root_moment_flap)
+        # plt.xlim([5000,10000])
+        # plt.ylim([4e6,7e6])
         # fig,ax = plt.subplots(1,1)
-        # plt.plot(root_moment_flap)
-        # # plt.xlim([5000,10000])
-        # # plt.ylim([4e6,7e6])
-        # # fig,ax = plt.subplots(1,1)
-        # # plt.rcParams['image.cmap']='Purples'
-        # # value_plot = u[0,128,:,:].T
-        # # plt.contourf(value_plot,100)
-        # # ax.set_aspect(0.5)
+        # plt.rcParams['image.cmap']='Purples'
+        # value_plot = u[0,128,:,:].T
+        # plt.contourf(value_plot,100)
+        # ax.set_aspect(0.5)
 
-        # # plt.clim(np.amin(value_plot),np.amax(value_plot)*1.6)
-        # plt.savefig(out_path+'/moment.png')
+        # plt.clim(np.amin(value_plot),np.amax(value_plot)*1.6)
+        plt.savefig(out_path+'/moment.png')
