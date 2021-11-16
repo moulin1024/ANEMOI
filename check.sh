@@ -1,6 +1,6 @@
-./debug_run.sh NREL-m-coarse
-./debug_run.sh NREL-m-coarse-yaw1
-./debug_run.sh NREL-m-coarse-yaw2
+./debug_run.sh NREL-m
+./debug_run.sh NREL-m-yaw1
+./debug_run.sh NREL-m-yaw2
 
 cd post
 python post.py

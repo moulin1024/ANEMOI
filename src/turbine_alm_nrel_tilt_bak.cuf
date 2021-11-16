@@ -55,8 +55,8 @@ module turbine
     real(fp), dimension(n_turb), parameter :: dA_tower = [(2.d0*tow_r(i_turb)*dz,i_turb = 1,n_turb)]
     real(fp), dimension(n_turb), parameter :: dA_nacell = [(pi*nac_r(i_turb)**2.d0, i_turb=1,n_turb)]
     
-    real(fp), dimension(n_turb), parameter :: turb_i = ((/1024,3.95,4.7/)/z_i)/dx
-    real(fp), dimension(n_turb), parameter :: turb_j = ((/256,0.8,0.8/)/z_i)/dy
+    real(fp), dimension(n_turb), parameter :: turb_i = ((/512,3.95,4.7/)/z_i)/dx
+    real(fp), dimension(n_turb), parameter :: turb_j = ((/512,0.8,0.8/)/z_i)/dy
 
     real(fp),parameter :: hub_tower_gap = turb_r(1)*0.1 ! The gap between the tower and the hub (2 cm for WiRE-01)
     contains
@@ -649,14 +649,14 @@ module turbine
             endif
             call compute_cl_cd_nrel(CTCL,CTCD,AOA,turb_aerodyn_nrel,r(i_r,i_turb)*z_i)
 
-    !         ! Tip loss factor correction
+            ! Tip loss factor correction
             f1_tip = 3._fp*(turb_r(i_turb)-r(i_r,i_turb))/(2.0*r(i_r,i_turb)*sin_CTphi)
             g = exp(-0.125*(3*8-21))+0.1
             f2_tip = 2._fp/pi*acos(exp(-g*f1_tip))
             ! Hub loss factor correction
             f1_hub = 3._fp*(r(i_r,i_turb)-nac_r(i_turb))/(2.0*r(i_r,i_turb)*sin_CTphi)
             f2_hub = 2._fp/pi*acos(exp(-g*f1_hub))
-    !         ! Impose a stronger restriction: necessary for yawed turbine
+            ! Impose a stronger restriction: necessary for yawed turbine
             ! Basically igore the case with weird AoA
             
             if (AoA > -10 .and. AoA < 50) then 

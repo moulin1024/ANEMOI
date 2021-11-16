@@ -14,3 +14,4 @@ job/*
 *.bin
 post/*
 unit_test/*
+check.sh

@@ -219,78 +219,104 @@ def anime(PATH, case_name):
         
 
     if config['ts_flag'] > 0:
-        # result_4d = post.get_result_4d(src_out_path, config)
-        # u = result_4d['u_inst_c']
-        # v = result_4d['v_inst_c']
-        # w = result_4d['w_inst_c']
+        result_4d = post.get_result_4d(src_out_path, config)
+        u = result_4d['u_inst_c']
+        v = result_4d['v_inst_c']
+        w = result_4d['w_inst_c']
 
-        # # np.save('u.npy',u)
-        # # np.save('v.npy',v)
-        # # np.save('w.npy',w)
+        # np.save('u.npy',u)
+        # np.save('v.npy',v)
+        # np.save('w.npy',w)
 
-        # x_grid_unmask = space['x']
-        # y_grid_unmask = space['y']
-        # z_grid_unmask = space['z_c']
+        x_grid_unmask = space['x']
+        y_grid_unmask = space['y']
+        z_grid_unmask = space['z_c']
 
-        # x = x_grid_unmask[config['ts_istart']-1:config['ts_iend']]
-        # y = y_grid_unmask[config['ts_jstart']-1:config['ts_jend']]
-        # z = z_grid_unmask[:config['ts_kend']-1]
+        x = x_grid_unmask[config['ts_istart']-1:config['ts_iend']]
+        y = y_grid_unmask[config['ts_jstart']-1:config['ts_jend']]
+        z = z_grid_unmask[:config['ts_kend']-1]
 
-        # # print(u)
+        # print(u)
             
-        # fig,ax = plt.subplots(1,1)
-        # # plt.rcParams['image.cmap']='Greys'
-        # def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
-        #     values = w[i,64,:,:]#np.random.random((azimuths.size, zeniths.size))
-        #     # values = v[i,:,:,45]#np.random.random((azimuths.size, zeniths.size))
-        #     plt.cla()
-        #     im1 = ax.imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
-        #     # im1 = ax.imshow(values.T,origin='lower',aspect=config['dx']/config['dy'])
-        #     # plt.clim(0,10000)
-        #     ax.set_xlabel('x')
-        #     ax.set_ylabel('y')
-        #     # plt.xlim([100,150])
-        #     # plt.ylim([0,100])
-        #     print(i)
-        #     return
-        # anim = animation.FuncAnimation(fig, animate, frames=10)
-        # anim.save(out_path+'/animation.gif',writer='pillow', fps=10)
-
-
-        # fig,ax = plt.subplots(1,1)
-        # # plt.rcParams['image.cmap']='Greys'
-        # def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
-        #     # values = w[i,:,:,4]#np.random.random((azimuths.size, zeniths.size))
-        #     values = w[i,:,:,45]#np.random.random((azimuths.size, zeniths.size))
-        #     plt.cla()
-        #     # im1 = ax.imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
-        #     im1 = ax.imshow(values.T,origin='lower',aspect=config['dx']/config['dy'])
-        #     # plt.clim(0,10000)
-        #     ax.set_xlabel('x')
-        #     ax.set_ylabel('y')
-        #     # plt.xlim([100,150])
-        #     # plt.ylim([0,100])
-        #     print(i)
-        #     return
-        # anim = animation.FuncAnimation(fig, animate, frames=10)
-        # anim.save(out_path+'/animation_xy.gif',writer='pillow', fps=10)
-
-        root_moment_flap = pd.read_csv(case_path+'/src/output/root.csv',header=None).iloc[0:-1].astype(float)
-        
-        # root_moment_flap = root_moment_flap.astype(np.float)
-        # print(root_moment_flap.iloc[0:-1].astype(float))
-        # print()
         fig,ax = plt.subplots(1,1)
-        plt.plot(root_moment_flap)
-        # plt.xlim([5000,10000])
-        # plt.ylim([4e6,7e6])
-        # fig,ax = plt.subplots(1,1)
-        # plt.rcParams['image.cmap']='Purples'
-        # value_plot = u[0,128,:,:].T
-        # plt.contourf(value_plot,100)
-        # ax.set_aspect(0.5)
+        # # plt.rcParams['image.cmap']='Greys'
+        def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
+            values = w[i,64,:,:]#np.random.random((azimuths.size, zeniths.size))
+            # values = v[i,:,:,45]#np.random.random((azimuths.size, zeniths.size))
+            plt.cla()
+            im1 = ax.imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
+            # im1 = ax.imshow(values.T,origin='lower',aspect=config['dx']/config['dy'])
+            # plt.clim(0,10000)
+            ax.set_xlabel('x')
+            ax.set_ylabel('y')
+            # plt.xlim([100,150])
+            # plt.ylim([0,100])
+            print(i)
+            return
+        anim = animation.FuncAnimation(fig, animate, frames=10)
+        anim.save(out_path+'/animation.gif',writer='pillow', fps=5)
 
-        # plt.clim(np.amin(value_plot),np.amax(value_plot)*1.6)
+
+        fig,ax = plt.subplots(1,1)
+        # plt.rcParams['image.cmap']='Greys'
+        def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
+            # values = w[i,:,:,4]#np.random.random((azimuths.size, zeniths.size))
+            values = w[i,:,:,45]#np.random.random((azimuths.size, zeniths.size))
+            plt.cla()
+            # im1 = ax.imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
+            im1 = ax.imshow(values.T,origin='lower',aspect=config['dx']/config['dy'])
+            # plt.clim(0,10000)
+            ax.set_xlabel('x')
+            ax.set_ylabel('y')
+            # plt.xlim([100,150])
+            # plt.ylim([0,100])
+            print(i)
+            return
+        anim = animation.FuncAnimation(fig, animate, frames=10)
+        anim.save(out_path+'/animation_xy.gif',writer='pillow', fps=5)
+
+        fig,ax = plt.subplots(1,1)
+        # plt.rcParams['image.cmap']='Greys'
+        def animate(i):    #     azimuths = np.radians(np.linspace(0, 360, 40))
+            # values = w[i,:,:,4]#np.random.random((azimuths.size, zeniths.size))
+            values = v[i,:,64,:]#np.random.random((azimuths.size, zeniths.size))
+            plt.cla()
+            # im1 = ax.imshow(values.T,origin='lower',aspect=config['dz']/config['dy'])
+            im1 = ax.imshow(values.T,origin='lower',aspect=config['dz']/config['dx'])
+            # plt.clim(0,10000)
+            ax.set_xlabel('x')
+            ax.set_ylabel('y')
+            # plt.xlim([100,150])
+            # plt.ylim([0,100])
+            print(i)
+            return
+        anim = animation.FuncAnimation(fig, animate, frames=10)
+        anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=5)
+
+        turb_result = post.get_turb(src_out_path, config)
+        turb_fx =  turb_result['fx']
+        turb_ft =  turb_result['ft']
+
+        print(turb_fx.shape)
+        fig,ax = plt.subplots(1,1)
+        # plt.plot(turb_fx[-1,0,:,0])
+        plt.plot(turb_fx[-1,0,:,0])
+        # root_moment_flap = pd.read_csv(case_path+'/src/output/root.csv',header=None).iloc[0:-1].astype(float)
+        
+        # # root_moment_flap = root_moment_flap.astype(np.float)
+        # # print(root_moment_flap.iloc[0:-1].astype(float))
+        # # print()
+        # fig,ax = plt.subplots(1,1)
+        # plt.plot(root_moment_flap)
+        # # plt.xlim([5000,10000])
+        # # plt.ylim([4e6,7e6])
+        # # fig,ax = plt.subplots(1,1)
+        # # plt.rcParams['image.cmap']='Purples'
+        # # value_plot = u[0,128,:,:].T
+        # # plt.contourf(value_plot,100)
+        # # ax.set_aspect(0.5)
+
+        # # plt.clim(np.amin(value_plot),np.amax(value_plot)*1.6)
         plt.savefig(out_path+'/force.png')
 
 
