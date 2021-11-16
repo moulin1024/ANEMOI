@@ -12,6 +12,6 @@ job/*
 *.npy
 *.txt
 *.bin
-post/*
+*.csv
 unit_test/*
 check.sh
