@@ -138,13 +138,13 @@ def anime(PATH, case_name):
         # plt.plot(moment_flap[:,2,0,0])
         # plt.savefig(out_path+'/total force.png')
         
-        Neq = 1000
-        M_eq_baseline = fatigue.get_DEL(moment_edge[20000:,0,0,0],Neq,10)
-        print(M_eq_baseline)
-        M_eq_baseline = fatigue.get_DEL(moment_edge[20000:,1,0,0],Neq,10)
-        print(M_eq_baseline)
-        M_eq_baseline = fatigue.get_DEL(moment_edge[20000:,2,0,0],Neq,10)
-        print(M_eq_baseline)
+        # Neq = 1000
+        # M_eq_baseline = fatigue.get_DEL(moment_edge[20000:,0,0,0],Neq,10)
+        # print(M_eq_baseline)
+        # M_eq_baseline = fatigue.get_DEL(moment_edge[20000:,1,0,0],Neq,10)
+        # print(M_eq_baseline)
+        # M_eq_baseline = fatigue.get_DEL(moment_edge[20000:,2,0,0],Neq,10)
+        # print(M_eq_baseline)
 
         arr2D = np.array([moment_flap[:,0,0,0],moment_edge[:,0,0,0]]).T
         np.savetxt(out_path + '/root_moment.csv', arr2D, delimiter=',', fmt='%d')

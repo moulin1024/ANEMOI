@@ -76,7 +76,7 @@ module turbine
         real(fp),dimension(n_turb) :: CTUin_host,turb_rpm_host
         integer :: i,j,k,t,counter
     
-        save CTUin,turb_rpm,counter,deformation
+        save CTUin,turb_rpm,counter,deformation,turb_loc_host
     !---------------------------------------------------------------------------
     ! code
     !---------------------------------------------------------------------------
@@ -84,6 +84,7 @@ module turbine
             allocate(CTUin(n_turb))
             allocate(turb_rpm(n_turb))
             allocate(deformation(blade_num,n_r,n_turb,2))
+            turb_loc_host = turb_loc
         end if
         fx = 0._fp
         fy = 0._fp
@@ -100,7 +101,7 @@ module turbine
             CTF_host = CTF
             turb_rpm_host = turb_rpm
             
-            call aeroelastic(deformation_host,displacement_host,moment_host,CTF_host,turb_rpm_host,t)
+            call aeroelastic(deformation_host,displacement_host,moment_host,CTF_host,turb_rpm_host,turb_loc_host,t)
             deformation = deformation_host
         end if
         

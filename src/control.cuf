@@ -94,10 +94,6 @@ module control
             CTUin_old(i_turb) = CTUin(i_turb)
         end do
 
-        turb_rpm_host = turb_rpm
-        CTUin_host = CTUin
-        print *,turb_rpm_host,7.5*CTUin_host/63*60/(2*pi)
-
     end subroutine controller_lambda
 
     subroutine controller_fix(turb_rpm,CTUin,u,turb_loc,t)
