@@ -2,7 +2,7 @@ module control
     use precision
     use dimen
     use cudafor
-    integer,parameter :: i0 = nint(3.0*turb_r(1)/dx)
+    integer,parameter :: i0 = nint(4.0*turb_r(1)/dx)
     integer,parameter :: i2 = nint(2.0*turb_r(1)/dx)
     integer,parameter :: i1 = nint(2.0*turb_r(1)/dy)
     real(fp),dimension(3),parameter :: rpm_0_0_0 = (/2183.0,1405.7,1560.5/)
@@ -62,7 +62,7 @@ module control
         real(fp),dimension(n_turb),intent(out),device  :: turb_rpm,CTUin
         real(fp),dimension(n_turb)  :: debug
         real(fp),dimension(:),allocatable,device  :: CTUin_old
-        real(fp),dimension(n_turb)  :: turb_rpm_host
+        real(fp),dimension(n_turb)  :: turb_rpm_host,CTUin_host
         ! real(fp),dimension(:),allocatable,device  :: turb_rpm_old
         real(fp),dimension(nx,ny,nz2),intent(in),device   :: u
         real(fp),dimension(n_turb,5),intent(in),device :: turb_loc 
@@ -94,8 +94,9 @@ module control
             CTUin_old(i_turb) = CTUin(i_turb)
         end do
 
-        ! turb_rpm_host = CTUin_old
-        ! print *,turb_rpm_host
+        turb_rpm_host = turb_rpm
+        CTUin_host = CTUin
+        print *,turb_rpm_host,7.5*CTUin_host/63*60/(2*pi)
 
     end subroutine controller_lambda
 
