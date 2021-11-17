@@ -59,9 +59,9 @@ module structural
                 tau = turb_loc_host(i_turb,5)
                 do i_blade = 1,blade_num
                     do j = 1, T_warmup       
-                        phi = phase_angle(i_blade,i_turb) + omega(i_turb)*delta_t*j    
+                        phi = phase_angle(i_blade,i_turb)  
 
-                        g(1) = -(9.8*Sin(gamma)*Sin(phi)) +  9.8*Cos(gamma)*Cos(phi)*Sin(tau)
+                        g(1) =  9.8*Sin(tau)
                         g(2) = -(9.8*Cos(phi)*Cos(tau)) 
 
                         F_a(2:N+1,1) = CTF_host(i_blade,n_r_s:n_r,i_turb,1)*dx*dy*dz*z_i**2/delta_r
@@ -83,7 +83,7 @@ module structural
                 end do
             end do
         end if
-        
+
         do i_turb = 1,n_turb
             omega(i_turb) = turb_rpm_host(i_turb)/60*2*pi
             do i_blade = 1,blade_num
@@ -95,8 +95,8 @@ module structural
                 gamma = turb_loc_host(i_turb,4)
                 tau = turb_loc_host(i_turb,5)
                 do j = 1, T_split            
-                    phi = phase_angle(i_blade,i_turb) + omega(i_turb)*delta_t*j  
-                    g(1) = -(9.8*Sin(gamma)*Sin(phi)) +  9.8*Cos(gamma)*Cos(phi)*Sin(tau)
+                    phi = mod(phase_angle(i_blade,i_turb) + omega(i_turb)*delta_t*j,2*pi)  
+                    g(1) =  9.8*Sin(tau)
                     g(2) = -(9.8*Cos(phi)*Cos(tau)) 
 
 
@@ -118,8 +118,11 @@ module structural
                 S(i_blade,:,i_turb,:) = S_old
             end do
         end do
-        ! print *,M(1,2,1,1)
-        write(112, '(E11.4)') M(1,2,1,1)
+
+        ! print *,q(1,32,1,1),damping
+        !  stop
+        ! print *,q(1,32,1,1)
+        ! write(112, '(E11.4)') M(1,2,1,1)
         
         do i_turb = 1,n_turb
             phase_angle(2,i_turb) = mod(phase_angle(1,i_turb) + turb_rpm_host(i_turb)/60*2*pi*dt*z_i*turb_count,2*pi) - 2*pi/3
