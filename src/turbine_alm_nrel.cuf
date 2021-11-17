@@ -98,11 +98,11 @@ module turbine
             call controller_lambda(turb_rpm,CTUin,u,turb_loc,t)
             call almyaw(fx,fy,fz,CTF,power,u,v,w,turb_loc,turb_rpm,deformation,t,me,nall)
             CTF_host = CTF
-            power_host = power
-            CTUin_host = CTUin
+            ! power_host = power
+            ! CTUin_host = CTUin
             turb_rpm_host = turb_rpm
 
-            print *,CTUin_host,power_host,turb_rpm_host
+            ! print *,CTUin_host,power_host,turb_rpm_host
             
             call aeroelastic(deformation_host,displacement_host,moment_host,CTF_host,turb_rpm_host,t)
             deformation = deformation_host
