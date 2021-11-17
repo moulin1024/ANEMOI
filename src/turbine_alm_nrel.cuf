@@ -96,7 +96,7 @@ module turbine
         if(turbine_model == 1)then
             call tower(fx,fy,fz,u,v,w,turb_loc,t) 
             call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
-            call controller_fix(turb_rpm,CTUin,u,turb_loc,t)
+            call controller_lambda(turb_rpm,CTUin,u,turb_loc,t)
             call almyaw(fx,fy,fz,CTF,power,u,v,w,turb_loc,turb_rpm,deformation,t,me,nall)
             CTF_host = CTF
             turb_rpm_host = turb_rpm
