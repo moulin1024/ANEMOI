@@ -7,11 +7,10 @@
 #SBATCH --chdir ./job/${case_name}
 #SBATCH --ntasks ${job_np}
 #SBATCH --time ${job_time}
-#SBATCH --mem 30000
 #SBATCH --account wire
 #SBATCH --partition gpu
 #SBATCH --qos gpu
-#SBATCH --gres gpu:2
+#SBATCH --gres gpu:${job_np}
 
 ##################################################
 # MODULE

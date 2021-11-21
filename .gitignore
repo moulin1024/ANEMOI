@@ -13,5 +13,6 @@ job/*
 *.txt
 *.bin
 *.csv
+*.h5
 unit_test/*
 check.sh

@@ -1,53 +1,53 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import animation, rc
+from matplotlib.pyplot import figure
+from mpl_toolkits.mplot3d import Axes3D
 import pandas as pd
 import fatpack
+import h5py
 import fatigue
 
-root_moment0 = pd.read_csv('../job/NREL-m/output/root_moment.csv',header=None).iloc[0:-1].astype(float).to_numpy()
-root_moment1 = pd.read_csv('../job/NREL-m-yaw1/output/root_moment.csv',header=None).iloc[0:-1].astype(float).to_numpy()
-root_moment2 = pd.read_csv('../job/NREL-m-yaw2/output/root_moment.csv',header=None).iloc[0:-1].astype(float).to_numpy()
 
-root_moment0 = root_moment0[1000:10000] 
-root_moment1 = root_moment1[1000:10000] 
-root_moment2 = root_moment2[1000:10000] 
+f = h5py.File('data/NREL-m-test.h5','r')
 
-fig,ax = plt.subplots(1,1)
-plt.plot(root_moment0[:,0],lw=1)
-plt.plot(root_moment1[:,0],lw=1)
-plt.plot(root_moment2[:,0],lw=1)
-# plt.xlim([8000,10000])
-plt.savefig('flap_moment.png')
+u = np.array(f.get('velocity/u'))
+v = np.array(f.get('velocity/v'))
+w = np.array(f.get('velocity/w'))
 
+x = np.array(f.get('space/x'))
+y = np.array(f.get('space/y'))
+z = np.array(f.get('space/z')) 
 
-fig,ax = plt.subplots(1,1)
-plt.plot(root_moment0[:,1],lw=1)
-plt.plot(root_moment1[:,1],lw=1)
-plt.plot(root_moment2[:,1],lw=1)
-plt.xlim([8000,10000])
-plt.savefig('edge_moment.png')
+x_mask = x[f.attrs['ts_istart']-1:f.attrs['ts_iend']]
+y_mask = y[f.attrs['ts_jstart']-1:f.attrs['ts_jend']]
+z_mask = z[:f.attrs['ts_kend']-1]
 
-
+fig = figure(figsize=(11,6),dpi=200)
+ax1 = fig.add_subplot(222)
+ax2 = fig.add_subplot(221)
+ax3 = fig.add_subplot(223)
+# ax4 = fig.add_subplot(224,projection='3d')
 # fig,ax = plt.subplots(1,1)
-# plt.plot(root_force_flap)
-# plt.plot(root_force_flap2)
-# plt.plot(root_force_flap0)
-plt.xlim([2000,10000])
-# # plt.ylim([4e6,7e6])
-# # fig,ax = plt.subplots(1,1)
-# # plt.rcParams['image.cmap']='Purples'
-# # value_plot = u[0,128,:,:].T
-# # plt.contourf(value_plot,100)
-# # ax.set_aspect(0.5)
+def animate(i):    
+    plt.cla()
+    ax1.contourf(y_mask,z_mask,u[i,64,:,:].T,50)
+    ax1.set_xlabel('y')
+    ax1.set_ylabel('z')
 
-# # plt.clim(np.amin(value_plot),np.amax(value_plot)*1.6)
-# plt.savefig('force.png')
-Neq = 1000
-M_eq_baseline = fatigue.get_DEL(root_moment0[:,0],Neq,10)
-print(M_eq_baseline)
-M_eq_baseline = fatigue.get_DEL(root_moment1[:,0],Neq,10)
-print(M_eq_baseline)
-M_eq_baseline = fatigue.get_DEL(root_moment2[:,0],Neq,10)
-print(M_eq_baseline)
-# M_eq_baseline = fatigue.get_DEL(root_moment2[:,0],Neq,10)
-# print(M_eq_baseline)
+    ax2.contourf(x_mask,z_mask,v[i,:,16,:].T,50)
+    ax2.set_xlabel('x')
+    ax2.set_ylabel('z')
+
+    ax3.contourf(x_mask,y_mask,w[i,:,:,45].T,50)
+    ax3.set_xlabel('x')
+    ax3.set_ylabel('y')
+
+    ax1.axis('scaled')
+    ax2.axis('scaled')
+    ax3.axis('scaled')
+    print(i)
+    plt.tight_layout()
+    return
+anim = animation.FuncAnimation(fig, animate, frames=10)
+anim.save('plot/animation_xz.gif',writer='pillow', fps=10)

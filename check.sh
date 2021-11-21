@@ -1,6 +1,6 @@
-./debug_run.sh NREL-m
-./debug_run.sh NREL-m-yaw1
-./debug_run.sh NREL-m-yaw2
+./debug_run.sh NREL-m-notilt
+./debug_run.sh NREL-m-notilt-yaw1
+./debug_run.sh NREL-m-notilt-yaw2
 
 # cd post
 # python post.py

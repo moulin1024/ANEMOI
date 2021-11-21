@@ -707,8 +707,8 @@ module turbine
                 mu_z = mu(3)
                 ! Apply gaussian smoothing kernel
                 
-                sigma_x  = 2*chord_length(i_r,i_turb)!delta_grid!dx!chord_length(i_r,i_turb)
-                sigma_yz = 2*chord_length(i_r,i_turb)!delta_grid!dx!chord_length(i_r,i_turb)
+                sigma_x  = delta_grid!dx!chord_length(i_r,i_turb)
+                sigma_yz = delta_grid!dx!chord_length(i_r,i_turb)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
@@ -784,8 +784,8 @@ module turbine
                 r_w  = sqrt((coord_y/cos(turb_loc(i_turb,4)))**2 + coord_z_w**2)
                 ! Phase angle of the grid point
                 ! Apply gaussian smoothing kernel
-                sigma_x  = 2*chord_length(i_r,i_turb)!delta_grid!dx!chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
-                sigma_yz = 2*chord_length(i_r,i_turb)!delta_grid!dx!chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_x  = delta_grid!dx!chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_yz = delta_grid!dx!chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
