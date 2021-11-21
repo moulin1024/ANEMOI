@@ -18,7 +18,6 @@ import numpy as np
 import h5py
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('GTK3Agg')
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import h5py
 import os.path
