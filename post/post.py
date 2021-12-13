@@ -9,7 +9,7 @@ import h5py
 import fatigue
 
 
-f = h5py.File('data/NREL-m-test.h5','r')
+f = h5py.File('data/long-NREL-m-inflow-tracing.h5','r')
 
 u = np.array(f.get('velocity/u'))
 v = np.array(f.get('velocity/v'))

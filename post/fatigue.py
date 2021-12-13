@@ -4,7 +4,6 @@ import fatpack
 import matplotlib.pyplot as plt
 import pandas as pd
 
-#Create a function that reutrns the Goodman correction:
 def Goodman_method_correction(M_a,M_m,M_max):
     M_u = 1.5*M_max
     M_ar = M_a/(1-M_m/M_u)
@@ -21,9 +20,8 @@ def Equivalent_bending_moment(M_ar,Neq,m):
 
 def get_DEL(y,Neq,m):
     S, Sm = fatpack.find_rainflow_ranges(y.flatten(), return_means=True, k=256)
-    data_arr  = np.array([Sm , S ]).T
-    M_ar = Goodman_method_correction(data_arr[:,1],data_arr[:,0],np.max(S))
-    print(sum(M_ar.shape))
-    M_eq = Equivalent_bending_moment(M_ar,Neq,m)
-    return M_eq
-
+    M_ar = Goodman_method_correction(S,Sm,np.max(S))
+    hist, bin_edges = np.histogram(M_ar,bins=100)
+    bin_centres = 0.5*(bin_edges[:-1]+bin_edges[1:])
+    DEL = (np.sum(hist*bin_centres**m)/Neq)**(1/m)
+    return DEL
