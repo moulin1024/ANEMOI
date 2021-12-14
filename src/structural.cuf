@@ -7,12 +7,12 @@ module structural
     integer, parameter :: N_total = N_r
     integer, parameter :: N_start = n_r_s
     integer, parameter :: N = N_total - N_start + 1
-    integer, parameter :: T_warmup = 5e4
+    integer, parameter :: T_warmup = 1e5
     integer, parameter :: simulation_type = 1
     real, parameter :: radius = 61.5
     real, parameter :: pitch = 0.0/180*3.1415926
     ! real, parameter :: turb_loc_host(i_turb,5) = 5.0/180*3.1415926
-    real, parameter :: damping = 0.06!
+    real, parameter :: damping = 0.0!
     real, parameter :: r_start = 2.0
     real, parameter :: total_time_warmup = 10
     real, parameter :: delta_t = total_time_warmup/T_warmup
@@ -57,30 +57,6 @@ module structural
 
                 gamma = turb_loc_host(i_turb,4)
                 tau = turb_loc_host(i_turb,5)
-                do i_blade = 1,blade_num
-                    do j = 1, T_warmup       
-                        phi = phase_angle(i_blade,i_turb)  
-
-                        g(1) =  9.8*Sin(tau)
-                        g(2) = -(9.8*Cos(phi)*Cos(tau)) 
-
-                        F_a(2:N+1,1) = CTF_host(i_blade,n_r_s:n_r,i_turb,1)*dx*dy*dz*z_i**2/delta_r
-                        F_a(2:N+1,2) = CTF_host(i_blade,n_r_s:n_r,i_turb,2)*dx*dy*dz*z_i**2/delta_r
-
-                        call bladeSolve(V_new,M_new,S_new,q_new,V_old,M_old,S_old,q_old,&
-                                            rho,EI,r_location,g,F_a,delta_t,delta_r,10.0,0.0)
-                        ! Upload data to new time-step:
-                        V_old = V_new 
-                        q_old = q_new
-                        M_old = M_new 
-                        S_old = S_new
-
-                        V(i_blade,:,i_turb,:) = V_old
-                        q(i_blade,:,i_turb,:) = q_old
-                        M(i_blade,:,i_turb,:) = M_old
-                        S(i_blade,:,i_turb,:) = S_old
-                    end do
-                end do
             end do
         end if
 
@@ -99,7 +75,7 @@ module structural
                     g(1) =  9.8*Sin(tau)
                     g(2) = -(9.8*Cos(phi)*Cos(tau)) 
 
-
+                    
                     F_a(2:N+1,1) = CTF_host(i_blade,n_r_s:n_r,i_turb,1)*dx*dy*dz*z_i**2/delta_r
                     F_a(2:N+1,2) = CTF_host(i_blade,n_r_s:n_r,i_turb,2)*dx*dy*dz*z_i**2/delta_r
 
@@ -118,7 +94,7 @@ module structural
                 S(i_blade,:,i_turb,:) = S_old
             end do
         end do
-
+        
         ! print *,q(1,32,1,1),damping
         !  stop
         ! print *,q(1,32,1,1)
@@ -203,10 +179,12 @@ module structural
 
         ! Calculation of the velocity new values from the old step time:
         do i = 2, N+1
-            ! Interpolate the aerodynamic force
-            V_new(i,:) = (1-damping*delta_t)*V_old(i,:) + &
-                        delta_t*((-1.0/rho(i))*((M_old(i+1,:)-(2.0*M_old(i,:))+M_old(i-1,:))/delta_r**2)+&
-                        ((1.0/rho(i))*((S_old(i+1,:)-S_old(i,:))/delta_r))+(F_a(i,:)/rho(i))+g)
+            do j = 1,2
+                ! damping_coefficent = damping*12*EI(i,j,j)/(rho(i)*radius**3)
+                V_new(i,j) = (1-0.001*12*EI(i,j,j)/(rho(i)*radius**3)*delta_t)*V_old(i,j) + &
+                    delta_t*((-1.0/rho(i))*((M_old(i+1,j)-(2.0*M_old(i,j))+M_old(i-1,j))/delta_r**2)+&
+                    ((1.0/rho(i))*((S_old(i+1,j)-S_old(i,j))/delta_r))+(F_a(i,j)/rho(i))+g(j))
+            end do
         end do
     
         ! Boundary conditions at the ROOT position:
@@ -218,7 +196,7 @@ module structural
             M_new(i,1) = M_old(i,1) + delta_t * (EI(i,1,1)*((V_new(i+1,1)-(2.0*V_new(i,1))+V_new(i-1,1))/delta_r**2) + &
                                                 EI(i,1,2)*((V_new(i+1,2)-(2.0*V_new(i,2))+V_new(i-1,2))/delta_r**2))
             M_new(i,2) = M_old(i,2) + delta_t * (EI(i,2,2)*((V_new(i+1,2)-(2.0*V_new(i,2))+V_new(i-1,2))/delta_r**2) + &
-                                                EI(i,2,1)*((V_new(i+1,1)-(2.0*V_new(i,1))+V_new(i-1,1))/delta_r**2))                                     
+                                                EI(i,2,1)*((V_new(i+1,1)-(2.0*V_new(i,1))+V_new(i-1,1))/delta_r**2))                                                                         
             ! centrifugal force integration from i to N
             centrifugal_force = 0
             do j = i, N+1
