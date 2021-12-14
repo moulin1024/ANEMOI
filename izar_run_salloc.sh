@@ -2,7 +2,7 @@
 casename=$(basename $1)
 # echo $casename
 
-# salloc -N 1 --gres gpu:1
+# salloc -N 1 --gres gpu:1 --time 02:00:00
 # python prc/wireles.py debug $casename
 # scancel -u molin
 
