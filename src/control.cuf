@@ -67,6 +67,7 @@ module control
         real(fp),dimension(nx,ny,nz2),intent(in),device   :: u
         real(fp),dimension(n_turb,5),intent(in),device :: turb_loc 
         integer,intent(in) :: t
+        real(fp) :: tsr 
 
         ! Internal variables
         integer i_turb,i,j,k,istat
@@ -90,10 +91,12 @@ module control
             if (t>2000) then
                 CTUin(i_turb) = 0.5*CTUin_old(i_turb) + 0.5* CTUin(i_turb)
             end if
-            turb_rpm(i_turb) = 7.5*CTUin(i_turb)*cos(turb_loc(i_turb,4))/63.0*60.0/(2*pi)
-            CTUin_old(i_turb) = CTUin(i_turb)
+            tsr = 33.4-8.65*CTUin(i_turb)+0.97*CTUin(i_turb)**2-0.0365*CTUin(i_turb)**3
+            turb_rpm(i_turb) = tsr*CTUin(i_turb)*cos(turb_loc(i_turb,4))/63.0*60.0/(2*pi)
         end do
 
+        turb_rpm_host = turb_rpm
+        CTUin_host = CTUin
     end subroutine controller_lambda
 
     subroutine controller_fix(turb_rpm,CTUin,u,turb_loc,t)
