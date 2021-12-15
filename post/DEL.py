@@ -76,16 +76,16 @@ plt.savefig('plot/DEL.png')
 
 
 
-df = pd.read_csv('power_3wt.csv')
-print(df)
+# df = pd.read_csv('power_3wt.csv')
+# print(df)
 
 
-plt.figure(figsize=(14, 8),dpi=100)
-plt.plot(df['yaw'],df['wt1']/4173025,'o-',label='WT1')
-plt.plot(df['yaw'],df['wt2']/4173025,'o-',label='WT2')
-plt.plot(df['yaw'],df['wt3']/4173025,'o-',label='WT3')
-plt.legend()
+# plt.figure(figsize=(14, 8),dpi=100)
+# plt.plot(df['yaw'],df['wt1']/4173025,'o-',label='WT1')
+# plt.plot(df['yaw'],df['wt2']/4173025,'o-',label='WT2')
+# plt.plot(df['yaw'],df['wt3']/4173025,'o-',label='WT3')
+# plt.legend()
 
-plt.xlabel('Yaw angle (degree)')
-plt.ylabel('$P/P_{baseline}$')
-plt.savefig('plot/power.png')
+# plt.xlabel('Yaw angle (degree)')
+# plt.ylabel('$P/P_{baseline}$')
+# plt.savefig('plot/power.png')

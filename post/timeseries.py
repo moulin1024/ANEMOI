@@ -35,26 +35,26 @@ bins = np.linspace(0, bins_max, bins_num)
 bin_width = bins_max/(bins_num-1)
 bins_fine = np.linspace(0, bins_max, 501)
 
-# for ix,name in enumerate(caselist):
-#     print(ix)
-#     f[ix] = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
-#     time = np.array(f[ix].get('time'))[start:end]
-#     m_f[ix] = np.array(f[ix].get('moment_flap')[start:end,0,0,0])/1e6
-#     m_e[ix] = np.array(f[ix].get('moment_edge')[start:end,0,0,0])/1e6
+for ix,name in enumerate(caselist):
+    print(ix)
+    f[ix] = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
+    time = np.array(f[ix].get('time'))[start:end]
+    m_f[ix] = np.array(f[ix].get('moment_flap')[start:end,0,0,0])/1e3
+    m_e[ix] = np.array(f[ix].get('moment_edge')[start:end,0,0,0])/1e3
 
 
-# fig, axs = plt.subplots(3, 1,figsize=(12, 4),dpi=200,sharex=True, sharey=True)
-# for i in range(3):
-#     for j in range(3):
-#         case_ix = ix_0+(j-1)*(i+1)
-#         axs[i].plot(time,m_f[case_ix],label="$\gamma=$"+str(yaw_angle[case_ix])+'$^\circ$',alpha=0.5) 
-#         axs[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
-#         axs[i].set_ylim([1,14])
-#         axs[2].set_xlabel('time (s)')
-#         axs[1].set_ylabel('Flapwise bending moment ($mN \cdot m$)')
-#         # axs[i].rcParams.update({'font.size': 32})
-# # plt.rcParams.update({'font.size': 32})
-# plt.savefig('plot/timeseries_flap.png')
+fig, axs = plt.subplots(3, 1,figsize=(12, 4),dpi=200,sharex=True, sharey=True)
+for i in range(3):
+    for j in range(3):
+        case_ix = ix_0+(j-1)*(i+1)
+        axs[i].plot(time,m_f[case_ix],label="$\gamma=$"+str(yaw_angle[case_ix])+'$^\circ$',alpha=0.5) 
+        axs[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        # axs[i].set_ylim([1,14])
+        axs[2].set_xlabel('time (s)')
+        axs[1].set_ylabel('Flapwise bending moment ($mN \cdot m$)')
+        # axs[i].rcParams.update({'font.size': 32})
+# plt.rcParams.update({'font.size': 32})
+plt.savefig('plot/timeseries_flap.png')
 
 
 # name = "ultralong-0"
@@ -89,27 +89,27 @@ bins_fine = np.linspace(0, bins_max, 501)
 # plt.legend()
 # plt.savefig('plot/timeseries_3wt+20.png')
 
-name = "ultralong-0"
-f1 = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
-time = np.array(f1.get('time'))[start:end]
-# m_f1 = np.array(f1.get('displacement_flap')[start:end,-3,0,0])
+# name = "ultralong-0"
+# f1 = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
+# time = np.array(f1.get('time'))[start:end]
+# # m_f1 = np.array(f1.get('displacement_flap')[start:end,-3,0,0])
 
-# print(m_f1)
-# time = np.array(f1.get('time'))[start:]
-m_f1 = np.array(f1.get('moment_flap')[start:end,0,0,1])/1e3
-# m_f3 = np.array(f1.get('moment_flap')[start:end,0,0,2])/1e6
+# # print(m_f1)
+# # time = np.array(f1.get('time'))[start:]
+# m_f1 = np.array(f1.get('moment_flap')[start:end,0,0,1])/1e3
+# # m_f3 = np.array(f1.get('moment_flap')[start:end,0,0,2])/1e6
 
-fig, axs = plt.subplots(figsize=(12, 4),dpi=200)
-plt.plot(time-1000,m_f1,label='WT1')
-# plt.plot(time,m_f2,alpha=0.5,label='offset,zero yaw for WT1')
-# plt.plot(time,m_f3,alpha=0.5,label='offset,$-20^\circ$ yaw for WT1')
-plt.xlim([0,100])
-plt.ylim([2000,9000])
+# fig, axs = plt.subplots(figsize=(12, 4),dpi=200)
+# plt.plot(time-1000,m_f1,label='WT1')
+# # plt.plot(time,m_f2,alpha=0.5,label='offset,zero yaw for WT1')
+# # plt.plot(time,m_f3,alpha=0.5,label='offset,$-20^\circ$ yaw for WT1')
+# plt.xlim([0,100])
+# plt.ylim([2000,9000])
 
-plt.xlabel('time (s)')
-plt.ylabel('Flapwise bending moment ($kN \cdot m$)')
-plt.legend()
-plt.savefig('plot/timeseries_3wt_partial.png')
+# plt.xlabel('time (s)')
+# plt.ylabel('Flapwise bending moment ($kN \cdot m$)')
+# plt.legend()
+# plt.savefig('plot/timeseries_3wt_partial.png')
 
 
 

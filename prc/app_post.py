@@ -95,8 +95,8 @@ def post(PATH, case_name):
         ########################################################################
         # std
         print(hub_k)
-        inflow_avg = 0.5*(np.mean(np.mean(result_3d['u_avg_c'][25:28,:,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_avg_c'][25:28,:,hub_k+1],axis=0),axis=0))
-        inflow_ti  = 0.5*(np.mean(np.mean(result_3d['u_std_c'][25:28,:,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_std_c'][25:28,:,hub_k+1],axis=0),axis=0))/inflow_avg
+        inflow_avg = 0.5*(np.mean(np.mean(result_3d['u_avg_c'][:,:,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_avg_c'][:,:,hub_k],axis=0),axis=0))
+        inflow_ti  = 0.5*(np.mean(np.mean(result_3d['u_std_c'][:,:,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_std_c'][:,:,hub_k],axis=0),axis=0))/inflow_avg
         # inflow_avg = 0.5*(np.mean(np.mean(result_3d['u_avg_c'][15:16,115:140,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_avg_c'][15:16,115:140,hub_k+1],axis=0),axis=0))
         # inflow_ti  = 0.5*(np.mean(np.mean(result_3d['u_std_c'][15:16,115:140,hub_k],axis=0),axis=0)+np.mean(np.mean(result_3d['u_std_c'][15:16,115:140,hub_k+1],axis=0),axis=0))/inflow_avg
         
