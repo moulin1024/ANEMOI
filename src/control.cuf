@@ -2,9 +2,10 @@ module control
     use precision
     use dimen
     use cudafor
-    integer,parameter :: i0 = nint(4.0*turb_r(1)/dx)
-    integer,parameter :: i2 = nint(2.0*turb_r(1)/dx)
+    integer,parameter :: i0 = nint(2.0*turb_r(1)/dx)
     integer,parameter :: i1 = nint(2.0*turb_r(1)/dy)
+    ! integer,parameter :: i2 = nint(1.0*turb_r(1)/dx)
+    ! integer,parameter :: i3 = nint(2.0*turb_r(1)/dz)
     real(fp),dimension(3),parameter :: rpm_0_0_0 = (/2183.0,1405.7,1560.5/)
     real(fp),dimension(3),parameter :: rpm_25_15_0 = (/2113.39462885849,1666.10117077778,1744.22877040370/)
     
@@ -25,7 +26,7 @@ module control
         integer i_turb,i,j,k,istat
 
         type(dim3) :: grid,tBlock
-        tblock = dim3(i1,i2,1)
+        tblock = dim3(i1,i1,1)
         grid = dim3(n_turb,1,1)
 
         save CTUin_old,CTUin!,CTUin_old
@@ -73,7 +74,7 @@ module control
         integer i_turb,i,j,k,istat
 
         type(dim3) :: grid,tBlock
-        tblock = dim3(i1,i2,1)
+        tblock = dim3(i1,i1,1)
         grid = dim3(n_turb,1,1)
 
         save CTUin_old!,CTUin_old
@@ -88,15 +89,17 @@ module control
 
         !$cuf kernel do(1) <<<*,*>>>
         do i_turb = 1,n_turb
-            if (t>2000) then
-                CTUin(i_turb) = 0.5*CTUin_old(i_turb) + 0.5* CTUin(i_turb)
-            end if
-            tsr = 33.4-8.65*CTUin(i_turb)+0.97*CTUin(i_turb)**2-0.0365*CTUin(i_turb)**3
-            turb_rpm(i_turb) = tsr*CTUin(i_turb)*cos(turb_loc(i_turb,4))/63.0*60.0/(2*pi)
+            ! if (t>2000) then
+                ! CTUin(i_turb) = 0.5*CTUin_old(i_turb) + 0.5* CTUin(i_turb)
+            ! end if
+            tsr = 8!33.4-8.65*CTUin(i_turb)+0.97*CTUin(i_turb)**2-0.0365*CTUin(i_turb)**3
+            turb_rpm(i_turb) = tsr*CTUin(i_turb)/63.0*60.0/(2*pi)
+            CTUin_old(i_turb) = CTUin(i_turb)
         end do
 
         turb_rpm_host = turb_rpm
         CTUin_host = CTUin
+        print *, CTUin_host
     end subroutine controller_lambda
 
     subroutine controller_fix(turb_rpm,CTUin,u,turb_loc,t)
@@ -115,7 +118,7 @@ module control
         integer i_turb,i,j,k,istat
 
         type(dim3) :: grid,tBlock
-        tblock = dim3(i1,i2,1)
+        tblock = dim3(i1,i1,1)
         grid = dim3(n_turb,1,1)
 
         save CTUin_old!,CTUin_old
@@ -173,16 +176,16 @@ module control
         real(fp),dimension(n_turb,5),intent(in) :: turb_loc
         integer :: i,j,k,hub_x,hub_y,hub_z,i_turb,istat
         
-        i = threadidx%y
-        j = threadidx%x - int(i1/2)
-        i_turb = blockidx%x
 
-        hub_x = nint(turb_loc(i_turb,1)/dx)
-        hub_y = nint(turb_loc(i_turb,2)/dy)
+        j = threadidx%x - int(i1/2)
+        k = threadidx%y - int(i1/2)
+        i_turb = blockidx%x
+        
+        hub_x = nint(turb_loc(i_turb,1)/dx) - 1
+        hub_y = nint(turb_loc(i_turb,2)/dy) - 1
         hub_z = nint(turb_loc(i_turb,3)/dz) + 1
 
-        istat = atomicadd(CTUin(i_turb),0.5*(u(hub_x-i0+i,hub_y+j,hub_z)/(i1*i2)+&
-                                             u(hub_x-i0+i,hub_y+j,hub_z+1)/(i1*i2)))
+        istat = atomicadd(CTUin(i_turb),u(hub_x-i0,hub_y+j,hub_z+k)/(i1**2))
         call syncthreads() 
     end subroutine get_inflow
 end module control 

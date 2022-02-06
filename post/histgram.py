@@ -14,8 +14,8 @@ def Goodman_method_correction(M_a,M_m,M_max):
     M_ar = M_a/(1-M_m/M_u)
     return M_ar
 
-caselist = ["superlong-30","superlong-20","superlong-10","superlong-NREL-m","superlong+10","superlong+20","superlong+30"]
-yaw_angle = [-30,-20,-10,0,10,20,30]
+caselist = ["0-0","20-10","20-20"]
+yaw_angle = [0,10,20]
 f = [None] * len(yaw_angle)
 m_f = [None] * len(yaw_angle)
 m_e = [None] * len(yaw_angle)
@@ -27,9 +27,10 @@ ix_0 = len(yaw_angle)//2
 
 m = 10
 Neq = 1000
-start = 19000
-bins_num = 51
-bins_max = 25
+start = 20000
+end = 100001
+bins_num = 31
+bins_max = 10
 bins = np.linspace(0, bins_max, bins_num)
 bin_width = bins_max/(bins_num-1)
 bins_fine = np.linspace(0, bins_max, 501)
@@ -38,28 +39,41 @@ for ix,name in enumerate(caselist):
     print(ix)
     f[ix] = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
     time = np.array(f[ix].get('time'))[start:]
-    m_f[ix] = np.array(f[ix].get('moment_flap')[start:,0,0,0])/1e6
-    m_e[ix] = np.array(f[ix].get('moment_edge')[start:,0,0,0])/1e6
-    rev, rev_ix = fatpack.find_reversals_racetrack_filtered(m_f[ix], h=1, k=256)
+    m_f[ix] = np.array(f[ix].get('moment_flap')[start:end,0,0,2])/10**6
+    m_e[ix] = np.array(f[ix].get('moment_edge')[start:end,0,0,2])/10**6
+    rev, rev_ix = fatpack.find_reversals_racetrack_filtered(m_f[ix], h=0.1, k=256)
     ranges,means = fatpack.find_rainflow_ranges(rev, k=256, return_means=True)
     ranges_corrected[ix] = Goodman_method_correction(ranges,means,np.max(m_f[ix]))
     N[ix], S[ix] = fatpack.find_range_count(ranges_corrected[ix], bins)
     DEL[ix] = (np.sum(N[ix]*S[ix]**m)/Neq)**(1/m)
+    print(DEL[ix])
 
+fig, axs = plt.subplots(1, 3, figsize=(8, 5),dpi=200,sharex=True, sharey=True)
+for i in range(1):
+    for j in range(3):
+        case_ix = ix_0+(j-1)*(i+1)
+        print(case_ix)
+        axs[i].bar(S[case_ix], N[case_ix]/(np.sum(N[case_ix])*bin_width), width=bin_width,alpha=0.5,label="$\gamma=$"+str(yaw_angle[case_ix])+'$^\circ$')
+        # axs[i].set_ylim([0,0.4])
+        axs[i].legend()
+        axs[1].set_xlabel("Rainflow range ($mN \cdot m$)")
+        axs[0].set_ylabel("PDF")
+plt.savefig('range_histgram.png')
 
+# print(S)
 
 # fig, axs = plt.subplots(1, 3,figsize=(30, 10),dpi=100,sharex=True, sharey=True)
 # for i in range(3):
 #     for j in range(3):
-#         case_ix = ix_0+(j-1)*(i+1)
-#         axs[i].plot(time,m_f[case_ix],label="$\gamma=$"+str(yaw_angle[case_ix])+'$^\circ$',alpha=0.5) 
-#         axs[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+#         # case_ix = ix_0+(j-1)*(i+1)
+#         axs[i].plot(time,m_f[i],alpha=0.5) 
+#         # axs[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
 #         axs[i].set_ylim([1,14])
 #         axs[2].set_xlabel('time (s)')
 #         axs[1].set_ylabel('Flapwise bending moment ($mN \cdot m$)')
-#         axs[i].rcParams.update({'font.size': 32})
+#         # axs[i].rcParams.update({'font.size': 32})
 # # plt.rcParams.update({'font.size': 32})
-# plt.savefig('plot/timeseries_flap.png')
+# plt.savefig('timeseries_flap.png')
 
 
 # fig, axs = plt.subplots(3, 1,figsize=(30, 10),dpi=100,sharex=True, sharey=True)
@@ -180,62 +194,62 @@ for ix,name in enumerate(caselist):
 # pdf3 = stats.exponweib.pdf(bins_fine, fit_a3,fit_c3,fit_loc3,fit_scale3)
 
 
-fig, axs = plt.subplots(1, 3, figsize=(8, 5),dpi=200,sharex=True, sharey=True)
-for i in range(3):
-    for j in range(3):
-        case_ix = ix_0+(j-1)*(i+1)
-        axs[i].bar(S[case_ix], N[case_ix]/(np.sum(N[case_ix])*bin_width), width=bin_width,alpha=0.5,label="$\gamma=$"+str(yaw_angle[case_ix])+'$^\circ$')
-        axs[i].set_ylim([0,0.4])
-        axs[i].legend()
-        axs[1].set_xlabel("Rainflow range ($mN \cdot m$)")
-        axs[0].set_ylabel("PDF")
-plt.savefig('range_histgram.png')
+# fig, axs = plt.subplots(1, 3, figsize=(8, 5),dpi=200,sharex=True, sharey=True)
+# for i in range(3):
+#     for j in range(3):
+#         case_ix = ix_0+(j-1)*(i+1)
+#         axs[i].bar(S[case_ix], N[case_ix]/(np.sum(N[case_ix])*bin_width), width=bin_width,alpha=0.5,label="$\gamma=$"+str(yaw_angle[case_ix])+'$^\circ$')
+#         # axs[i].set_ylim([0,0.4])
+#         axs[i].legend()
+#         axs[1].set_xlabel("Rainflow range ($mN \cdot m$)")
+#         axs[0].set_ylabel("PDF")
+# plt.savefig('range_histgram.png')
 
 # DEL_test = DEL[ix_0]
 
-fig, axs = plt.subplots(1, 3, figsize=(8, 5),dpi=200,sharex=True, sharey=True)
-for i in range(3):
-    for j in range(3):
-        case_ix = ix_0+(j-1)*(i+1)
-        axs[i].bar(S[case_ix], np.cumsum(N[case_ix]*S[case_ix]**m)/np.sum(N[ix_0]*S[ix_0]**m), width=bin_width,alpha=0.5,label="$\gamma=$"+str(yaw_angle[case_ix])+'$^\circ$')
-        # axs[i].set_ylim([0,0.4])
-        axs[i].legend()
-        axs[1].set_xlabel("Rainflow range ($mN \cdot m$)")
-        axs[0].set_ylabel("Normalised cumulative damage")
-plt.savefig('range_histgram_mth.png')
+# fig, axs = plt.subplots(1, 3, figsize=(8, 5),dpi=200,sharex=True, sharey=True)
+# for i in range(3):
+#     for j in range(3):
+#         case_ix = ix_0+(j-1)*(i+1)
+#         axs[i].bar(S[case_ix], np.cumsum(N[case_ix]*S[case_ix]**m)/np.sum(N[ix_0]*S[ix_0]**m), width=bin_width,alpha=0.5,label="$\gamma=$"+str(yaw_angle[case_ix])+'$^\circ$')
+#         # axs[i].set_ylim([0,0.4])
+#         axs[i].legend()
+#         axs[1].set_xlabel("Rainflow range ($mN \cdot m$)")
+#         axs[0].set_ylabel("Normalised cumulative damage")
+# plt.savefig('range_histgram_mth.png')
 
 
 
-fig = plt.subplots(figsize=(6, 5),dpi=200,sharex=True, sharey=True)
-name = "ultralong-partial-0"
-f1 = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
-for i in range(3):
-    m_f1 = np.array(f1.get('moment_flap')[start:,0,0,i])/1e6
-    rev1, rev_ix1 = fatpack.find_reversals_racetrack_filtered(m_f1, h=1, k=256)
-    ranges1,means1 = fatpack.find_rainflow_ranges(rev1, k=256, return_means=True)
-    ranges_corrected1 = Goodman_method_correction(ranges1,means1,np.max(m_f1))
-    N1, S1 = fatpack.find_range_count(ranges_corrected1, bins)
-    plt.bar(S1, N1/(np.sum(N1)*bin_width), width=bin_width,alpha=0.5,label="WT"+str(i+1))
-plt.legend()
-plt.xlabel('Rainflow cycle range ($mN \cdot m$)')
-plt.ylabel('PDF')
-plt.savefig('plot/range_histgram_partial.png')
+# fig = plt.subplots(figsize=(6, 5),dpi=200,sharex=True, sharey=True)
+# name = "ultralong-partial-0"
+# f1 = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
+# for i in range(3):
+#     m_f1 = np.array(f1.get('moment_flap')[start:,0,0,i])/1e6
+#     rev1, rev_ix1 = fatpack.find_reversals_racetrack_filtered(m_f1, h=1, k=256)
+#     ranges1,means1 = fatpack.find_rainflow_ranges(rev1, k=256, return_means=True)
+#     ranges_corrected1 = Goodman_method_correction(ranges1,means1,np.max(m_f1))
+#     N1, S1 = fatpack.find_range_count(ranges_corrected1, bins)
+#     plt.bar(S1, N1/(np.sum(N1)*bin_width), width=bin_width,alpha=0.5,label="WT"+str(i+1))
+# plt.legend()
+# plt.xlabel('Rainflow cycle range ($mN \cdot m$)')
+# plt.ylabel('PDF')
+# plt.savefig('plot/range_histgram_partial.png')
 
-fig = plt.subplots(figsize=(6, 5),dpi=200,sharex=True, sharey=True)
-name = "ultralong-partial-0"
-f1 = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
-for i in range(3):
-    m_f1 = np.array(f1.get('moment_flap')[start:,0,0,i])/1e6
-    rev1, rev_ix1 = fatpack.find_reversals_racetrack_filtered(m_f1, h=1, k=256)
-    ranges1,means1 = fatpack.find_rainflow_ranges(rev1, k=256, return_means=True)
-    ranges_corrected1 = Goodman_method_correction(ranges1,means1,np.max(m_f1))
-    N1, S1 = fatpack.find_range_count(ranges_corrected1, bins)
-    plt.bar(S1, np.cumsum(N1*S1**m)/np.sum(N[ix_0]*S[ix_0]**m), width=bin_width,alpha=0.5,label="WT"+str(i+1))
-    print()
-plt.legend()
-plt.xlabel('Rainflow cycle range ($mN \cdot m$)')
-plt.ylabel('Normalised cumulative damage$)')
-plt.savefig('range_histgram_mth_partial.png')
+# fig = plt.subplots(figsize=(6, 5),dpi=200,sharex=True, sharey=True)
+# name = "ultralong-partial-0"
+# f1 = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
+# for i in range(3):
+#     m_f1 = np.array(f1.get('moment_flap')[start:,0,0,i])/1e6
+#     rev1, rev_ix1 = fatpack.find_reversals_racetrack_filtered(m_f1, h=1, k=256)
+#     ranges1,means1 = fatpack.find_rainflow_ranges(rev1, k=256, return_means=True)
+#     ranges_corrected1 = Goodman_method_correction(ranges1,means1,np.max(m_f1))
+#     N1, S1 = fatpack.find_range_count(ranges_corrected1, bins)
+#     plt.bar(S1, np.cumsum(N1*S1**m)/np.sum(N[ix_0]*S[ix_0]**m), width=bin_width,alpha=0.5,label="WT"+str(i+1))
+#     print()
+# plt.legend()
+# plt.xlabel('Rainflow cycle range ($mN \cdot m$)')
+# plt.ylabel('Normalised cumulative damage$)')
+# plt.savefig('range_histgram_mth_partial.png')
 
 
 # fig = plt.subplots(figsize=(6, 5),dpi=200,sharex=True, sharey=True)

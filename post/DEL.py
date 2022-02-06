@@ -27,10 +27,10 @@ ix_0 = len(yaw_angle)//2
 
 m = 10
 Neq = 1000
-start = 39000
-end = 399000
-bins_num = 51
-bins_max = 25
+start = 0
+end = 30000
+bins_num = 101
+bins_max = 10
 bins = np.linspace(0, bins_max, bins_num)
 bin_width = bins_max/(bins_num-1)
 bins_fine = np.linspace(0, bins_max, 501)
@@ -43,14 +43,16 @@ for ix,name in enumerate(caselist):
     print(ix)
     f[ix] = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
     time = np.array(f[ix].get('time'))[start:end]
-    m_f[ix] = np.array(f[ix].get('moment_flap')[start:end,0,0,0])/1e6
-    m_e[ix] = np.array(f[ix].get('moment_edge')[start:end,0,0,0])/1e6
-    rev, rev_ix = fatpack.find_reversals_racetrack_filtered(m_f[ix], h=1, k=256)
+    m_f[ix] = np.array(f[ix].get('moment_flap')[:,0,0,0])/1e6
+    m_e[ix] = np.array(f[ix].get('moment_edge')[:,0,0,0])/1e6
+    rev, rev_ix = fatpack.find_reversals_racetrack_filtered(m_f[ix], h=0.1, k=256)
     ranges,means = fatpack.find_rainflow_ranges(rev, k=256, return_means=True)
     ranges_corrected[ix] = Goodman_method_correction(ranges,means,np.max(m_f[ix]))
-    N[ix], S[ix] = fatpack.find_range_count(ranges_corrected[ix], bins)
+    N[ix], S[ix] = fatpack.find_range_count(ranges_corrected[ix],bins)
     DEL[ix] = (np.sum(N[ix]*S[ix]**m)/Neq)**(1/m)
+    print(DEL[ix])
 
+# print(ranges_corrected[0])
 DEL_test = DEL[ix_0]
 
 for ii in range(3):
@@ -58,8 +60,8 @@ for ii in range(3):
         print(ix)
         f[ix] = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
         time = np.array(f[ix].get('time'))[start:end]
-        m_f[ix] = np.array(f[ix].get('moment_flap')[start:end,0,0,ii])/1e6
-        m_e[ix] = np.array(f[ix].get('moment_edge')[start:end,0,0,ii])/1e6
+        m_f[ix] = np.array(f[ix].get('moment_flap')[:,0,0,ii])/1e6
+        m_e[ix] = np.array(f[ix].get('moment_edge')[:,0,0,ii])/1e6
         rev, rev_ix = fatpack.find_reversals_racetrack_filtered(m_f[ix], h=1, k=256)
         ranges,means = fatpack.find_rainflow_ranges(rev, k=256, return_means=True)
         ranges_corrected[ix] = Goodman_method_correction(ranges,means,np.max(m_f[ix]))

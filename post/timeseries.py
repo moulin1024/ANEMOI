@@ -14,8 +14,8 @@ def Goodman_method_correction(M_a,M_m,M_max):
     M_ar = M_a/(1-M_m/M_u)
     return M_ar
 
-caselist = ["ultralong-30","ultralong-20","ultralong-10","ultralong-0","ultralong+10","ultralong+20","ultralong+30"]
-yaw_angle = [-30,-20,-10,0,10,20,30]
+caselist = ["superlong-10","superlong-NREL-m","superlong+10"]
+yaw_angle = [-10,0,10]
 f = [None] * len(yaw_angle)
 m_f = [None] * len(yaw_angle)
 m_e = [None] * len(yaw_angle)
@@ -27,8 +27,8 @@ ix_0 = len(yaw_angle)//2
 
 m = 10
 Neq = 1000
-start = 39000
-end = 399000
+start = 0
+end = 80000
 bins_num = 51
 bins_max = 20
 bins = np.linspace(0, bins_max, bins_num)
@@ -43,23 +43,38 @@ for ix,name in enumerate(caselist):
     m_e[ix] = np.array(f[ix].get('moment_edge')[start:end,0,0,0])/1e3
 
 
-fig, axs = plt.subplots(3, 1,figsize=(12, 4),dpi=200,sharex=True, sharey=True)
+fig, axs = plt.subplots(1, 1,figsize=(12, 4),dpi=200,sharex=True, sharey=True)
 for i in range(3):
-    for j in range(3):
-        case_ix = ix_0+(j-1)*(i+1)
-        axs[i].plot(time,m_f[case_ix],label="$\gamma=$"+str(yaw_angle[case_ix])+'$^\circ$',alpha=0.5) 
-        axs[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        # axs[i].set_ylim([1,14])
-        axs[2].set_xlabel('time (s)')
-        axs[1].set_ylabel('Flapwise bending moment ($mN \cdot m$)')
-        # axs[i].rcParams.update({'font.size': 32})
-# plt.rcParams.update({'font.size': 32})
-plt.savefig('plot/timeseries_flap.png')
+    # for j in range(3):
+    # case_ix = ix_0
+    # print(case_ix)
+    plt.plot(time,m_f[i],label="$\gamma=$"+str(yaw_angle[i])+'$^\circ$',alpha=1,lw=1) 
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    # axs[0].set_ylim([4000,9000])
+    # axs[0].set_xlabel('time (s)')
+    # axs[0].set_ylabel('Flapwise bending moment ($mN \cdot m$)')
+    # axs[i].rcParams.update({'font.size': 32})
+plt.rcParams.update({'font.size': 32})
+
+# for i in range(3):
+#     for j in range(3):
+#         case_ix = ix_0+(j-1)*(i+1)
+#         axs[i].plot(time,m_f[case_ix],label="$\gamma=$"+str(yaw_angle[case_ix])+'$^\circ$',alpha=0.5) 
+#         axs[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+#         # axs[i].set_ylim([1,14])
+#         axs[2].set_xlabel('time (s)')
+#         axs[1].set_ylabel('Flapwise bending moment ($mN \cdot m$)')
+#         # axs[i].rcParams.update({'font.size': 32})
+# # plt.rcParams.update({'font.size': 32})
+
+
+plt.savefig('timeseries_flap.png')
 
 
 # name = "ultralong-0"
 # f1 = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
-# m_f1 = np.array(f1.get('moment_flap')[start:end,0,0,0])/1e6
+# time = np.array(f1.get('time'))[start:end]
+# m_f1 = np.array(f1.get('moment_flap')[start:end,0,0,0])/1e6                                    
 # m_f2 = np.array(f1.get('moment_flap')[start:end,0,0,1])/1e6
 # m_f3 = np.array(f1.get('moment_flap')[start:end,0,0,2])/1e6
 

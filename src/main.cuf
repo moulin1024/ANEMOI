@@ -58,7 +58,7 @@ program main
     real(fp),dimension(:,:,:,:),allocatable,device :: CTF,CTF_alm  !< Force on the blade element (CTFx,CTFt)    
     real(fp),dimension(n_phi,n_r,n_turb,2)         :: CTF_host !< Force on the blade element (CTFx,CTFt)
     real(fp),dimension(3,n_r,n_turb,2)             :: CTF_alm_host     !< Force on the blade element (CTFx,CTFt)
-    real(fp),dimension(blade_num,n_r,n_turb,2) :: displacement_host,moment_host
+    real(fp),dimension(blade_num,n_r,n_turb,2) :: displacement_host,moment_host,velocity_host   
     ! real(fp), dimension(3,181) :: alpha_cl_cd_host
     ! real(fp), dimension(3,181),device :: alpha_cl_cd
 
@@ -524,9 +524,9 @@ program main
             if (device_id == 0 ) then
                 ! if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
                 if (mod(t-1,turb_count)==0) then
-                    call turbine_force(Fx,Fy,Fz,CTF_alm,power,displacement_host,moment_host,u,v,w,turb_loc,t)
+                    call turbine_force(Fx,Fy,Fz,CTF_alm,power,displacement_host,moment_host,velocity_host,u,v,w,turb_loc,t)
                     CTF_alm_host = CTF_alm
-                    call write_turb(CTF_alm_host,displacement_host,moment_host,me)
+                    call write_turb(CTF_alm_host,displacement_host,moment_host,velocity_host,me)
                 end if
 
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
@@ -684,6 +684,9 @@ program main
                 ta_power(i_turb) = ta_power(i_turb) + power(i_turb)/p_count
             end do
             
+
+            power_host = power
+            print *,power_host
             if (mod(t-ta_tstart+1,p_count) == 0) then
                 ta_power_host = ta_power
                 print *, 'ta_power: ', ta_power_host

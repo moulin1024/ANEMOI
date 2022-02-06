@@ -77,23 +77,34 @@ def anime(PATH, case_name):
         v_std = result_3d['v_std_c']
         w_std = result_3d['w_std_c']
 
-        # f = h5py.File(out_path+'/'+case_name+'_stat.h5','w')
-        # for key, value in config.items():
-        #     f.attrs[key] = value
+        f = h5py.File(out_path+'/'+case_name+'_stat.h5','w')
+        for key, value in config.items():
+            f.attrs[key] = value
 
-        # f.create_dataset('x',data=space['x'])
-        # f.create_dataset('y',data=space['y'])
-        # f.create_dataset('z',data=space['z_c'])
+        f.create_dataset('x',data=space['x'])
+        f.create_dataset('y',data=space['y'])
+        f.create_dataset('z',data=space['z_c'])
 
-        # f.create_dataset('u_avg',data=u_avg )
-        # f.create_dataset('v_avg',data=v_avg)
-        # f.create_dataset('w_avg',data=w_avg)
+        f.create_dataset('u_avg',data=u_avg )
+        f.create_dataset('v_avg',data=v_avg)
+        f.create_dataset('w_avg',data=w_avg)
 
-        # f.create_dataset('u_std',data=u_avg )
-        # f.create_dataset('v_std',data=v_avg)
-        # f.create_dataset('w_std',data=w_avg)
+        f.create_dataset('u_std',data=u_std)
+        f.create_dataset('v_std',data=v_std)
+        f.create_dataset('w_std',data=w_std)
 
-        # f.close
+        f.close
+
+        fig = figure(figsize=(8,8))
+        ax = fig.add_subplot(111)
+        im = ax.imshow(u_avg[176,63-8:63+8,45-32:45+32].T,origin='lower',aspect=0.25)
+        print(np.mean(u_avg[176,63-8:63+8,45-32:45+32]))
+        # im = ax.imshow()
+        # im = ax.quiver(v_avg[176,::4,::4].T,w_avg[176,::4,::4].T,scale=50)
+        plt.savefig(out_path+'/test.png')
+        print('check')
+
+
 
     if config['ts_flag'] > 0:
 
@@ -119,6 +130,10 @@ def anime(PATH, case_name):
         # fig,ax = plt.subplots(1,1)
         fig = figure(figsize=(8,8))
         ax1 = fig.add_subplot(111)
+        hub = [256/8,896/8]
+
+        dx = 8
+        dy = 8
         # # ax2 = fig.add_subplot(212)
         def animate(i):  
               
@@ -136,16 +151,18 @@ def anime(PATH, case_name):
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
 
-            ax1.imshow(u[i,:,:,45].T,origin='lower',aspect=config['dz']/config['dy'])
+            im = ax1.imshow(u[i,180,:,:].T,origin='lower',aspect=1/4)
+            # if (i==9):
+                # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
             # ax1.quiver(space['x'],space['y'],u[i,:,:,90].T,v[i,:,:,90].T,scale=10000)
             ax1.set_xlabel('x')
             ax1.set_ylabel('y')
-            ax1.axis('scaled')
+            # ax1.axis('scaled') 
             # ax1.set_ylim([0,128])
 
             # ax2.plot(m_flap[:i*100,0,0,0])
-            print(i)
+            print(i,np.mean(u[i,(224-32):(224-16),(128-16):(128+16),89].flatten()))
             return
         anim = animation.FuncAnimation(fig, animate, frames=10)
         anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=5)
@@ -168,6 +185,8 @@ def anime(PATH, case_name):
         f.create_dataset('displacement_edge',data=turb_force['displacement_edge'])
         f.create_dataset('moment_flap',data=turb_force['moment_flap'])
         f.create_dataset('moment_edge',data=turb_force['moment_edge'])
+        f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
+        f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
 
         f.close
 
@@ -175,7 +194,7 @@ def anime(PATH, case_name):
         plt.figure()
         print(m_flap[:,0,0,0])
         plt.plot(m_flap[:,0,0,0],lw=1)
-        plt.xlim([10000,190000])
+        # plt.xlim([10000,190000])
         # plt.plot(m_flap[:,0,0,1],lw=0.1,alpha=0.5)
         # plt.plot(m_flap[:,0,0,2],lw=0.1,alpha=0.5)
         print(out_path)

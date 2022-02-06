@@ -185,7 +185,7 @@ def compute_vel(config):
         u = np.ravel(np.float64(u), order='F')
         v = np.ravel(np.float64(v), order='F')
         w = np.ravel(np.float64(w), order='F')
-    
+
     return u, v, w
 
 def compute_zo(config):
