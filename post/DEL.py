@@ -5,7 +5,7 @@ import fatpack
 import matplotlib.pyplot as plt
 import pandas as pd
 import h5py
-import seaborn as sns
+# import seaborn as sns
 from scipy.signal import savgol_filter
 import scipy.stats as stats   
 
@@ -14,8 +14,8 @@ def Goodman_method_correction(M_a,M_m,M_max):
     M_ar = M_a/(1-M_m/M_u)
     return M_ar
 
-caselist = ["ultralong-30","ultralong-20","ultralong-10","ultralong-0","ultralong+10","ultralong+20","ultralong+30"]
-yaw_angle = [-30,-20,-10,0,10,20,30]
+caselist = ["NREL-m-2","NREL-m","NREL-m-1"]
+yaw_angle = [-20,0,20]
 f = [None] * len(yaw_angle)
 m_f = [None] * len(yaw_angle)
 m_e = [None] * len(yaw_angle)

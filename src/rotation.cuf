@@ -8,13 +8,12 @@ module rotation
         implicit none
         real(fp),intent(out) :: mu(3)
         real(fp),intent(in) :: alpha,beta,gamma,tau,phi,deltaR,radius
-
         ! Rigid transformation
         mu(1) = - radius*Cos(phi)*Sin(gamma) + radius*Cos(gamma)*Sin(phi)*Sin(tau)
         mu(2) =   radius*Cos(phi)*Cos(gamma) + radius*Sin(gamma)*Sin(phi)*Sin(tau)
         mu(3) =   radius*Sin(phi)*Cos(tau)
         
-        ! Flexible defmormationCTU_relative_flex
+        ! ! Flexible defmormation
         ! mu(1) = mu(1) + deltaR*Tan(alpha)*Cos(gamma)*Cos(tau)
         ! mu(2) = mu(2) + deltaR*Tan(alpha)*Cos(tau)*Sin(gamma)
         ! mu(3) = mu(3) - deltaR*Tan(alpha)*Sin(tau)
@@ -28,6 +27,12 @@ module rotation
         real(fp),dimension(3,3) :: deformMatInv
 
         ! Relative velocity on the rigid blade
+        ! CTU_relative_rigid(1) = Cos(tau)*(ctu*Cos(gamma) + ctv*Sin(gamma)) - ctw*Sin(tau)
+        ! CTU_relative_rigid(2) = Cos(phi)*(ctv*Cos(gamma) - ctu*Sin(gamma)) + Sin(phi)*(ctw*Cos(tau) + &
+        !                         (ctu*Cos(gamma) + ctv*Sin(gamma))*Sin(tau))  
+        ! CTU_relative_rigid(3) = -((ctv*Cos(gamma) - ctu*Sin(gamma))*Sin(phi)) + Cos(phi)*(ctw*Cos(tau) + &
+        !                         (ctu*Cos(gamma) + ctv*Sin(gamma))*Sin(tau))
+
         CTU_relative_rigid(1) = ctu*Cos(gamma) + ctv*Sin(gamma)!Cos(tau)*(ctu*Cos(gamma) + ctv*Sin(gamma)) - ctw*Sin(tau)
         CTU_relative_rigid(2) = Cos(phi)*(ctv*Cos(gamma) - ctu*Sin(gamma)) + ctw*Sin(phi)!Cos(phi)*(ctv*Cos(gamma) - ctu*Sin(gamma)) + Sin(phi)*(ctw*Cos(tau) + &
                                 !(ctu*Cos(gamma) + ctv*Sin(gamma))*Sin(tau))  
@@ -71,16 +76,10 @@ module rotation
         CTF_origin(1) = CTFin_flap*Cos(gamma) + CTFin_edge*Sin(gamma)*Sin(phi)
         CTF_origin(2) = CTFin_flap*Sin(gamma) - CTFin_edge*Cos(gamma)*Sin(phi)
         CTF_origin(3) = CTFin_edge*Cos(phi)
-        
-        ! CTF_origin(1) = -(Sin(gamma)*(CTFs*Cos(phi) - CTFt*Sin(phi))) + &
-        !                 Cos(gamma)*(CTFn*Cos(tau) + (CTFt*Cos(phi) + &
-        !                 CTFs*Sin(phi))*Sin(tau))
-        ! CTF_origin(2) = Cos(gamma)*(CTFs*Cos(phi) - CTFt*Sin(phi)) + &
-        !                 Sin(gamma)*(CTFn*Cos(tau) + (CTFt*Cos(phi) + &
-        !                 CTFs*Sin(phi))*Sin(tau))
 
-        ! CTF_origin(3) = Cos(tau)*(CTFt*Cos(phi) + CTFs*Sin(phi)) - &
-        !                 CTFn*Sin(tau)
+        ! CTF_origin(1) = -(Sin(gamma)*(CTFs*Cos(phi) + CTFt*Sin(phi))) + Cos(gamma)*(CTFn*Cos(tau) + (-(CTFt*Cos(phi)) + CTFs*Sin(phi))*Sin(tau))
+        ! CTF_origin(2) =  (Cos(gamma)*(CTFs*Cos(phi) + CTFt*Sin(phi))) + Sin(gamma)*(CTFn*Cos(tau) + (-(CTFt*Cos(phi)) + CTFs*Sin(phi))*Sin(tau))
+        ! CTF_origin(3) = Cos(tau)*(-(CTFt*Cos(phi)) + CTFs*Sin(phi)) - CTFn*Sin(tau)
 
     end subroutine
 

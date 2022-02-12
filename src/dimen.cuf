@@ -60,6 +60,7 @@ module dimen
     integer, parameter :: n_phi = 64    ! Don't change it! (because of cuda kernel)
     integer, parameter :: n_r = 32      ! Don't change it! (because of cuda kernel)
     integer, parameter :: n_r_s = 1
+    integer, parameter :: clockwise = -1
     
     !-------------------------------------------------------------------------------
     ! spec

@@ -104,9 +104,9 @@ module turbine
             CTF_host = CTF
             turb_rpm_host = turb_rpm
             
-            ! call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
+            call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
             ! deformation = deformation_host
-            ! velocity = velocity_host
+            velocity = velocity_host
         end if
         
     end Subroutine turbine_force
@@ -657,8 +657,7 @@ module turbine
                 CTF(blade,i_r,i_turb,2) = 0.5_fp*(CTUrel**2)*chord_length(i_r,i_turb)*dr(i_turb)/(dx*dy*dz)*(CTCL*sin_CTphi-CTCD*cos_CTphi)*f2_tip!*f2_hub
             end if
             istat = atomicadd(power(i_turb),CTF(blade,i_r,i_turb,2)*r(i_r,i_turb)*turb_rpm(i_turb)/60*2*pi*(dx*dy*dz)*z_i**3)
-            ! if (blade == 1) istat = atomicadd(power(i_turb),CTF(blade,i_r,i_turb,2)*r(i_r,i_turb)*(dx*dy*dz)*z_i**3)
-
+            
             call syncthreads()  
         end if
     end subroutine force_compute_alm
@@ -782,16 +781,9 @@ module turbine
                 coord_z_u = (k_global-1.5)*dz-turb_loc(i_turb,3)
                 coord_z_w = coord_z_u - 0.5*dz
 
-                ! Distance to the hub
-                ! r_u  = sqrt(((coord_y+coord_x*tan(turb_loc(i_turb,4)))*cos(turb_loc(i_turb,4)))**2 + coord_z_u**2)
-                ! r_w  = sqrt(((coord_y+coord_x*tan(turb_loc(i_turb,4)))*cos(turb_loc(i_turb,4)))**2 + coord_z_w**2)
-
-                ! r_u  = sqrt((coord_y/cos(turb_loc(i_turb,4)))**2 + coord_z_u**2)
-                ! r_w  = sqrt((coord_y/cos(turb_loc(i_turb,4)))**2 + coord_z_w**2)
-                ! Phase angle of the grid point
                 ! Apply gaussian smoothing kernel
-                sigma_x  = chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
-                sigma_yz = chord_length(i_r,i_turb)!sqrt((chord_length(i_r,i_turb))**2+dr(i_turb)**2)
+                sigma_x  = chord_length(i_r,i_turb)
+                sigma_yz = chord_length(i_r,i_turb)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
@@ -802,17 +794,10 @@ module turbine
                 ker_w  = tmp1*exp(tmp2*tmp3)/sum_ker(blade,i_r,i_turb,2)
 
                 ! Rotate the force from the disk-normal reference to the original reference
-                
-                ! CTFx_origin = CTF(blade,i_r,i_turb,1)
-                ! CTFy_origin = - CTF(blade,i_r,i_turb,2)*sin(phase_angle(blade,i_turb))
-                ! CTFz_origin = CTF(blade,i_r,i_turb,2)*cos(phase_angle(blade,i_turb))
-                
                 call forceRotation(CTF_origin,CTF(blade,i_r,i_turb,1),CTF(blade,i_r,i_turb,2),&
                                     deformation(blade,i_r,i_turb,1),deformation(blade,i_r,i_turb,2),&
                                     turb_loc(i_turb,4),phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))
                 
-                ! print *, CTFx_origin-CTF_origin(1)
-                ! print *, CTFz_origin,CTF_origin(3)
                 CTFx_origin = CTF_origin(1)
                 CTFy_origin = CTF_origin(2)
                 CTFz_origin = CTF_origin(3)

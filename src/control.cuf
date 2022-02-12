@@ -99,7 +99,7 @@ module control
 
         turb_rpm_host = turb_rpm
         CTUin_host = CTUin
-        print *, CTUin_host
+        ! print *, CTUin_host
     end subroutine controller_lambda
 
     subroutine controller_fix(turb_rpm,CTUin,u,turb_loc,t)
@@ -178,11 +178,11 @@ module control
         
 
         j = threadidx%x - int(i1/2)
-        k = threadidx%y - int(i1/2)
+        k = threadidx%y - int(i1/2) 
         i_turb = blockidx%x
         
-        hub_x = nint(turb_loc(i_turb,1)/dx) - 1
-        hub_y = nint(turb_loc(i_turb,2)/dy) - 1
+        hub_x = nint(turb_loc(i_turb,1)/dx)
+        hub_y = nint(turb_loc(i_turb,2)/dy) 
         hub_z = nint(turb_loc(i_turb,3)/dz) + 1
 
         istat = atomicadd(CTUin(i_turb),u(hub_x-i0,hub_y+j,hub_z+k)/(i1**2))

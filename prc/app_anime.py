@@ -97,10 +97,10 @@ def anime(PATH, case_name):
 
         fig = figure(figsize=(8,8))
         ax = fig.add_subplot(111)
-        im = ax.imshow(u_avg[176,63-8:63+8,45-32:45+32].T,origin='lower',aspect=0.25)
-        print(np.mean(u_avg[176,63-8:63+8,45-32:45+32]))
+        # im = ax.imshow(u_avg[176,63-8:63+8,45-32:45+32].T,origin='lower',aspect=0.25)
+        # print(np.mean(u_avg[176,63-8:63+8,45-32:45+32]))
         # im = ax.imshow()
-        # im = ax.quiver(v_avg[176,::4,::4].T,w_avg[176,::4,::4].T,scale=50)
+        im = ax.quiver(v_avg[176,::4,::4].T,w_avg[176,::4,::4].T,scale=50)
         plt.savefig(out_path+'/test.png')
         print('check')
 
@@ -151,7 +151,7 @@ def anime(PATH, case_name):
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
 
-            im = ax1.imshow(u[i,180,:,:].T,origin='lower',aspect=1/4)
+            im = ax1.imshow(u[i,:,:,44].T,origin='lower',aspect=1)
             # if (i==9):
                 # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
@@ -165,7 +165,7 @@ def anime(PATH, case_name):
             print(i,np.mean(u[i,(224-32):(224-16),(128-16):(128+16),89].flatten()))
             return
         anim = animation.FuncAnimation(fig, animate, frames=10)
-        anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=5)
+        anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=10)
 
     if config['turb_flag'] > 0:
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
