@@ -1,4 +1,5 @@
 module rotation
+    use dimen
     use precision
     use cudafor
 
@@ -73,9 +74,13 @@ module rotation
         ! CTFs = dot_product(deformMatInv(2,:),CTF_onBlade)
         ! CTFt = dot_product(deformMatInv(3,:),CTF_onBlade)
 
-        CTF_origin(1) = CTFin_flap*Cos(gamma) + CTFin_edge*Sin(gamma)*Sin(phi)
-        CTF_origin(2) = CTFin_flap*Sin(gamma) - CTFin_edge*Cos(gamma)*Sin(phi)
-        CTF_origin(3) = CTFin_edge*Cos(phi)
+        CTFn = CTFin_flap
+        CTFs = 0
+        CTFt = clockwise*CTFin_edge
+
+        CTF_origin(1) = CTFn*Cos(gamma) + CTFt*Sin(gamma)*Sin(phi)
+        CTF_origin(2) = CTFn*Sin(gamma) - CTFt*Cos(gamma)*Sin(phi)
+        CTF_origin(3) = CTFt*Cos(phi)
 
         ! CTF_origin(1) = -(Sin(gamma)*(CTFs*Cos(phi) + CTFt*Sin(phi))) + Cos(gamma)*(CTFn*Cos(tau) + (-(CTFt*Cos(phi)) + CTFs*Sin(phi))*Sin(tau))
         ! CTF_origin(2) =  (Cos(gamma)*(CTFs*Cos(phi) + CTFt*Sin(phi))) + Sin(gamma)*(CTFn*Cos(tau) + (-(CTFt*Cos(phi)) + CTFs*Sin(phi))*Sin(tau))

@@ -101,12 +101,12 @@ module turbine
             ! call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
             call controller_lambda(turb_rpm,CTUin,u,turb_loc,t)
             call almyaw(fx,fy,fz,CTF,power,u,v,w,turb_loc,turb_rpm,deformation,velocity,t,me,nall)
-            CTF_host = CTF
-            turb_rpm_host = turb_rpm
+            ! CTF_host = CTF
+            ! turb_rpm_host = turb_rpm
             
-            call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
+            ! call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
             ! deformation = deformation_host
-            velocity = velocity_host
+            ! velocity = velocity_host
         end if
         
     end Subroutine turbine_force
@@ -623,7 +623,7 @@ module turbine
             
             ! Compute the tangential velocity relative to the rotating blade   
 
-            U_edgewise = turb_rpm(i_turb)/60*2*pi*(r(i_r,i_turb)*z_i) - CTU_relative_flex(3) + velocity(blade,i_r,i_turb,2)          
+            U_edgewise = turb_rpm(i_turb)/60*2*pi*(r(i_r,i_turb)*z_i) - clockwise*CTU_relative_flex(3) !+ velocity(blade,i_r,i_turb,2)          
             ! Find the attack angle and relative inflow velocity for the blade element
             CTphi     = atan((CTU_relative_flex(1) - velocity(blade,i_r,i_turb,1))/U_edgewise)
             sin_CTphi = sin(CTphi)
