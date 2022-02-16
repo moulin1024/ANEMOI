@@ -151,7 +151,7 @@ def anime(PATH, case_name):
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
 
-            im = ax1.imshow(u[i,:,:,44].T,origin='lower',aspect=1)
+            im = ax1.imshow(u[i,:,:,44].T,origin='lower',aspect=1/1)
             # if (i==9):
                 # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)

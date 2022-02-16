@@ -177,8 +177,8 @@ module control
         integer :: i,j,k,hub_x,hub_y,hub_z,i_turb,istat
         
 
-        j = threadidx%x - int(i1/2)
-        k = threadidx%y - int(i1/2) 
+        j = threadidx%x - int(i1/2) + 1
+        k = threadidx%y - int(i1/2) + 1 
         i_turb = blockidx%x
         
         hub_x = nint(turb_loc(i_turb,1)/dx)
