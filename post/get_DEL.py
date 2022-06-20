@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import h5py
 from matplotlib.pyplot import figure
 from matplotlib import animation, rc
 import fatpack
@@ -24,74 +25,59 @@ def get_DEL(m_f):
     DEL = (np.sum(N*S**m)/Neq)**(1/m)
     return DEL
 
-# flowfield   = np.load('flowfield.npy')
-root_moment_rotate_m5 = np.load('root_moment_rotate_m5.npy')
-root_moment_rotate_m4 = np.load('root_moment_rotate_m4.npy')
-root_moment_rotate_m3 = np.load('root_moment_rotate_m3.npy')
-root_moment_rotate_m2 = np.load('root_moment_rotate_m2.npy')
-root_moment_rotate_m1 = np.load('root_moment_rotate_m1.npy')
-root_moment_rotate_0 = np.load('root_moment_rotate_0.npy')
-root_moment_rotate_1 = np.load('root_moment_rotate_1.npy')
-root_moment_rotate_2 = np.load('root_moment_rotate_2.npy')
-root_moment_rotate_3 = np.load('root_moment_rotate_3.npy')
-root_moment_rotate_4 = np.load('root_moment_rotate_4.npy')
-root_moment_rotate_5 = np.load('root_moment_rotate_5.npy')
+# # flowfield   = np.load('flowfield.npy')
+# root_moment_rotate_m5 = np.load('root_moment_rotate_m5.npy')
+# root_moment_rotate_m4 = np.load('root_moment_rotate_m4.npy')
+# root_moment_rotate_m3 = np.load('root_moment_rotate_m3.npy')
+# root_moment_rotate_m2 = np.load('root_moment_rotate_m2.npy')
+# root_moment_rotate_m1 = np.load('root_moment_rotate_m1.npy')
+# root_moment_rotate_0 = np.load('root_moment_rotate_0.npy')
+# root_moment_rotate_1 = np.load('root_moment_rotate_1.npy')
+# root_moment_rotate_2 = np.load('root_moment_rotate_2.npy')
+# root_moment_rotate_3 = np.load('root_moment_rotate_3.npy')
+# root_moment_rotate_4 = np.load('root_moment_rotate_4.npy')
+# root_moment_rotate_5 = np.load('root_moment_rotate_5.npy')
 
-power_0       = np.load('power_rotate_0.npy')
-power_1       = np.load('power_rotate_1.npy')
-power_2       = np.load('power_rotate_2.npy')
-power_3       = np.load('power_rotate_3.npy')
-power_4       = np.load('power_rotate_4.npy')
-power_5       = np.load('power_rotate_5.npy')
-power_m1      = np.load('power_rotate_-1.npy')
-power_m2      = np.load('power_rotate_-2.npy')
-power_m3      = np.load('power_rotate_-3.npy')
-power_m5      = np.load('power_rotate_-5.npy')
-time          = np.load('time.npy')
+time        = np.load('time.npy')
 
 # print(root_moment.shape)
-
-DEL_m5 = np.zeros((13,13,1,3))
-DEL_m4 = np.zeros((13,13,1,3))
-DEL_m3 = np.zeros((13,13,1,3))
-DEL_m2 = np.zeros((13,13,1,3))
-DEL_m1 = np.zeros((13,13,1,3))
-DEL_0  = np.zeros((13,13,1,3))
-DEL_1  = np.zeros((13,13,1,3))
-DEL_2  = np.zeros((13,13,1,3))
-DEL_3  = np.zeros((13,13,1,3))
-DEL_4  = np.zeros((13,13,1,3))
-DEL_5  = np.zeros((13,13,1,3))
-
+# root_moment = np.zeros((13,13,11,3,2,49001))
+DEL = np.zeros((13,13,11,3,3))
+# DEL_m4 = np.zeros((13,13,1,3))
+# DEL_m3 = np.zeros((13,13,1,3))
+# DEL_m2 = np.zeros((13,13,1,3))
+# DEL_m1 = np.zeros((13,13,1,3))
+# DEL_0 = np.zeros((13,13,1,3))
+# DEL_1 = np.zeros((13,13,1,3))
+# DEL_2 = np.zeros((13,13,1,3))
+# DEL_3 = np.zeros((13,13,1,3))
+# DEL_4 = np.zeros((13,13,1,3))
+# DEL_5 = np.zeros((13,13,1,3))
 for i in range(13):
     print(i)
     for j in range(13):
-        for k in range(1):
-            for l in range(3):
-                DEL_m3[i,j,k,l] = get_DEL(root_moment_rotate_m3[i,j,k,l,0,10000:])
-                DEL_m2[i,j,k,l] = get_DEL(root_moment_rotate_m2[i,j,k,l,0,10000:])
-                DEL_m1[i,j,k,l] = get_DEL(root_moment_rotate_m1[i,j,k,l,0,10000:])
-                DEL_m4[i,j,k,l] = get_DEL(root_moment_rotate_m4[i,j,k,l,0,10000:])
-                DEL_m5[i,j,k,l] = get_DEL(root_moment_rotate_m5[i,j,k,l,0,10000:])
-                DEL_0[i,j,k,l]  = get_DEL(root_moment_rotate_0[i,j,k,l,0,10000:])
-                DEL_1[i,j,k,l]  = get_DEL(root_moment_rotate_1[i,j,k,l,0,10000:])
-                DEL_2[i,j,k,l]  = get_DEL(root_moment_rotate_2[i,j,k,l,0,10000:])
-                DEL_3[i,j,k,l]  = get_DEL(root_moment_rotate_3[i,j,k,l,0,10000:])
-                DEL_4[i,j,k,l]  = get_DEL(root_moment_rotate_4[i,j,k,l,0,10000:])
-                DEL_5[i,j,k,l]  = get_DEL(root_moment_rotate_5[i,j,k,l,0,10000:])
+        for k in range(11):
+            name = "rotate-"+str(k-5)+"-"+str((i-6)*5)+"-"+str((j-6)*5)
+            print(name)
+            f = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
+            for wt in range(3):
+                for blade in range(3):
+                    flap_moment = np.array(f.get('moment_flap')[10000:49001,blade,0,wt])/10**6
+                    # edge_moment = np.array(f.get('moment_flap')[:49001,blade,1,wt])/10**6
+                    DEL[i,j,k,blade,wt] = get_DEL(flap_moment)
 
 
-np.save('DEL_m5.npy', DEL_m5)
-np.save('DEL_m4.npy', DEL_m4)
-np.save('DEL_m3.npy', DEL_m3)
-np.save('DEL_m2.npy', DEL_m2)
-np.save('DEL_m1.npy', DEL_m1)
-np.save('DEL_0.npy', DEL_0)
-np.save('DEL_1.npy', DEL_1)
-np.save('DEL_2.npy', DEL_2)
-np.save('DEL_3.npy', DEL_3)
-np.save('DEL_4.npy', DEL_4)
-np.save('DEL_5.npy', DEL_5)
+np.save('DEL.npy', DEL)
+# np.save('DEL_m4.npy', DEL_m4)
+# np.save('DEL_m3.npy', DEL_m3)
+# np.save('DEL_m2.npy', DEL_m2)
+# np.save('DEL_m1.npy', DEL_m1)
+# np.save('DEL_0.npy', DEL_0)
+# np.save('DEL_1.npy', DEL_1)
+# np.save('DEL_2.npy', DEL_2)
+# np.save('DEL_3.npy', DEL_3)
+# np.save('DEL_4.npy', DEL_4)
+# np.save('DEL_5.npy', DEL_5)
 # x = np.linspace(1,512,512)*8
 # y = np.linspace(1,256,256)*8
 

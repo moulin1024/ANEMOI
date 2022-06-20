@@ -162,9 +162,6 @@ def decision_new(power,DEL,name):
     plt.ylim([-0.25,0.25])
     plt.savefig(name)
 
-
-
-
 # plt.figure()
 # power = power_0
 # DEL = DEL_0
@@ -186,7 +183,7 @@ def decision_new(power,DEL,name):
 # DELmap(power_m3,'power_m3.png',0.15,1,'inflow degree: $-3^\circ$',1)
 # DELmap(power_m4,'power_m4.png',0.15,1,'inflow degree: $-4^\circ$',1)
 # DELmap(power_m5,'power_m5.png',0.15,1,'inflow degree: $-5^\circ$',1)
-DELmap(power_0,'power_0.png',0.15,1,'inflow degree: $0^\circ$',1)
+# DELmap(power_0,'power_0.png',0.15,1,'inflow degree: $0^\circ$',1)
 # DELmap(power_1,'power_1.png',0.15,1,'inflow degree: $1^\circ$',1)
 # DELmap(power_2,'power_2.png',0.15,1,'inflow degree: $2^\circ$',1)
 # DELmap(power_3,'power_3.png',0.15,1,'inflow degree: $3^\circ$',1)
@@ -219,17 +216,17 @@ DELmap(power_0,'power_0.png',0.15,1,'inflow degree: $0^\circ$',1)
 # decision(power_m4,DEL_m4,'decision_m4.png')
 # decision(power_m5,DEL_m5,'decision_m5.png')
 
-# decision_new(power_0,DEL_0,'decision_new_0.png')
-# decision_new(power_1,DEL_1,'decision_new_1.png')
-# decision_new(power_2,DEL_2,'decision_new_2.png')
-# decision_new(power_3,DEL_3,'decision_new_3.png')
-# decision_new(power_4,DEL_4,'decision_new_4.png')
-# decision_new(power_5,DEL_5,'decision_new_5.png')
-# decision_new(power_m1,DEL_m1,'decision_new_m1.png')
-# decision_new(power_m2,DEL_m2,'decision_new_m2.png')
-# decision_new(power_m3,DEL_m3,'decision_new_m3.png')
-# decision_new(power_m4,DEL_m4,'decision_new_m4.png')
-# decision_new(power_m5,DEL_m5,'decision_new_m5.png')
+decision_new(power_0,DEL_0,'decision_new_0.png')
+decision_new(power_1,DEL_1,'decision_new_1.png')
+decision_new(power_2,DEL_2,'decision_new_2.png')
+decision_new(power_3,DEL_3,'decision_new_3.png')
+decision_new(power_4,DEL_4,'decision_new_4.png')
+decision_new(power_5,DEL_5,'decision_new_5.png')
+decision_new(power_m1,DEL_m1,'decision_new_m1.png')
+decision_new(power_m2,DEL_m2,'decision_new_m2.png')
+decision_new(power_m3,DEL_m3,'decision_new_m3.png')
+decision_new(power_m4,DEL_m4,'decision_new_m4.png')
+decision_new(power_m5,DEL_m5,'decision_new_m5.png')
 
 
 # decision_new(power_0,DEL_0,'decision_new_0.png')
