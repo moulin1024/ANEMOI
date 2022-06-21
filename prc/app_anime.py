@@ -67,42 +67,42 @@ def anime(PATH, case_name):
 
     turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
 
-    if config['ta_flag'] > 0:
-        result_3d = post.get_result_3d(src_inp_path,src_out_path, config)
-        u_avg = result_3d['u_avg_c']
-        v_avg = result_3d['v_avg_c']
-        w_avg = result_3d['w_avg_c']
+    # if config['ta_flag'] > 0:
+    #     result_3d = post.get_result_3d(src_inp_path,src_out_path, config)
+    #     u_avg = result_3d['u_avg_c']
+    #     v_avg = result_3d['v_avg_c']
+    #     w_avg = result_3d['w_avg_c']
 
-        u_std = result_3d['u_std_c']
-        v_std = result_3d['v_std_c']
-        w_std = result_3d['w_std_c']
+    #     u_std = result_3d['u_std_c']
+    #     v_std = result_3d['v_std_c']
+    #     w_std = result_3d['w_std_c']
 
-        f = h5py.File(out_path+'/'+case_name+'_stat.h5','w')
-        for key, value in config.items():
-            f.attrs[key] = value
+    #     f = h5py.File(out_path+'/'+case_name+'_stat.h5','w')
+    #     for key, value in config.items():
+    #         f.attrs[key] = value
 
-        f.create_dataset('x',data=space['x'])
-        f.create_dataset('y',data=space['y'])
-        f.create_dataset('z',data=space['z_c'])
+    #     f.create_dataset('x',data=space['x'])
+    #     f.create_dataset('y',data=space['y'])
+    #     f.create_dataset('z',data=space['z_c'])
 
-        f.create_dataset('u_avg',data=u_avg )
-        f.create_dataset('v_avg',data=v_avg)
-        f.create_dataset('w_avg',data=w_avg)
+    #     f.create_dataset('u_avg',data=u_avg )
+    #     f.create_dataset('v_avg',data=v_avg)
+    #     f.create_dataset('w_avg',data=w_avg)
 
-        f.create_dataset('u_std',data=u_std)
-        f.create_dataset('v_std',data=v_std)
-        f.create_dataset('w_std',data=w_std)
+    #     f.create_dataset('u_std',data=u_std)
+    #     f.create_dataset('v_std',data=v_std)
+    #     f.create_dataset('w_std',data=w_std)
 
-        f.close
+    #     f.close
 
-        fig = figure(figsize=(8,8))
-        ax = fig.add_subplot(111)
-        # im = ax.imshow(u_avg[176,63-8:63+8,45-32:45+32].T,origin='lower',aspect=0.25)
-        # print(np.mean(u_avg[176,63-8:63+8,45-32:45+32]))
-        # im = ax.imshow()
-        im = ax.quiver(v_avg[176,::4,::4].T,w_avg[176,::4,::4].T,scale=50)
-        plt.savefig(out_path+'/test.png')
-        print('check')
+    #     fig = figure(figsize=(8,8))
+    #     ax = fig.add_subplot(111)
+    #     # im = ax.imshow(u_avg[176,63-8:63+8,45-32:45+32].T,origin='lower',aspect=0.25)
+    #     # print(np.mean(u_avg[176,63-8:63+8,45-32:45+32]))
+    #     # im = ax.imshow()
+    #     im = ax.quiver(v_avg[176,::4,::4].T,w_avg[176,::4,::4].T,scale=50)
+    #     plt.savefig(out_path+'/test.png')
+    #     print('check')
 
 
 
@@ -112,31 +112,35 @@ def anime(PATH, case_name):
         # for key, value in config.items():
         #     f.attrs[key] = value
         result_4d = post.get_result_4d(src_out_path, config)
-        # # f.create_dataset('x',data=space['x'])
-        # # f.create_dataset('y',data=space['y'])
-        # # f.create_dataset('z',data=space['z_c'])
+        
+        # # # f.create_dataset('x',data=space['x'])
+        # # # f.create_dataset('y',data=space['y'])
+        # # # f.create_dataset('z',data=space['z_c'])
 
-        # # f.create_dataset('t_sample',data=time['t_ts'])
-        # # f.create_dataset('u',data=result_4d['u_inst_c'])
-        # # f.create_dataset('v',data=result_4d['v_inst_c'])
-        # # f.create_dataset('w',data=result_4d['w_inst_c'])
+        # # # f.create_dataset('t_sample',data=time['t_ts'])
+        # # # f.create_dataset('u',data=result_4d['u_inst_c'])
+        # # # f.create_dataset('v',data=result_4d['v_inst_c'])
+        # # # f.create_dataset('w',data=result_4d['w_inst_c'])
 
-        # # f.close
+        # # # f.close
 
         u = result_4d['u_inst_c']
-        v = result_4d['v_inst_c']
-        w = result_4d['w_inst_c']
+        # v = result_4d['v_inst_c']
+        # w = result_4d['w_inst_c']
 
         # fig,ax = plt.subplots(1,1)
         fig = figure(figsize=(8,8))
         ax1 = fig.add_subplot(111)
-        hub = [256/8,896/8]
+        # hub = [256/8,896/8]
 
-        dx = 8
-        dy = 8
+        # dx = 8
+        # dy = 8
+
+        # print(u.shape)
+        # print(u[0,:,:,90])
         # # ax2 = fig.add_subplot(212)
         def animate(i):  
-              
+            print(i)
             # values = u[i,:,:,45]
             ax1.cla()
             # ax2.cla()
@@ -151,7 +155,7 @@ def anime(PATH, case_name):
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
 
-            im = ax1.imshow(u[i,:,:,44].T,origin='lower',aspect=1/1)
+            im = ax1.imshow(u[i,:128,:,44].T,origin='lower',aspect=1/1)
             # if (i==9):
                 # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
@@ -162,43 +166,65 @@ def anime(PATH, case_name):
             # ax1.set_ylim([0,128])
 
             # ax2.plot(m_flap[:i*100,0,0,0])
-            print(i,np.mean(u[i,(224-32):(224-16),(128-16):(128+16),89].flatten()))
+            # print(i,np.mean(u[i,(224-32):(224-16),(128-16):(128+16),89].flatten()))
             return
-        anim = animation.FuncAnimation(fig, animate, frames=10)
+        anim = animation.FuncAnimation(fig, animate, frames=40)
         anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=10)
 
-    if config['turb_flag'] > 0:
-        f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
-        for key, value in config.items():
-            f.attrs[key] = value
-        f.create_dataset('turb_x',data=turb_loc['x'].to_numpy())
-        f.create_dataset('turb_y',data=turb_loc['y'].to_numpy())
-        f.create_dataset('turb_z',data=turb_loc['z'].to_numpy())
-        f.create_dataset('yaw',data=turb_loc['yaw'].to_numpy())
-        f.create_dataset('tilt',data=turb_loc['yaw'].to_numpy())
+    # if config['turb_flag'] > 0:
+    #     f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
+    #     for key, value in config.items():
+    #         f.attrs[key] = value
+    #     f.create_dataset('turb_x',data=turb_loc['x'].to_numpy())
+    #     f.create_dataset('turb_y',data=turb_loc['y'].to_numpy())
+    #     f.create_dataset('turb_z',data=turb_loc['z'].to_numpy())
+    #     f.create_dataset('yaw',data=turb_loc['yaw'].to_numpy())
+    #     f.create_dataset('tilt',data=turb_loc['yaw'].to_numpy())
         
         turb_force = post.get_turb(src_out_path, config)
-        f.create_dataset('time',data=time['t'])
-        f.create_dataset('fx',data=turb_force['fx'])
-        f.create_dataset('ft',data=turb_force['ft'])
-        f.create_dataset('displacement_flap',data=turb_force['displacement_flap'])
-        f.create_dataset('displacement_edge',data=turb_force['displacement_edge'])
-        f.create_dataset('moment_flap',data=turb_force['moment_flap'])
-        f.create_dataset('moment_edge',data=turb_force['moment_edge'])
-        f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
-        f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
+        power = np.squeeze(np.squeeze(turb_force['power'], axis=1), axis=1)
+        # print(power.shape)
+        plt.plot(power[:,0])
+        plt.savefig('test.png')
+    #     f.create_dataset('time',data=time['t'])
+    #     f.create_dataset('fx',data=turb_force['fx'])
+    #     f.create_dataset('ft',data=turb_force['ft'])
+    #     f.create_dataset('displacement_flap',data=turb_force['displacement_flap'])
+    #     f.create_dataset('displacement_edge',data=turb_force['displacement_edge'])
+    #     f.create_dataset('moment_flap',data=turb_force['moment_flap'])
+    #     f.create_dataset('moment_edge',data=turb_force['moment_edge'])
+    #     f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
+    #     f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
+    #     f.create_dataset('phase',data=turb_force['phase'])
 
-        f.close
+    #     f.close
 
-        m_flap = turb_force['moment_flap']
-        plt.figure()
-        print(m_flap[:,0,0,0])
-        plt.plot(m_flap[:,0,0,0],lw=1)
-        # plt.xlim([10000,190000])
-        # plt.plot(m_flap[:,0,0,1],lw=0.1,alpha=0.5)
-        # plt.plot(m_flap[:,0,0,2],lw=0.1,alpha=0.5)
-        print(out_path)
-        plt.savefig(out_path+'/flapwise_moment.png')
+    #     m_flap = turb_force['moment_flap']
+    #     plt.figure()
+    #     print(m_flap[:,0,0,0])
+    #     plt.plot(m_flap[:,0,0,0],lw=1)
+    #     # plt.xlim([10000,190000])
+    #     # plt.plot(m_flap[:,0,0,1],lw=0.1,alpha=0.5)
+    #     # plt.plot(m_flap[:,0,0,2],lw=0.1,alpha=0.5)
+    #     print(out_path)
+    #     plt.savefig(out_path+'/flapwise_moment.png')
+
+    #     phase = np.squeeze(turb_force['phase'],axis=1)
+    #     # power = np.squeeze(np.squeeze(turb_force['power'],axis=1),axis=1)
+
+    #     print(phase.shape)
+
+    #     # power = np.squeeze(np.squeeze(turb_force['power'],axis=1),axis=1)
+    #     plt.figure()
+    #     # print(power.shape)
+    #     plt.plot(phase[:,0,0],lw=1)
+    #     plt.plot(phase[:,1,0],lw=1)
+    #     plt.plot(phase[:,2,0],lw=1)
+    #     # plt.xlim([10000,190000])
+    #     # plt.plot(m_flap[:,0,0,1],lw=0.1,alpha=0.5)
+    #     # plt.plot(m_flap[:,0,0,2],lw=0.1,alpha=0.5)
+    #     # print(out_path)
+    #     plt.savefig(out_path+'/phase.png')
 
 
         # fig = figure(figsize=(14,8))

@@ -104,9 +104,9 @@ module turbine
             CTF_host = CTF
             turb_rpm_host = turb_rpm
             
-            call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
+            ! call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
             ! deformation = deformation_host
-            velocity = velocity_host
+            ! velocity = velocity_host
         end if
         
     end Subroutine turbine_force
@@ -406,6 +406,7 @@ module turbine
             real(fp),dimension(:,:),allocatable,device         :: turb_aerodyn,turb_geo
             real(fp), dimension(:),allocatable,device          :: radius_dat,twist_dat,chord_dat
             real(fp),dimension(:,:),allocatable,device         :: phase_angle
+            real(fp),dimension(3,n_turb)                       :: phase_angle_host
             real(fp),dimension(n_r,n_turb)                     :: chord_length_test
             real(fp),dimension(:),allocatable,device           :: turb_rpm_new,torque
             real(fp),dimension(n_turb) :: turb_rpm_host
@@ -493,6 +494,9 @@ module turbine
             
             call force_compute_pre_alm<<<grid_alm1,tBlock_alm1>>>(twist_angle,chord_length,&
                                                                   turb_loc,radius_dat,twist_dat,chord_dat)
+
+            
+            open (unit=(82000),file=('output/phase_angle.bin'), status='unknown',form='unformatted', access='stream')
         end if
 
         !$cuf kernel do(1) <<<*,*>>>
@@ -502,6 +506,11 @@ module turbine
             phase_angle(3,i_turb) = mod(phase_angle(1,i_turb) + turb_rpm(i_turb)/60*2*pi*dt*z_i*turb_count,2*pi) - 4*pi/3
             phase_angle(1,i_turb) = mod(phase_angle(1,i_turb) + turb_rpm(i_turb)/60*2*pi*dt*z_i*turb_count,2*pi) 
         end do
+
+
+        phase_angle_host = phase_angle
+        write (82000) phase_angle_host
+
 
         call force_compute_alm<<<grid_alm,tBlock_alm>>>(CTF,power,&
                                                         u,v,w,&

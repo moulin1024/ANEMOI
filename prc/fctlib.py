@@ -209,7 +209,7 @@ def get_config(case_path):
     config['tow_c'] = float(config['tow_c'])
     config['nac_r'] = float(config['nac_r'])
     config['nac_c'] = float(config['nac_c'])
-    # config['yaw_angle'] = config['yaw_angle']
+    config['dyn_yaw_freq'] = config['dyn_yaw_freq']
     config['turb_count'] = int(config['turb_count'])
 
     # prec

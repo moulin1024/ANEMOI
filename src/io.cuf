@@ -494,6 +494,8 @@ subroutine open_turb(me)
             form='unformatted', access='stream')
         open (unit=(80000),file=('output/blade_velocity_edge.bin'), status='unknown', &
             form='unformatted', access='stream')
+        open (unit=(81000),file=('output/power.bin'), status='unknown', &
+            form='unformatted', access='stream')
     end if
 
 end subroutine open_turb
@@ -634,10 +636,11 @@ subroutine write_log(log_ustar,log_umax,me)
 
 end subroutine write_log
 
-subroutine write_turb(CTF,displacement_host,moment_host,velocity_host,me)
+subroutine write_turb(CTF,power_host,displacement_host,moment_host,velocity_host,me)
 
     implicit none
     integer me,nall
+    real(fp),dimension(n_turb) :: power_host
     real(fp), dimension(3,n_r,n_turb,2) , intent(in):: CTF,displacement_host,moment_host,velocity_host
     
     if (me == 0) then
@@ -650,6 +653,7 @@ subroutine write_turb(CTF,displacement_host,moment_host,velocity_host,me)
         write (78000) moment_host(:,:,:,2)
         write (79000) velocity_host(:,:,:,1)
         write (80000) velocity_host(:,:,:,2)
+        write (81000) power_host
     end if
 
 end subroutine write_turb
@@ -749,6 +753,8 @@ subroutine close_turb(me)
         close (unit=(78000))
         close (unit=(79000))
         close (unit=(80000))
+        close (unit=(81000))
+        close (unit=(82000))
     end if
 
 end subroutine close_turb
