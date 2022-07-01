@@ -67,33 +67,33 @@ def anime(PATH, case_name):
 
     turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
 
-    # if config['ta_flag'] > 0:
-    #     result_3d = post.get_result_3d(src_inp_path,src_out_path, config)
-    #     u_avg = result_3d['u_avg_c']
-    #     v_avg = result_3d['v_avg_c']
-    #     w_avg = result_3d['w_avg_c']
+    if config['ta_flag'] > 0:
+        result_3d = post.get_result_3d(src_inp_path,src_out_path, config)
+        u_avg = result_3d['u_avg_c']
+        v_avg = result_3d['v_avg_c']
+        w_avg = result_3d['w_avg_c']
 
-    #     u_std = result_3d['u_std_c']
-    #     v_std = result_3d['v_std_c']
-    #     w_std = result_3d['w_std_c']
+        u_std = result_3d['u_std_c']
+        v_std = result_3d['v_std_c']
+        w_std = result_3d['w_std_c']
 
-    #     f = h5py.File(out_path+'/'+case_name+'_stat.h5','w')
-    #     for key, value in config.items():
-    #         f.attrs[key] = value
+        f = h5py.File(out_path+'/'+case_name+'_stat.h5','w')
+        for key, value in config.items():
+            f.attrs[key] = value
 
-    #     f.create_dataset('x',data=space['x'])
-    #     f.create_dataset('y',data=space['y'])
-    #     f.create_dataset('z',data=space['z_c'])
+        f.create_dataset('x',data=space['x'])
+        f.create_dataset('y',data=space['y'])
+        f.create_dataset('z',data=space['z_c'])
 
-    #     f.create_dataset('u_avg',data=u_avg )
-    #     f.create_dataset('v_avg',data=v_avg)
-    #     f.create_dataset('w_avg',data=w_avg)
+        f.create_dataset('u_avg',data=u_avg )
+        f.create_dataset('v_avg',data=v_avg)
+        f.create_dataset('w_avg',data=w_avg)
 
-    #     f.create_dataset('u_std',data=u_std)
-    #     f.create_dataset('v_std',data=v_std)
-    #     f.create_dataset('w_std',data=w_std)
+        f.create_dataset('u_std',data=u_std)
+        f.create_dataset('v_std',data=v_std)
+        f.create_dataset('w_std',data=w_std)
 
-    #     f.close
+        f.close
 
     #     fig = figure(figsize=(8,8))
     #     ax = fig.add_subplot(111)
@@ -155,7 +155,7 @@ def anime(PATH, case_name):
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
 
-            im = ax1.imshow(u[i,:128,:,44].T,origin='lower',aspect=1/1)
+            im = ax1.imshow(u[i,:,:,44].T,origin='lower',aspect=1/1)
             # if (i==9):
                 # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
@@ -168,7 +168,7 @@ def anime(PATH, case_name):
             # ax2.plot(m_flap[:i*100,0,0,0])
             # print(i,np.mean(u[i,(224-32):(224-16),(128-16):(128+16),89].flatten()))
             return
-        anim = animation.FuncAnimation(fig, animate, frames=40)
+        anim = animation.FuncAnimation(fig, animate, frames=10)
         anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=10)
 
     # if config['turb_flag'] > 0:

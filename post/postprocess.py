@@ -76,14 +76,16 @@ time        = np.load('time.npy')
 #     plt.ylabel('WT2')
 #     plt.colorbar()
 #     plt.savefig(name)
-#     plt.colorbar()
+#     # plt.colorbar()
+
+# powermap(power_0,'power_0.png')
 
 def DELmap(DEL,name,climit,factor,title_name,flag):
-    plt.figure()
+    plt.figure(dpi=300)
     total_DEL = np.sum(DEL,axis=3)
     plt.rcParams.update({'font.size': 14})
     DEL_reference = total_DEL[6,6,0]
-    normal_DEL = factor*(total_DEL[:,:,0]/DEL_reference-1)
+    normal_DEL = np.flip(np.flip(factor*(total_DEL[:,:,0]/DEL_reference-1),axis=0),axis=1)
     max_DEL = np.max(np.max(np.max(normal_DEL)))
     i,j = np.where(normal_DEL == max_DEL)
     levels = np.linspace(-climit,climit,101)
@@ -186,7 +188,7 @@ def decision_new(power,DEL,name):
 # DELmap(power_m3,'power_m3.png',0.15,1,'inflow degree: $-3^\circ$',1)
 # DELmap(power_m4,'power_m4.png',0.15,1,'inflow degree: $-4^\circ$',1)
 # DELmap(power_m5,'power_m5.png',0.15,1,'inflow degree: $-5^\circ$',1)
-DELmap(power_0,'power_0.png',0.15,1,'inflow degree: $0^\circ$',1)
+DELmap(power_0,'power_0.png',0.1,1,'inflow degree: $0^\circ$',1)
 # DELmap(power_1,'power_1.png',0.15,1,'inflow degree: $1^\circ$',1)
 # DELmap(power_2,'power_2.png',0.15,1,'inflow degree: $2^\circ$',1)
 # DELmap(power_3,'power_3.png',0.15,1,'inflow degree: $3^\circ$',1)
@@ -194,7 +196,7 @@ DELmap(power_0,'power_0.png',0.15,1,'inflow degree: $0^\circ$',1)
 # DELmap(power_5,'power_5.png',0.15,1,'inflow degree: $5^\circ$',1)
 
 
-# DELmap(DEL_0,'DEL_0.png',0.2,-1,'inflow degree: $0^\circ$',0)
+DELmap(DEL_0,'DEL_0.png',0.3,1,'inflow degree: $0^\circ$',0)
 # DELmap(DEL_1,'DEL_1.png',0.2,-1,'inflow degree: $1^\circ$',0)
 # DELmap(DEL_2,'DEL_2.png',0.2,-1,'inflow degree: $2^\circ$',0)
 # DELmap(DEL_3,'DEL_3.png',0.2,-1,'inflow degree: $3^\circ$',0)
