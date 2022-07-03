@@ -168,10 +168,10 @@ def anime(PATH, case_name):
             # ax2.plot(m_flap[:i*100,0,0,0])
             # print(i,np.mean(u[i,(224-32):(224-16),(128-16):(128+16),89].flatten()))
             return
-        anim = animation.FuncAnimation(fig, animate, frames=10)
-        anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=10)
+        anim = animation.FuncAnimation(fig, animate, frames=50)
+        anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=20)
 
-    if config['turb_flag'] > 0:
+    if config['turb_flag'] > 3:
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():
             f.attrs[key] = value

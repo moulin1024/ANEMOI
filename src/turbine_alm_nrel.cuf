@@ -92,7 +92,7 @@ module turbine
             deformation = 0._fp
             velocity = 0._fp
             turb_rpm = 12.1
-            open(unit=1,file='output/power.dat',status='replace',form='formatted')
+            open(unit=111,file='output/power.csv',form='formatted')
         end if
         fx = 0._fp
         fy = 0._fp
@@ -116,9 +116,10 @@ module turbine
                 power(i_turb) = turb_rpm(i_turb)/60*2*PI*torque(i_turb)
             end do
             power_host = power
-            write(1,11) power_host/1e6
+            ! write(1,11) 1.0
+            write(111, '(E11.4)') power_host
             11 format(F8.4)
-            print*,power_host/1e6
+            ! print*,power_host/1e6
             call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
             deformation = deformation_host
             velocity = velocity_host
