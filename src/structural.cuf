@@ -218,7 +218,7 @@ module structural
             do i = 2, N+1
                 do j = 1,2
                     ! damping_coefficent = damping*12*EI(i,j,j)/(rho(i)*radius**3)
-                    V_new(i,j) = (1-0.0*12*EI(i,j,j)/(rho(i)*radius**3)*delta_t)*V_old(i,j) + &
+                    V_new(i,j) = (1-0.5*delta_t)*V_old(i,j) + &
                         delta_t*((-1.0/rho(i))*((M_old(i+1,j)-(2.0*M_old(i,j))+M_old(i-1,j))/delta_r**2)+&
                         ((1.0/rho(i))*((S_old(i+1,j)-S_old(i,j))/delta_r))+(F_a(i,j)/rho(i))+g(j))
                 end do
@@ -241,7 +241,7 @@ module structural
                 centrifugal_force = centrifugal_force + rho(j)*omega**2*(r_location(j))*delta_r
             end do
 
-            S_new(i,:) = S_old(i,:) + delta_t*(centrifugal_force*((V_new(i,:)-V_new(i-1,:))/delta_r))
+S_new(i,:) = S_old(i,:) + delta_t*(centrifugal_force*((V_new(i,:)-V_new(i-1,:))/delta_r))
         end do
 
         ! Boundary conditions at the TIPS position:

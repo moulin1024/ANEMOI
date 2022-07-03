@@ -118,10 +118,10 @@ module control
         !$cuf kernel do(1) <<<*,*>>>
         do i_turb = 1,n_turb
             turb_rpm(i_turb) = 8.7 + 0.00262*torque(i_turb)/1000 - 0.024*sqrt(4334 + 15*torque(i_turb)/1000)
-            if (t>1000) then
-                turb_rpm(i_turb) = 0.5*turb_rpm_old(i_turb)+ 0.5*turb_rpm(i_turb)
-                turb_rpm_old(i_turb) = turb_rpm(i_turb)
-            end if
+            ! if (t>1000) then
+            !     turb_rpm(i_turb) = 0.5*turb_rpm_old(i_turb)+ 0.5*turb_rpm(i_turb)
+            !     turb_rpm_old(i_turb) = turb_rpm(i_turb)
+            ! end if
         end do
         ! end if
         ! turb_rpm_host = torque
