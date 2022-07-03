@@ -18,3 +18,4 @@ unit_test/*
 check.sh
 post/*
 post/core.*
+test.py
