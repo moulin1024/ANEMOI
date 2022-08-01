@@ -47,7 +47,7 @@ module structural
 
             print *,T_split
 
-            OPEN(112, FILE='output/root_moment.csv', FORM='formatted')
+            ! OPEN(112, FILE='output/root_moment.csv', FORM='formatted')
 
             call bladeConfig(EI,r_location,rho)
             do i_turb = 1,n_turb
@@ -122,7 +122,7 @@ module structural
         ! print *,v(1,32,1,1),v(1,32,1,2)
         !  stop
         ! print *,q(1,32,1,1)
-        write(112, '(E11.4)') M(1,2,1,:)
+        ! write(112, '(E11.4)') M(1,2,1,1)
         
         do i_turb = 1,n_turb
             phase_angle(2,i_turb) = mod(phase_angle(1,i_turb) + turb_rpm_host(i_turb)/60*2*pi*dt*z_i*turb_count,2*pi) - 2*pi/3
@@ -241,7 +241,7 @@ module structural
                 centrifugal_force = centrifugal_force + rho(j)*omega**2*(r_location(j))*delta_r
             end do
 
-S_new(i,:) = S_old(i,:) + delta_t*(centrifugal_force*((V_new(i,:)-V_new(i-1,:))/delta_r))
+            S_new(i,:) = S_old(i,:) + delta_t*(centrifugal_force*((V_new(i,:)-V_new(i-1,:))/delta_r))
         end do
 
         ! Boundary conditions at the TIPS position:

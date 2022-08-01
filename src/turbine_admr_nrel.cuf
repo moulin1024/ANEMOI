@@ -320,7 +320,7 @@ module turbine
             call force_compute<<<grid_be,tBlock_be>>>(CTF,power,&
                                                       u,v,w,coeff,blade_ijk,twist_angle,solidity,&
                                                       turb_rpm,CTUin,turb_loc,turb_aerodyn,turb_aerodyn_nrel)
-            
+
         call force_projection<<<grid_full,tBlock_full>>>(fx,fy,fz,CTF,sum_ker,turb_loc)
     end Subroutine admryaw
 
@@ -892,15 +892,15 @@ module turbine
         CTCL = 0
         CTCD = 0.35
     else if ( radius >= 11.75 .and. radius < 15.85 ) then
-        section = 6
+        section = 1
     else if ( radius >= 15.85 .and. radius < 24.05 ) then
-        section = 6 
+        section = 2 
     else if ( radius >= 24.05 .and. radius < 28.15 ) then
-        section = 6
+        section = 3
     else if ( radius >= 28.15 .and. radius < 36.35 ) then
-        section = 6 
+        section = 4 
     else if ( radius >= 36.35 .and. radius < 44.55 ) then
-        section = 6
+        section = 5
     else if ( radius >= 44.55 ) then
         section = 6
     end if

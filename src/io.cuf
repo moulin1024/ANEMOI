@@ -494,8 +494,6 @@ subroutine open_turb(me)
             form='unformatted', access='stream')
         open (unit=(80000),file=('output/blade_velocity_edge.bin'), status='unknown', &
             form='unformatted', access='stream')
-        open (unit=(81000),file=('output/power.bin'), status='unknown', &
-            form='unformatted', access='stream')
         open (unit=(82000),file=('output/phase_angle.bin'), status='unknown',&
             form='unformatted', access='stream')
     end if
@@ -753,7 +751,6 @@ subroutine close_turb(me)
         close (unit=(78000))
         close (unit=(79000))
         close (unit=(80000))
-        close (unit=(81000))
         close (unit=(82000))
     end if
 

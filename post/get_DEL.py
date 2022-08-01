@@ -42,8 +42,8 @@ time        = np.load('time.npy')
 
 # print(root_moment.shape)
 # root_moment = np.zeros((13,13,11,3,2,49001))
-DEL_flap = np.zeros((13,13,11,3,3))
-DEL_edge = np.zeros((13,13,11,3,3))
+DEL_flap = np.zeros((13,13,5,3,3))
+DEL_edge = np.zeros((13,13,5,3,3))
 # DEL_m4 = np.zeros((13,13,1,3))
 # DEL_m3 = np.zeros((13,13,1,3))
 # DEL_m2 = np.zeros((13,13,1,3))
@@ -54,21 +54,26 @@ DEL_edge = np.zeros((13,13,11,3,3))
 # DEL_3 = np.zeros((13,13,1,3))
 # DEL_4 = np.zeros((13,13,1,3))
 # DEL_5 = np.zeros((13,13,1,3))
+inflow = [-5,-3,0,3,5]
 for i in range(13):
     print(i)
     for j in range(13):
-        for k in range(11):
-            name = "rotate-"+str(k-5)+"-"+str((i-6)*5)+"-"+str((j-6)*5)
+        for k in range(5):
+            name = "rotate-"+str(inflow[k])+'-'+str((i-6)*5)+"-"+str((j-6)*5)
             print(name)
             f = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
             for wt in range(3):
                 for blade in range(3):
-                    flap_moment = np.array(f.get('moment_flap')[10000:49001,blade,0,wt])/10**6
-                    # edge_moment = np.array(f.get('moment_flap')[:49001,blade,1,wt])/10**6
-                    DEL[i,j,k,blade,wt] = get_DEL(flap_moment)
+                    flap_moment = np.array(f.get('moment_flap')[10000:,blade,0,wt])/10**6
+                    edge_moment = np.array(f.get('moment_edge')[10000:,blade,1,wt])/10**6
+                    DEL_flap[i,j,k,blade,wt] = get_DEL(flap_moment)
+                    DEL_edge[i,j,k,blade,wt] = get_DEL(edge_moment)
 
 
-np.save('DEL.npy', DEL)
+np.save('DEL_flap.npy', DEL_flap)
+np.save('DEL_edge.npy', DEL_edge)
+
+
 # np.save('DEL_m4.npy', DEL_m4)
 # np.save('DEL_m3.npy', DEL_m3)
 # np.save('DEL_m2.npy', DEL_m2)
