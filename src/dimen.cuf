@@ -72,7 +72,7 @@ module dimen
     real(fp), parameter, dimension(n_turb) :: tow_r = ${tow_r}/z_i
     real(fp), parameter, dimension(n_turb) :: nac_c = ${nac_c}
     real(fp), parameter, dimension(n_turb) :: tow_c = ${tow_c}
-    ! real(fp), parameter, dimension(n_turb) :: dyn_yaw_freq = $dyn_yaw_freq
+    real(fp), parameter, dimension(n_turb) :: dyn_yaw_freq = $dyn_yaw_freq
     ! real(fp), parameter, dimension(n_turb) :: yaw_angle != $yaw_angle/180._fp*pi
 
     !-------------------------------------------------------------------------------
