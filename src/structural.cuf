@@ -61,8 +61,8 @@ module structural
                     do j = 1, T_warmup       
                         phi = phase_angle(i_blade,i_turb)  
 
-                        g(:,1) = 0.0! 9.8*Sin(tau)
-                        g(:,2) = 0.0!-(9.8*Cos(phi)*Cos(tau)) 
+                        g(:,1) = 9.8*Sin(tau)
+                        g(:,2) = -(9.8*Cos(phi)*Cos(tau)) 
 
                         F_a(2:N+1,1) = CTF_host(i_blade,n_r_s:n_r,i_turb,1)*dx*dy*dz*z_i**2/delta_r
                         F_a(2:N+1,2) = CTF_host(i_blade,n_r_s:n_r,i_turb,2)*dx*dy*dz*z_i**2/delta_r
@@ -97,9 +97,8 @@ module structural
                 do j = 1, T_split            
                     phi = mod(phase_angle(i_blade,i_turb) + omega(i_turb)*delta_t*j,2*pi)
                     do i_r = 2,N+1
-                        g(i_r,1) = delta_r*(i-1)*cos(phi)*(dyn_yaw_freq(i_turb)*2*pi)**2*sin(dyn_yaw_freq(i_turb)*2*pi*(t*dt*z_i+delta_t*j))
-                        g(i_r,2) = 0.0!-(9.8*Cos(phi)*Cos(tau)) 
-                        print *,g(i_r,1)
+                        g(i_r,1) = 9.8*Sin(tau) + delta_r*(i_r-1)*cos(phi)*(dyn_yaw_freq(i_turb)*2*pi)**2*sin(dyn_yaw_freq(i_turb)*2*pi*(t*dt*z_i+delta_t*j))
+                        g(i_r,2) = -(9.8*Cos(phi)*Cos(tau)) 
                     end do
 
                     F_a(2:N+1,1) = CTF_host(i_blade,n_r_s:n_r,i_turb,1)*dx*dy*dz*z_i**2/delta_r

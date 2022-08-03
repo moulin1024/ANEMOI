@@ -268,8 +268,8 @@ def anime(PATH, case_name):
         print(dt)
 
         downsample = 40
-        flap_scale = 1000
-        edge_scale = 1000
+        flap_scale = 100
+        edge_scale = 1
         
         initial_phase = [0,0,0]
         blade_coord = np.zeros([32,3,3])
@@ -321,7 +321,7 @@ def anime(PATH, case_name):
             ax3.cla() # clear the previous image
             ax4.cla() # clear the previous image
             yaw_angle = np.sin((i+1)*(config['dtr']*downsample)*2*np.pi*0.01666)*np.pi/6
-            print((i+1)*(config['dtr']*downsample))
+            # print((i+1)*downsample)
             for j in range(3):
                 blade_coord[:,j,0] = displacement_flap[(i+1)*downsample,j,:,0]*flap_scale
                 blade_coord[:,j,1] = blade*np.cos(phase[(i+1)*downsample,j]) - displacement_edge[(i+1)*downsample,j,:,0]*edge_scale*np.sin(phase[(i+1)*downsample,j])
@@ -372,5 +372,5 @@ def anime(PATH, case_name):
 
             print(i)
 
-        anim = animation.FuncAnimation(fig, animate, frames=50)
+        anim = animation.FuncAnimation(fig, animate, frames=100)
         anim.save(out_path+'/blade_movement_3d.gif',writer='pillow', fps=20)
