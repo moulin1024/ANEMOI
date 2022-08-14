@@ -12,6 +12,8 @@ app: create self-explained hdf5 output file
 # IMPORT
 ################################################################################
 import os, sys
+
+from matplotlib import projections
 import fctlib
 import app_post as post
 import numpy as np
@@ -28,6 +30,10 @@ from matplotlib.pyplot import figure
 from matplotlib import animation, rc
 from mpl_toolkits.mplot3d import Axes3D
 import fatigue
+from skimage.measure import marching_cubes
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import cv2
 # from pyevtk.hl import gridToVTK
 
 
@@ -64,8 +70,6 @@ def anime(PATH, case_name):
 
     space = post.get_space(config)
     time = post.get_time(config)
-
-    turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
 
     if config['ta_flag'] > 10:
         result_3d = post.get_result_3d(src_inp_path,src_out_path, config)
@@ -108,70 +112,79 @@ def anime(PATH, case_name):
 
     if config['ts_flag'] > 3:
 
-        # f = h5py.File(out_path+'/'+case_name+'_flowfield.h5','w')
+        # u  = fctlib.load_3d('001_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
+    
+        f = h5py.File(out_path+'/'+case_name+'_flowfield.h5','w')
         # for key, value in config.items():
         #     f.attrs[key] = value
-        result_4d = post.get_result_4d(src_out_path, config)
+        # result_4d = post.get_result_4d(src_out_path, config)
         
-        # # # f.create_dataset('x',data=space['x'])
-        # # # f.create_dataset('y',data=space['y'])
-        # # # f.create_dataset('z',data=space['z_c'])
+        f.create_dataset('x',data=space['x'])
+        f.create_dataset('y',data=space['y'])
+        f.create_dataset('z',data=space['z_c'])
 
-        # # # f.create_dataset('t_sample',data=time['t_ts'])
-        # # # f.create_dataset('u',data=result_4d['u_inst_c'])
-        # # # f.create_dataset('v',data=result_4d['v_inst_c'])
-        # # # f.create_dataset('w',data=result_4d['w_inst_c'])
+        f.create_dataset('t_sample',data=time['t_ts'])
+        # f.create_dataset('u',data=result_4d['u_inst_c'])
+        # f.create_dataset('v',data=result_4d['v_inst_c'])
+        # f.create_dataset('w',data=result_4d['w_inst_c'])
 
-        # # # f.close
+        # f.close
 
-        u = result_4d['u_inst_c']
-        # v = result_4d['v_inst_c']
-        # w = result_4d['w_inst_c']
+        velo_data = np.zeros([199,3,256,32,128])
 
-        # fig,ax = plt.subplots(1,1)
-        fig = figure(figsize=(8,8))
-        ax1 = fig.add_subplot(111)
-        # hub = [256/8,896/8]
-
-        # dx = 8
-        # dy = 8
-
-        # print(u.shape)
-        # print(u[0,:,:,90])
-        # # ax2 = fig.add_subplot(212)
-        def animate(i):  
+        for i in range(199):
+            u = fctlib.load_3d(str(i+801).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            v = fctlib.load_3d(str(i+801).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            w = post.node2center_3d(fctlib.load_3d(str(i+801).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
+            
+            velo_data[i,2,:,:,:] = w[128:,64-16:64+16,:128]
+            velo_data[i,0,:,:,:] = u[128:,64-16:64+16,:128]
+            velo_data[i,1,:,:,:] = v[128:,64-16:64+16,:128]
+            
             print(i)
-            # values = u[i,:,:,45]
-            ax1.cla()
-            # ax2.cla()
-            # ax3.cla()
 
-            # ax1.imshow(u[i,:,:,45].T,origin='lower',aspect=config['dx']/config['dy'])
-            # ax1.set_xlabel('x')
-            # ax1.set_ylabel('y')
+        f.create_dataset('U',data=velo_data)
+        f.close
+        # u = np.flip(result_4d['u_inst_c'],axis=2)
+        # v = - np.flip(result_4d['v_inst_c'],axis=2)
+        # w = np.flip(result_4d['w_inst_c'],axis=2)
 
-            # ax2.imshow(u[i,32,:,:].T,origin='lower',aspect=config['dz']/config['dy'])
-            # ax2.set_xlabel('x')
-            # ax2.set_ylabel('y')
-            # ax2.set_ylim([0,128])
+        # dx = space['x'][1]-space['x'][0]
+        # dy = space['y'][1]-space['y'][0]
+        # dz = space['z_c'][1]-space['z_c'][0]
 
-            im = ax1.imshow(u[i,:,:,90].T,origin='lower',aspect=1/1)
-            # if (i==9):
-                # fig.colorbar(im)
-            # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
-            # ax1.quiver(space['x'],space['y'],u[i,:,:,90].T,v[i,:,:,90].T,scale=10000)
-            ax1.set_xlabel('x')
-            ax1.set_ylabel('y')
-            # ax1.axis('scaled') 
-            # ax1.set_ylim([0,128])
+        # for i in range(100):
+        #     print(i)
+        #     fig = figure(figsize=(8,6),dpi=300)
+        #     ax1 = fig.add_subplot(111,projection='3d')
+        #     u = fctlib.load_3d(str(i+901).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+        #     v = fctlib.load_3d(str(i+901).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+        #     w = post.node2center_3d(fctlib.load_3d(str(i+901).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
+        
+        #     dudx = np.diff(u,axis=0)[:,:-1,:-1]/dx
+        #     dudy = np.diff(u,axis=1)[:-1,:,:-1]/dy
+        #     dudz = np.diff(u,axis=2)[:-1,:-1,:]/dz
+        #     dvdx = np.diff(v,axis=0)[:,:-1,:-1]/dx
+        #     dvdy = np.diff(v,axis=1)[:-1,:,:-1]/dy
+        #     dvdz = np.diff(v,axis=2)[:-1,:-1,:]/dz
+        #     dwdx = np.diff(w,axis=0)[:,:-1,:-1]/dx
+        #     dwdy = np.diff(w,axis=1)[:-1,:,:-1]/dy
+        #     dwdz = np.diff(w,axis=2)[:-1,:-1,:]/dz
+        #     Qcriter=dudx*dvdy+dvdy*dwdz+dwdz*dudx-dudy*dvdx-dvdz*dwdy-dwdx*dudz
+        #     verts, faces, _, _ = marching_cubes(Qcriter, 0.02)
+        #     ax1.plot_trisurf(verts[:, 0]*dx, verts[:,1]*dy, faces, verts[:, 2]*dz, lw=1,alpha=0.2)
+        #     ax1.set_xlabel('x')
+        #     ax1.set_ylabel('y')
+        #     ax1.set_xlim(0,4096)
+        #     ax1.set_ylim(0,1024)
+        #     ax1.set_zlim(0,512)
+        #     ax1.set_box_aspect([8,2,1])
+        #     plt.savefig(out_path+'/'+str(i+1).zfill(3)+'_animation_xz.png')
+        #     plt.close()
 
-            # ax2.plot(m_flap[:i*100,0,0,0])
-            # print(i,np.mean(u[i,(224-32):(224-16),(128-16):(128+16),89].flatten()))
-            return
-        anim = animation.FuncAnimation(fig, animate, frames=10)
-        anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=10)
 
     if config['turb_flag'] > 0:
+        turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():
             f.attrs[key] = value
@@ -181,9 +194,10 @@ def anime(PATH, case_name):
         f.create_dataset('yaw',data=turb_loc['yaw'].to_numpy())
         f.create_dataset('tilt',data=turb_loc['yaw'].to_numpy())
         
+        print(turb_loc['yaw'].to_numpy())
         turb_force = post.get_turb(src_out_path, config)
         # power = np.squeeze(np.squeeze(turb_force['power'], axis=1), axis=1)
-        # # print(power.shape)
+        # print(power.shape)
         # plt.plot(power[:,0])
         # plt.savefig('test.png')
         f.create_dataset('time',data=time['t'])
@@ -199,178 +213,100 @@ def anime(PATH, case_name):
 
         f.close
 
-        displacement_flap = turb_force['displacement_flap']
-        displacement_edge = turb_force['displacement_edge']
+        # displacement_flap = turb_force['displacement_flap']
+        # displacement_edge = turb_force['displacement_edge']
 
-    #     m_flap = turb_force['moment_flap']
-    #     plt.figure()
-    #     print(m_flap[:,0,0,0])
-    #     plt.plot(m_flap[:,0,0,0],lw=1)
-    #     # plt.xlim([10000,190000])
-    #     # plt.plot(m_flap[:,0,0,1],lw=0.1,alpha=0.5)
-    #     # plt.plot(m_flap[:,0,0,2],lw=0.1,alpha=0.5)
-    #     print(out_path)
-    #     plt.savefig(out_path+'/flapwise_moment.png')
-
-    #     phase = np.squeeze(turb_force['phase'],axis=1)
-    #     # power = np.squeeze(np.squeeze(turb_force['power'],axis=1),axis=1)
-
-    #     print(phase.shape)
-
-    #     # power = np.squeeze(np.squeeze(turb_force['power'],axis=1),axis=1)
-    #     plt.figure()
-    #     # print(power.shape)
-    #     plt.plot(phase[:,0,0],lw=1)
-    #     plt.plot(phase[:,1,0],lw=1)
-    #     plt.plot(phase[:,2,0],lw=1)
-    #     # plt.xlim([10000,190000])
-    #     # plt.plot(m_flap[:,0,0,1],lw=0.1,alpha=0.5)
-    #     # plt.plot(m_flap[:,0,0,2],lw=0.1,alpha=0.5)
-    #     # print(out_path)
-    #     plt.savefig(out_path+'/phase.png')
-
-
-        # fig = figure(figsize=(14,8))
-        # gs = fig.add_gridspec(2, 3)
-        # ax1 = fig.add_subplot(gs[0, 0])
-        # ax2 = fig.add_subplot(gs[0, 1])
-        # ax3 = fig.add_subplot(gs[0, 2])
-        # ax4 = fig.add_subplot(gs[1, :])
-        # # ax2 = fig.add_subplot(212)
-        # def animate(i):  
-              
-        #     # values = u[i,:,:,45].T
-        #     ax1.cla()
-        #     ax2.cla()
-        #     ax3.cla()
-        #     ax4.cla()
-        #     # ax3.cla()
-
-        #     ax1.imshow(u[i,:,:,90].T,origin='lower',aspect=config['dx']/config['dy'])
-        #     ax1.set_xlabel('x')
-        #     ax1.set_ylabel('y')
-
-        #     ax2.imshow(u[i,:,64,:].T,origin='lower',aspect=config['dz']/config['dx'])
-        #     ax2.set_xlabel('x')
-        #     ax2.set_ylabel('z')
-
-        #     ax3.imshow(u[i,256,:,:].T,origin='lower',aspect=config['dz']/config['dy'])
-        #     ax3.set_xlabel('y')
-        #     ax3.set_ylabel('z')
-
-        #     ax4.plot(m_flap[:i*100,0,0,0])
-        #     print(i)
-        #     return
-        # anim = animation.FuncAnimation(fig, animate, frames=10)
-        # anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=10)
-
-        dt = config['dt']
-        print(dt)
-
-        downsample = 40
-        flap_scale = 100
-        edge_scale = 1
+        # dt = config['dt']
+        # downsample = 10
+        # flap_scale = 1
+        # edge_scale = 1
         
-        initial_phase = [0,0,0]
-        blade_coord = np.zeros([32,3,3])
-        blade_coord_tilted = np.zeros([32,3,3])
-        blade_coord_yawed = np.zeros([32,3,3])
-        blade = np.linspace(1.5,63,32)
-        omega = 0.0#12.1/69*2*np.pi
-        phase_angle = 0
-        tilt_angle = 0.0#np.deg2rad(df['tilt'][0])
-        yaw_angle = 0.0#np.deg2rad(20)
+        # initial_phase = [0,0,0]
+        # blade_coord = np.zeros([32,3,3])
+        # blade_coord_tilted = np.zeros([32,3,3])
+        # blade_coord_yawed = np.zeros([32,3,3])
+        # blade = np.linspace(1.5,63,32)
+        # tilt_angle = 0.0#np.deg2rad(df['tilt'][0])
         # print(config['dyn_yaw_freq'])
-        dyn_yaw_freq = 0.01666666
-        phase = np.squeeze(np.squeeze(turb_force['phase'],axis=3),axis=1)
-    #     print(phase[:,0])
-        
-    #     # print(u.shape)
+        # dyn_yaw_freq = config['dyn_yaw_freq'][2:-2].split(",")
+        # dyn_yaw_freq = [float(item) for item in dyn_yaw_freq]
+        # print(dyn_yaw_freq)
+        # fig = figure(figsize=(8,8),dpi=200)
+        # # ax1 = fig.add_subplot(111)
+        # # ax2 = fig.add_subplot(222)
+        # # ax3 = fig.add_subplot(223)
+        # ax4 = fig.add_subplot(111,projection='3d')
+        # def animate(i):
 
-    # for key, value in config.items():
-    #     f.attrs[key] = value
-    # f.close
+        # #     ax1.cla() # clear the previous image
+        # #     ax2.cla() # clear the previous image
+        # #     ax3.cla() # clear the previous image
+        #     ax4.cla() # clear the previous image
+        #     for i_turb in range(1):
+        #         phase = np.squeeze(np.squeeze(turb_force['phase'],axis=3),axis=1)
+        #         # phase = np.squeeze(turb_force['phase'][:,:,:,i_turb],axis=1)
+        #         turb_x=turb_loc['x'].to_numpy()[i_turb]
+        #         turb_y=turb_loc['y'].to_numpy()[i_turb]
+        #         turb_z=turb_loc['z'].to_numpy()[i_turb]
+        #         # print(turb_x)
 
-    # #     f = h5py.File(out_path+'/'+case_name+'.h5', 'r')
-    #     # print(f.attrs['dx'])
+        #         # ax4.plot3D([turb_x,turb_x],[turb_y,turb_y],[0,90],'k')
+        #         yaw_angle = np.sin((i+1)*(config['dtr']*downsample)*2*np.pi*dyn_yaw_freq[i_turb])*turb_loc['yaw'].to_numpy()[i_turb]/180*np.pi
+        #         for j in range(3):
+        #             # ax4.plot3D([turb_x+j*100,turb_x+j*100],[turb_y,turb_y],[0,90],'k')
 
-    #     # for key, value in config.items():
-    #     #     dset.attrs[]
-    #     # dset = f.create_dataset('config',data=config)
-       
-    #     # dset = f.create_dataset('v',data=v)
-    #     # dset = f.create_dataset('w',data=w)
-    #     # dset.attrs['property'] = config
-    #     # f.close()
-    #     # print(dset.name)
+        #             blade_coord[:,j,0] = displacement_flap[(i+1)*downsample,j,:,i_turb]*flap_scale
+        #             blade_coord[:,j,1] = blade*np.cos(phase[(i+1)*downsample,j]) - displacement_edge[(i+1)*downsample,j,:,i_turb]*edge_scale*np.sin(phase[(i+1)*downsample,j])
+        #             blade_coord[:,j,2] = blade*np.sin(phase[(i+1)*downsample,j]) + displacement_edge[(i+1)*downsample,j,:,i_turb]*edge_scale*np.cos(phase[(i+1)*downsample,j])
+                    
+        #             blade_coord_tilted[:,j,0] = blade_coord[:,j,0]*np.cos(tilt_angle) + blade_coord[:,j,2]*np.sin(tilt_angle)
+        #             blade_coord_tilted[:,j,1] = blade_coord[:,j,1]
+        #             blade_coord_tilted[:,j,2] = blade_coord[:,j,2]*np.cos(tilt_angle) - blade_coord[:,j,0]*np.sin(tilt_angle)
+                    
+        #             blade_coord_yawed[:,j,0] = blade_coord_tilted[:,j,0]*np.cos(yaw_angle) - blade_coord_tilted[:,j,1]*np.sin(yaw_angle)  
+        #             blade_coord_yawed[:,j,1] = blade_coord_tilted[:,j,1]*np.cos(yaw_angle) + blade_coord_tilted[:,j,0]*np.sin(yaw_angle) 
+        #             blade_coord_yawed[:,j,2] = blade_coord_tilted[:,j,2] 
 
-        turb_x=turb_loc['x'].to_numpy()[0]
-        turb_y=turb_loc['y'].to_numpy()[0]
-        turb_z=turb_loc['z'].to_numpy()[0]
+        #             # print(turb_x)
+                    
+        #             blade_coord_yawed[:,j,0] = turb_x + blade_coord_yawed[:,j,0]
+        #             blade_coord_yawed[:,j,1] = turb_y + blade_coord_yawed[:,j,1]
+        #             blade_coord_yawed[:,j,2] = turb_z + blade_coord_yawed[:,j,2]
+        #             # print(blade_coord_yawed.shape)
+        #     #         ax1.plot(blade_coord_yawed[:,j,1], blade_coord_yawed[:,j,2])
+        #     #         ax2.plot(blade_coord_yawed[:,j,0], blade_coord_yawed[:,j,2])
+        #     #         ax3.plot(blade_coord_yawed[:,j,0], blade_coord_yawed[:,j,1])
+        #             ax4.scatter3D(blade_coord_yawed[:,j,0],blade_coord_yawed[:,j,1], blade_coord_yawed[:,j,2],'.',s=1)
 
-        fig = figure(figsize=(8,8),dpi=200)
-        ax1 = fig.add_subplot(221)
-        ax2 = fig.add_subplot(222)
-        ax3 = fig.add_subplot(223)
-        ax4 = fig.add_subplot(224,projection='3d')
-
-        def animate(i):
-
-            ax1.cla() # clear the previous image
-            ax2.cla() # clear the previous image
-            ax3.cla() # clear the previous image
-            ax4.cla() # clear the previous image
-            yaw_angle = np.sin((i+1)*(config['dtr']*downsample)*2*np.pi*0.01666)*np.pi/6
-            # print((i+1)*downsample)
-            for j in range(3):
-                blade_coord[:,j,0] = displacement_flap[(i+1)*downsample,j,:,0]*flap_scale
-                blade_coord[:,j,1] = blade*np.cos(phase[(i+1)*downsample,j]) - displacement_edge[(i+1)*downsample,j,:,0]*edge_scale*np.sin(phase[(i+1)*downsample,j])
-                blade_coord[:,j,2] = blade*np.sin(phase[(i+1)*downsample,j]) + displacement_edge[(i+1)*downsample,j,:,0]*edge_scale*np.cos(phase[(i+1)*downsample,j])
-                
-                blade_coord_tilted[:,j,0] = blade_coord[:,j,0]*np.cos(tilt_angle) + blade_coord[:,j,2]*np.sin(tilt_angle)
-                blade_coord_tilted[:,j,1] = blade_coord[:,j,1]
-                blade_coord_tilted[:,j,2] = blade_coord[:,j,2]*np.cos(tilt_angle) - blade_coord[:,j,0]*np.sin(tilt_angle)
-                
-                blade_coord_yawed[:,j,0] = blade_coord_tilted[:,j,0]*np.cos(yaw_angle) - blade_coord_tilted[:,j,1]*np.sin(yaw_angle)  
-                blade_coord_yawed[:,j,1] = blade_coord_tilted[:,j,1]*np.cos(yaw_angle) + blade_coord_tilted[:,j,0]*np.sin(yaw_angle) 
-                blade_coord_yawed[:,j,2] = blade_coord_tilted[:,j,2] 
-
-
-                blade_coord_yawed[:,j,0] = turb_x + blade_coord_yawed[:,j,0]
-                blade_coord_yawed[:,j,1] = turb_y + blade_coord_yawed[:,j,1]
-                blade_coord_yawed[:,j,2] = turb_z + blade_coord_yawed[:,j,2]
-
-                ax1.plot(blade_coord_yawed[:,j,1], blade_coord_yawed[:,j,2])
-                ax2.plot(blade_coord_yawed[:,j,0], blade_coord_yawed[:,j,2])
-                ax3.plot(blade_coord_yawed[:,j,0], blade_coord_yawed[:,j,1])
-                ax4.plot3D(blade_coord_yawed[:,j,0],blade_coord_yawed[:,j,1], blade_coord_yawed[:,j,2])
-
-            ax1.axis('scaled')
-            ax1.set_xlabel('y (m)')
-            ax1.set_ylabel('z (m)')
-            ax1.set_ylim([0,200]) # fix the x axis
-            ax1.set_xlim([turb_y-100,turb_y+100]) # fix the y axis
+        # #     ax1.axis('scaled')
+        # #     ax1.set_xlabel('y (m)')
+        # #     ax1.set_ylabel('z (m)')
+        # #     ax1.set_ylim([0,200]) # fix the x axis
+        # #     ax1.set_xlim([turb_y-100,turb_y+100]) # fix the y axis
             
-            ax2.axis('scaled')
-            ax2.set_xlabel('x (m)')
-            ax2.set_ylabel('z (m)')
-            ax2.set_ylim([0,200]) # fix the x axis
-            ax2.set_xlim([turb_x-100,turb_x+100]) # fix the y axis
+        # #     ax2.axis('scaled')
+        # #     ax2.set_xlabel('x (m)')
+        # #     ax2.set_ylabel('z (m)')
+        # #     ax2.set_ylim([0,200]) # fix the x axis
+        # #     ax2.set_xlim([turb_x-100,turb_x+100]) # fix the y axis
 
-            ax3.axis('scaled')
-            ax3.set_xlabel('x (m)')
-            ax3.set_ylabel('y (m)')
-            ax3.set_ylim([turb_y-100,turb_y+100]) # fix the x axis
-            ax3.set_xlim([turb_x-100,turb_x+100]) # fix the y axis
+        # #     ax3.axis('scaled')
+        # #     ax3.set_xlabel('x (m)')
+        # #     ax3.set_ylabel('y (m)')
+        # #     ax3.set_ylim([turb_y-100,turb_y+100]) # fix the x axis
+        # #     ax3.set_xlim([turb_x-100,turb_x+100]) # fix the y axis
 
-            ax4.set_xlabel('x (m)')
-            ax4.set_ylabel('y (m)')
-            ax4.set_zlabel('z (m)')
-            ax4.set_zlim([0,200]) # fix the x axis
-            ax4.set_xlim([turb_x-100,turb_x+100]) # fix the y axis
-            ax4.set_ylim([turb_y-100,turb_y+100]) # fix the y axis
+        #     # ax4.set_xlabel('x (m)')
+        #     # ax4.set_ylabel('y (m)')
+        #     # ax4.set_zlabel('z (m)')
+        #     ax4.set_xlim([1024-128,1024+128])
+        #     ax4.set_ylim([512-128,1024+128])
+        #     ax4.set_zlim([0,256])
+        #     ax4.set_box_aspect([1,1,1])
+        #     ax4.azim = -90
+        #     ax4.elev = 0
 
-            print(i)
+        #     print(i)
 
-        anim = animation.FuncAnimation(fig, animate, frames=100)
-        anim.save(out_path+'/blade_movement_3d.gif',writer='pillow', fps=20)
+        # anim = animation.FuncAnimation(fig, animate, frames=100)
+        # anim.save(out_path+'/blade_movement_3d.gif',writer='pillow', fps=20)
