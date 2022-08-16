@@ -610,7 +610,7 @@ module turbine
             if (i_turb == 1) then
                 time = t*dt*z_i
                 gamma = turb_loc(i_turb,4)*(sin(2*pi*dyn_yaw_freq(i_turb)*time))
-                dyn_yaw_speed = (- turb_loc(i_turb,4)/2.0*2*pi*dyn_yaw_freq(i_turb)*sin(2*pi*dyn_yaw_freq(i_turb)*time))*cos(phase_angle(blade,i_turb))*(r(i_r,i_turb)*z_i)
+                dyn_yaw_speed = (turb_loc(i_turb,4)*2*pi*dyn_yaw_freq(i_turb)*cos(2*pi*dyn_yaw_freq(i_turb)*time))*cos(phase_angle(blade,i_turb))*(r(i_r,i_turb)*z_i)
             end if
             call elementCoordinate(mu,deformation(blade,i_r,i_turb,1),deformation(blade,i_r,i_turb,2),&
                             gamma,phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))

@@ -110,7 +110,7 @@ def anime(PATH, case_name):
 
 
 
-    if config['ts_flag'] > 3:
+    if config['ts_flag'] > 0:
 
         # u  = fctlib.load_3d('001_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
     
@@ -127,21 +127,27 @@ def anime(PATH, case_name):
         # f.create_dataset('u',data=result_4d['u_inst_c'])
         # f.create_dataset('v',data=result_4d['v_inst_c'])
         # f.create_dataset('w',data=result_4d['w_inst_c'])
-
+        # print(space['y'].shape)
         # f.close
 
-        velo_data = np.zeros([199,3,256,32,128])
+        velo_data = np.zeros([9,3,1024-128,32,128])
 
-        for i in range(199):
-            u = fctlib.load_3d(str(i+801).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-            v = fctlib.load_3d(str(i+801).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-            w = post.node2center_3d(fctlib.load_3d(str(i+801).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
+        for i in range(99):
+            u = fctlib.load_3d(str(i+1).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            # v = fctlib.load_3d(str(i+1).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            # w = post.node2center_3d(fctlib.load_3d(str(i+1).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
             
-            velo_data[i,2,:,:,:] = w[128:,64-16:64+16,:128]
-            velo_data[i,0,:,:,:] = u[128:,64-16:64+16,:128]
-            velo_data[i,1,:,:,:] = v[128:,64-16:64+16,:128]
+            # velo_data[i,2,:,:,:] = w[128:,64-16:64+16,:128]
+            # velo_data[i,0,:,:,:] = u[128:,64-16:64+16,:128]
+            # velo_data[i,1,:,:,:] = v[128:,64-16:64+16,:128]
             
             print(i)
+
+            fig = figure(figsize=(8,6),dpi=100)
+            ax1 = fig.add_subplot(111)
+            ax1.imshow((u[:,:,44]).T)
+            plt.savefig(out_path+'/'+str(i+1).zfill(3)+'_flowfield_xz.png')
+            plt.close()
 
         f.create_dataset('U',data=velo_data)
         f.close
