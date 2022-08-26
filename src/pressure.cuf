@@ -218,9 +218,9 @@ module pressure
         ! Reused from Numerical recipe
         INTEGER*4 n
         real(fp) a(n),b(n),c(n),r(n),u(n)
-        ! PARAMETER (NMAX=nz)
+        PARAMETER (NMAX=1024)
         INTEGER*4 j
-        real(fp) bet,gam(nz)
+        real(fp) bet,gam(NMAX)
     
         bet=b(1)
         u(1)=r(1)/bet
