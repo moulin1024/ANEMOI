@@ -30,10 +30,10 @@ from matplotlib.pyplot import figure
 from matplotlib import animation, rc
 from mpl_toolkits.mplot3d import Axes3D
 import fatigue
-from skimage.measure import marching_cubes
+# from skimage.measure import marching_cubes
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import cv2
+# from mpl_toolkits.mplot3d import Axes3D
+# import cv2
 # from pyevtk.hl import gridToVTK
 
 
@@ -124,32 +124,32 @@ def anime(PATH, case_name):
         f.create_dataset('z',data=space['z_c'])
 
         f.create_dataset('t_sample',data=time['t_ts'])
-        # f.create_dataset('u',data=result_4d['u_inst_c'])
+        # f.create_dataset('u',data=result_4d['u_inst_c'][:,:,:])
         # f.create_dataset('v',data=result_4d['v_inst_c'])
         # f.create_dataset('w',data=result_4d['w_inst_c'])
         # print(space['y'].shape)
-        # f.close
+        f.close
+        t_count = 600
+        velo_data = np.zeros([t_count,1024-100,128])
 
-        velo_data = np.zeros([9,3,1024-128,32,128])
-
-        for i in range(99):
-            u = fctlib.load_3d(str(i+1).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+        for i in range(t_count):
+            u = fctlib.load_3d(str(i+101).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
             # v = fctlib.load_3d(str(i+1).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
             # w = post.node2center_3d(fctlib.load_3d(str(i+1).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
             
             # velo_data[i,2,:,:,:] = w[128:,64-16:64+16,:128]
-            # velo_data[i,0,:,:,:] = u[128:,64-16:64+16,:128]
+            velo_data[i,:,:] = u[100:,:,44]
             # velo_data[i,1,:,:,:] = v[128:,64-16:64+16,:128]
             
             print(i)
 
-            fig = figure(figsize=(8,6),dpi=100)
-            ax1 = fig.add_subplot(111)
-            ax1.imshow((u[:,:,44]).T)
-            plt.savefig(out_path+'/'+str(i+1).zfill(3)+'_flowfield_xz.png')
-            plt.close()
+            # fig = figure(figsize=(8,6),dpi=100)
+            # ax1 = fig.add_subplot(111)
+            # ax1.imshow((velo_data[i,:,:]).T)
+            # plt.savefig(out_path+'/'+str(i+201).zfill(3)+'_flowfield_xz.png')
+            # plt.close()
 
-        f.create_dataset('U',data=velo_data)
+        f.create_dataset('u',data=velo_data)
         f.close
         # u = np.flip(result_4d['u_inst_c'],axis=2)
         # v = - np.flip(result_4d['v_inst_c'],axis=2)
@@ -206,16 +206,16 @@ def anime(PATH, case_name):
         # print(power.shape)
         # plt.plot(power[:,0])
         # plt.savefig('test.png')
-        f.create_dataset('time',data=time['t'])
-        f.create_dataset('fx',data=turb_force['fx'])
-        f.create_dataset('ft',data=turb_force['ft'])
-        f.create_dataset('displacement_flap',data=turb_force['displacement_flap'])
-        f.create_dataset('displacement_edge',data=turb_force['displacement_edge'])
-        f.create_dataset('moment_flap',data=turb_force['moment_flap'])
-        f.create_dataset('moment_edge',data=turb_force['moment_edge'])
+        f.create_dataset('time',data=time['t'][::10])
+        f.create_dataset('fx',data=turb_force['fx'][::10,:,:,:])
+        f.create_dataset('ft',data=turb_force['ft'][::10,:,:,:])
+        f.create_dataset('displacement_flap',data=turb_force['displacement_flap'][::10,:,:,:])
+        f.create_dataset('displacement_edge',data=turb_force['displacement_edge'][::10,:,:,:])
+        f.create_dataset('moment_flap',data=turb_force['moment_flap'][::10,:,:,:])
+        f.create_dataset('moment_edge',data=turb_force['moment_edge'][::10,:,:,:])
         # f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
         # f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
-        f.create_dataset('phase',data=turb_force['phase'])
+        f.create_dataset('phase',data=turb_force['phase'][::10,:])
 
         f.close
 
