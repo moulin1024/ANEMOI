@@ -874,7 +874,7 @@ subroutine recompose_ts(fname, me,t)
         end do
 
         ! save new file
-        write(ftime,'(i3.3)'),t/100 
+        write(ftime,'(i3.3)'),(t-ts_tstart)/100 
         open (unit=99,file=('output/'//ftime//'_'//fname), status='unknown', form='unformatted', access='stream')
         write (99) q
         close(99)
