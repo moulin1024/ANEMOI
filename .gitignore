@@ -20,3 +20,4 @@ post/*
 post/core.*
 test.py
 src-old
+core*
