@@ -1,6 +1,6 @@
 import imageio
 images = []
-for j in range(140):
+for j in range(20):
     print(j)
-    images.append(imageio.imread('job/dyn-yaw-8wt-anime/output/'+str(j+201).zfill(3)+'_flowfield_xz.png'))
-imageio.mimsave('test-400.gif',images,fps=60)
+    images.append(imageio.imread('job/NREL-m/output/'+str(j).zfill(3)+'_flowfield_xz.png'))
+imageio.mimsave('test.gif',images,fps=30)

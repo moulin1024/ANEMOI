@@ -74,12 +74,12 @@ def anime(PATH, case_name):
     if config['ta_flag'] > 10:
         result_3d = post.get_result_3d(src_inp_path,src_out_path, config)
         u_avg = result_3d['u_avg_c']
-        # v_avg = result_3d['v_avg_c']
-        # w_avg = result_3d['w_avg_c']
+        v_avg = result_3d['v_avg_c']
+        w_avg = result_3d['w_avg_c']
 
         u_std = result_3d['u_std_c']
-        # v_std = result_3d['v_std_c']
-        # w_std = result_3d['w_std_c']
+        v_std = result_3d['v_std_c']
+        w_std = result_3d['w_std_c']
 
         f = h5py.File(out_path+'/'+case_name+'_stat.h5','w')
         for key, value in config.items():
@@ -90,27 +90,28 @@ def anime(PATH, case_name):
         f.create_dataset('z',data=space['z_c'])
 
         f.create_dataset('u_avg',data=u_avg )
-        # f.create_dataset('v_avg',data=v_avg)
-        # f.create_dataset('w_avg',data=w_avg)
+        f.create_dataset('v_avg',data=v_avg)
+        f.create_dataset('w_avg',data=w_avg)
 
         f.create_dataset('u_std',data=u_std)
-        # f.create_dataset('v_std',data=v_std)
-        # f.create_dataset('w_std',data=w_std)
+        f.create_dataset('v_std',data=v_std)
+        f.create_dataset('w_std',data=w_std)
 
         f.close
 
-    #     fig = figure(figsize=(8,8))
-    #     ax = fig.add_subplot(111)
-    #     # im = ax.imshow(u_avg[176,63-8:63+8,45-32:45+32].T,origin='lower',aspect=0.25)
+        fig = figure(figsize=(8,8))
+        ax = fig.add_subplot(111)
+        im = ax.imshow(u_avg[:,:,9].T,origin='lower',aspect=0.25)
+        plt.colorbar(im)
     #     # print(np.mean(u_avg[176,63-8:63+8,45-32:45+32]))
     #     # im = ax.imshow()
     #     im = ax.quiver(v_avg[176,::4,::4].T,w_avg[176,::4,::4].T,scale=50)
-    #     plt.savefig(out_path+'/test.png')
+        plt.savefig(out_path+'/test.png')
     #     print('check')
 
 
 
-    if config['ts_flag'] > 10:
+    if config['ts_flag'] > 0:
 
         # u  = fctlib.load_3d('001_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
     
@@ -129,25 +130,26 @@ def anime(PATH, case_name):
         # f.create_dataset('w',data=result_4d['w_inst_c'])
         # print(space['y'].shape)
         f.close
-        t_count = 600
-        velo_data = np.zeros([t_count,1024-100,128])
+        t_count = 20
+        velo_data = np.zeros([t_count,512,64])
 
         for i in range(t_count):
-            u = fctlib.load_3d(str(i+101).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            # print(i)
+            u = fctlib.load_3d(str(i).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
             # v = fctlib.load_3d(str(i+1).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
             # w = post.node2center_3d(fctlib.load_3d(str(i+1).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
             
             # velo_data[i,2,:,:,:] = w[128:,64-16:64+16,:128]
-            velo_data[i,:,:] = u[100:,:,44]
+            velo_data[i,:,:] = u[:,:,22]
             # velo_data[i,1,:,:,:] = v[128:,64-16:64+16,:128]
             
             print(i)
 
-            # fig = figure(figsize=(8,6),dpi=100)
-            # ax1 = fig.add_subplot(111)
-            # ax1.imshow((velo_data[i,:,:]).T)
-            # plt.savefig(out_path+'/'+str(i+201).zfill(3)+'_flowfield_xz.png')
-            # plt.close()
+            fig = figure(figsize=(8,6),dpi=100)
+            ax1 = fig.add_subplot(111)
+            ax1.imshow((velo_data[i,:,:]).T)
+            plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
+            plt.close()
 
         f.create_dataset('u',data=velo_data)
         f.close
@@ -189,7 +191,7 @@ def anime(PATH, case_name):
         #     plt.close()
 
 
-    if config['turb_flag'] > 0:
+    if config['turb_flag'] > 10:
         turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():
