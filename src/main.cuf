@@ -529,8 +529,8 @@ program main
                 if (mod(t-1,turb_count)==0) then
                     call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
                     ! call turbine_force(Fx,Fy,Fz,CTF_alm,power,displacement_host,moment_host,velocity_host,u,v,w,turb_loc,t)
-                    CTF_alm_host = CTF_alm
-                    call write_turb(CTF_alm_host,displacement_host,moment_host,velocity_host,me)
+                    ! CTF_alm_host = CTF_alm
+                    ! call write_turb(CTF_alm_host,displacement_host,moment_host,velocity_host,me)
                 end if
 
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
