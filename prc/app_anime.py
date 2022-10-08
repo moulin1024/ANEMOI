@@ -130,8 +130,8 @@ def anime(PATH, case_name):
         # f.create_dataset('w',data=result_4d['w_inst_c'])
         # print(space['y'].shape)
         f.close
-        t_count = 20
-        velo_data = np.zeros([t_count,512,64])
+        t_count = 10
+        velo_data = np.zeros([t_count,1024,64])
 
         for i in range(t_count):
             # print(i)
