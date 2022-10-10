@@ -631,11 +631,11 @@ program main
         !-----------------------------------------------------------------------
         ! read (and force) inflow
 
-        ! if (sim_flag == 3) then
-        !     call read_inflow(u,v,w,t,me)
-        ! end if
+        if (sim_flag == 3) then
+            call read_inflow(u,v,w,t,me)
+        end if
 
-        call read_inflow_const(u,v,w,t,me)
+        ! call read_inflow_const(u,v,w,t,me)
         ! !-----------------------------------------------------------------------
         ! ! compute time average outputs (just the sum at this stage)
 
