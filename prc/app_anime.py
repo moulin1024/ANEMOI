@@ -130,8 +130,8 @@ def anime(PATH, case_name):
         # f.create_dataset('w',data=result_4d['w_inst_c'])
         # print(space['y'].shape)
         f.close
-        t_count = 10
-        velo_data = np.zeros([t_count,1024,64])
+        t_count = 300
+        velo_data = np.zeros([t_count,256,64])
 
         for i in range(t_count):
             # print(i)
@@ -145,11 +145,11 @@ def anime(PATH, case_name):
             
             print(i)
 
-            fig = figure(figsize=(8,6),dpi=100)
-            ax1 = fig.add_subplot(111)
-            ax1.imshow((velo_data[i,:,:]).T)
-            plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
-            plt.close()
+            # fig = figure(figsize=(8,6),dpi=100)
+            # ax1 = fig.add_subplot(111)
+            # ax1.imshow((velo_data[i,:,:]).T)
+            # plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
+            # plt.close()
 
         f.create_dataset('u',data=velo_data)
         f.close
