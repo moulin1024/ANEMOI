@@ -102,6 +102,7 @@ program main
 
     integer :: localRank
     character(len=10) :: rankStr
+    character(4) :: ftime
 
     ! MPI_Comm loc_comm
     ! MPI_COMM_SPLIT_TYPE(COMM, SPLIT_TYPE, KEY, INFO, NEWCOMM, IERROR)
@@ -375,10 +376,17 @@ program main
             call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
             if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*10) == 0) then 
                 print *,'Write instant field:'
-                call open_ts1(me)
-                call write_ts1(u_host,v_host,w_host,me)
-                call close_ts1(me)
-                call recompose_ts1(me,t)
+                ! call open_ts1(me)
+                ! call write_ts1(u_host,v_host,w_host,me)
+                ! call close_ts1(me)
+                
+                write(ftime,'(i4.4)'),(t-ts_tstart)/(c_count*10)
+                ! print *, ftime
+
+                open (unit=(51100),file=('output/'//ftime//'_ts_slice_u.bin'),status='unknown', form='unformatted', access='stream')
+                write (51100) u_host(:,:,22)
+                close (unit=(51100))
+                ! call recompose_ts1(me,t)
             end if
             ! print *,mean_power,power_host
         end if

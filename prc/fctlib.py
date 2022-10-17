@@ -342,6 +342,14 @@ def load_3d(var_name, Nx, Ny, Nz, double_flag, path):
     var = var.reshape((Nx,  Ny,  Nz), order='F')
     return var
 
+def load_2d(var_name, Nx, Ny, double_flag, path):
+    if double_flag == 0:
+        var = np.fromfile(os.path.join(path, var_name + '.bin'), dtype=np.float32, count=Nx*Ny)
+    else:
+        var = np.fromfile(os.path.join(path, var_name + '.bin'), dtype=np.float64, count=Nx*Ny)        
+    var = var.reshape((Nx,  Ny), order='F')
+    return var
+
 def node2center_4d(var_n):
     var_c = 0.5*(var_n[:,:,:,:-1]+var_n[:,:,:,1:])
     return var_c

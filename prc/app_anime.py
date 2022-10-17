@@ -130,26 +130,26 @@ def anime(PATH, case_name):
         # f.create_dataset('w',data=result_4d['w_inst_c'])
         # print(space['y'].shape)
         f.close
-        t_count = 300
-        velo_data = np.zeros([t_count,256,64])
+        t_count = 150
+        velo_data = np.zeros([t_count,128,128])
 
         for i in range(t_count):
             # print(i)
-            u = fctlib.load_3d(str(i).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            u = fctlib.load_2d(str(i).zfill(4)+'_ts_slice_u', config['nx'],  config['ny'], config['double_flag'], src_out_path)
             # v = fctlib.load_3d(str(i+1).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
             # w = post.node2center_3d(fctlib.load_3d(str(i+1).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
             
             # velo_data[i,2,:,:,:] = w[128:,64-16:64+16,:128]
-            velo_data[i,:,:] = u[:,:,22]
+            # velo_data[i,:,:] = u[:,:,90]
             # velo_data[i,1,:,:,:] = v[128:,64-16:64+16,:128]
             
             print(i)
 
-            # fig = figure(figsize=(8,6),dpi=100)
-            # ax1 = fig.add_subplot(111)
-            # ax1.imshow((velo_data[i,:,:]).T)
-            # plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
-            # plt.close()
+            fig = figure(figsize=(8,6),dpi=100)
+            ax1 = fig.add_subplot(111)
+            ax1.imshow(u.T,origin='lower',aspect=1/1)
+            plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
+            plt.close()
 
         f.create_dataset('u',data=velo_data)
         f.close
