@@ -130,7 +130,7 @@ def anime(PATH, case_name):
         # f.create_dataset('w',data=result_4d['w_inst_c'])
         # print(space['y'].shape)
         f.close
-        t_count = 9
+        t_count = 10
         velo_data = np.zeros([t_count,128,128])
 
         for i in range(t_count):
@@ -149,7 +149,7 @@ def anime(PATH, case_name):
 
             fig = figure(figsize=(8,6),dpi=100)
             ax1 = fig.add_subplot(111)
-            ax1.imshow(qcrit[:,:,22].T,origin='lower',aspect=1/1)
+            ax1.imshow(qcrit[:,:,22].T,origin='lower',aspect=1/1,vmin=-10000,vmax=10000,cmap='bwr')
             plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
             plt.close()
 

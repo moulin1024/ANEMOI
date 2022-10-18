@@ -978,8 +978,8 @@ attributes(global) subroutine compute_q_criterion(qcrit,dudx,dudy,dudz,dvdx,dvdy
     k = (blockIdx%z - 1)* blockDim%z + threadIdx%z
 
     if (k>1 .and. k<nz2) then
-        qcrit(i,j,k)=dudx(i,j,k)*dvdy(i,j,k)+dvdy(i,j,k)*dwdz(i,j,k)+dwdz(i,j,k)*dudx(i,j,k)-&
-                     dudy(i,j,k)*dvdx(i,j,k)-dvdz(i,j,k)*dwdy(i,j,k)-dwdx(i,j,k)*dudz(i,j,k)     
+        qcrit(i,j,k)=(dudx(i,j,k)*dvdy(i,j,k)+dvdy(i,j,k)*dwdz(i,j,k)+dwdz(i,j,k)*dudx(i,j,k)-&
+                     dudy(i,j,k)*dvdx(i,j,k)-dvdz(i,j,k)*dwdy(i,j,k)-dwdx(i,j,k)*dudz(i,j,k))/z_i     
     end if
 
 end subroutine
