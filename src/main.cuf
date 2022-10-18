@@ -31,12 +31,12 @@ program main
     ! flow
     real(fp),dimension(nx,ny):: zo_host,ustar_host,m_host
     real(fp),dimension(nx,ny,nz2) :: u_host,v_host,w_host,&
-                                    rhsx_host,rhsy_host,rhsz_host
+                                    rhsx_host,rhsy_host,rhsz_host,qcrit_host
     real(fp), dimension(nx,ny,nz2) :: lm_old_host,mm_old_host,qn_old_host,nn_old_host
 
     real(fp),dimension(nx,ny,nz2) :: fx_host,fy_host,fz_host
     real(fp),dimension(nx,ny),device :: zo,ustar,m 
-    real(fp),dimension(:,:,:),allocatable,device  :: u,v,w,p,&       ! Velocity & pressure   
+    real(fp),dimension(:,:,:),allocatable,device  :: u,v,w,p,q,&       ! Velocity & pressure   
                                              cx,cy,cz,&          ! Convection term      
                                              txx,txy,txz,&       ! Stress term
                                              tyy,tyz,tzz,&       
@@ -146,7 +146,8 @@ program main
     allocate(u(nx,ny,nz2),&
              v(nx,ny,nz2),&
              w(nx,ny,nz2),&
-             p(nx,ny,nz2),&       ! Velocity & pressure   
+             p(nx,ny,nz2),&
+             q(nx,ny,nz2),&       ! Velocity & pressure   
              cx(nx,ny,nz2),&
              cy(nx,ny,nz2),&
              cz(nx,ny,nz2),&          ! Convection term      
@@ -368,25 +369,21 @@ program main
             ! v_host = fy 
             ! w_host = fz 
 
+            call compute_q_criterion<<<grid, tBlock>>>(q,dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz)
+            
             u_host = u
             v_host = v 
-            w_host = w 
+            w_host = w
+            qcrit_host = q
             ustar_host = ustar 
 
             call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
             if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*10) == 0) then 
                 print *,'Write instant field:'
-                ! call open_ts1(me)
-                ! call write_ts1(u_host,v_host,w_host,me)
-                ! call close_ts1(me)
-                
-                write(ftime,'(i4.4)'),(t-ts_tstart)/(c_count*10)
-                ! print *, ftime
-
-                open (unit=(51100),file=('output/'//ftime//'_ts_slice_u.bin'),status='unknown', form='unformatted', access='stream')
-                write (51100) u_host(:,:,22)
-                close (unit=(51100))
-                ! call recompose_ts1(me,t)
+                call open_ts1(me)
+                call write_ts1(u_host,v_host,w_host,qcrit_host,me)
+                call close_ts1(me)
+                call recompose_ts1(me,t)
             end if
             ! print *,mean_power,power_host
         end if

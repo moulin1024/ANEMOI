@@ -436,6 +436,8 @@ subroutine open_ts1(me)
             status='unknown', form='unformatted', access='stream')
         open (unit=(53000+me),file=('output/p'//trim(fme)//'_'//'ts_w.bin'), &
             status='unknown', form='unformatted', access='stream')
+        open (unit=(53001+me),file=('output/p'//trim(fme)//'_'//'ts_q.bin'), &
+            status='unknown', form='unformatted', access='stream')
     end if
 
 end subroutine open_ts1
@@ -609,16 +611,17 @@ subroutine write_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz,me)
 
 end subroutine write_ta2
 
-subroutine write_ts1(u,v,w,me)
+subroutine write_ts1(u,v,w,qcrit,me)
 
     implicit none
     integer me,nall
-    real(fp), dimension(nx,ny,nz2), intent(in) :: u,v,w
+    real(fp), dimension(nx,ny,nz2), intent(in) :: u,v,w,qcrit
 
     if (me <= ts_kend/nzb -1 ) then
         write (51000+me) u(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
         write (52000+me) v(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
         write (53000+me) w(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
+        write (53001+me) qcrit(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
     end if
 
 end subroutine write_ts1
@@ -706,6 +709,7 @@ subroutine close_ts1(me)
         close (unit=(51000+me))
         close (unit=(52000+me))
         close (unit=(53000+me))
+        close (unit=(53001+me))
     end if
 
 end subroutine close_ts1
@@ -801,6 +805,7 @@ subroutine recompose_ts1(me,t)
     call recompose_ts('ts_u.bin', me, t)
     call recompose_ts('ts_v.bin', me, t)
     call recompose_ts('ts_w.bin', me, t)
+    call recompose_ts('ts_q.bin', me, t)
 
     ! call recompose_ts('ts_fx.bin', me)
     ! call recompose_ts('ts_fy.bin', me)
@@ -958,6 +963,27 @@ subroutine write_inflow(u,v,w,t,me)
     ! end if
 
 end subroutine write_inflow
+
+
+attributes(global) subroutine compute_q_criterion(qcrit,dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz)
+    implicit none
+    integer me,nall
+
+    real(fp),dimension(nx,ny,nz2),intent(out) :: qcrit
+    real(fp),dimension(nx,ny,nz2),intent(in) :: dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz
+    integer :: i,j,k
+    ! Watch out for the inversion of axis sequence
+    i = (blockIdx%x - 1)* blockDim%x + threadIdx%x
+    j = (blockIdx%y - 1)* blockDim%y + threadIdx%y
+    k = (blockIdx%z - 1)* blockDim%z + threadIdx%z
+
+    if (k>1 .and. k<nz2) then
+        qcrit(i,j,k)=dudx(i,j,k)*dvdy(i,j,k)+dvdy(i,j,k)*dwdz(i,j,k)+dwdz(i,j,k)*dudx(i,j,k)-&
+                     dudy(i,j,k)*dvdx(i,j,k)-dvdz(i,j,k)*dwdy(i,j,k)-dwdx(i,j,k)*dudz(i,j,k)     
+    end if
+
+end subroutine
+
 
 !-------------------------------------------------------------------------------
 ! write prec
