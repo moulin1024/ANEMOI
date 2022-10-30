@@ -22,10 +22,15 @@
 #     # python prc/wireles.py pre dyn-yaw-8wt-9-120s-$idx
 # done
 
-./run.sh dyn-yaw-8wt-9-5D-64s-1
-./run.sh dyn-yaw-8wt-9-5D-72s-1
-./run.sh dyn-yaw-8wt-9-5D-80s-1
-./run.sh dyn-yaw-8wt-9-5D-90s-1
-./run.sh dyn-yaw-8wt-9-5D-128s-1
-./run.sh dyn-yaw-8wt-9-5D-144s-1
-./run.sh dyn-yaw-8wt-9-5D-160s-1
+# for i in {1..9}
+# do
+#     ./run.sh ${i}D-baseline
+# done
+
+# ./run.sh dyn-yaw-8wt-9-5D-64s-1
+# ./run.sh dyn-yaw-8wt-9-5D-72s-1
+# ./run.sh dyn-yaw-8wt-9-5D-80s-1
+# ./run.sh dyn-yaw-8wt-9-5D-90s-1
+# ./run.sh dyn-yaw-8wt-9-5D-128s-1
+# ./run.sh dyn-yaw-8wt-9-5D-144s-1
+# ./run.sh dyn-yaw-8wt-9-5D-160s-1

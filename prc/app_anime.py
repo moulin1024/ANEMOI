@@ -130,30 +130,32 @@ def anime(PATH, case_name):
         # f.create_dataset('w',data=result_4d['w_inst_c'])
         # print(space['y'].shape)
         f.close
-        t_count = 10
-        velo_data = np.zeros([t_count,128,128])
+        t_count = (config['nsteps']-config['ts_tstart'])//100
+        velo_data = np.zeros([t_count,config['nx'],config['ny'],3])
 
         for i in range(t_count):
             # print(i)
             # qcrit = fctlib.load_3d(str(i).zfill(4)+'_ts_slice_u', config['nx'],  config['ny'], config['double_flag'], src_out_path)
-            qcrit = fctlib.load_3d(str(i+1).zfill(3)+'_ts_q', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-            # v = fctlib.load_3d(str(i+1).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-            # v = fctlib.load_3d(str(i+1).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-            # w = post.node2center_3d(fctlib.load_3d(str(i+1).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
+            # qcrit = fctlib.load_3d(str(i).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            u = fctlib.load_3d(str(i).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            v = fctlib.load_3d(str(i).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            w = post.node2center_3d(fctlib.load_3d(str(i).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
             
             # velo_data[i,2,:,:,:] = w[128:,64-16:64+16,:128]
             # velo_data[i,:,:] = u[:,:,90]
             # velo_data[i,1,:,:,:] = v[128:,64-16:64+16,:128]
             
             print(i)
+            velo_data[i,:,:,0] = u[:,:,22]
+            velo_data[i,:,:,1] = v[:,:,22]
+            velo_data[i,:,:,2] = w[:,:,22]
+            # fig = figure(figsize=(8,6),dpi=100)
+            # ax1 = fig.add_subplot(111)
+            # ax1.imshow(v[:,:,22].T,origin='lower',aspect=1/1,vmin=-2,vmax=2,cmap='bwr')
+            # plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
+            # plt.close()
 
-            fig = figure(figsize=(8,6),dpi=100)
-            ax1 = fig.add_subplot(111)
-            ax1.imshow(qcrit[:,:,22].T,origin='lower',aspect=1/1,vmin=-10000,vmax=10000,cmap='bwr')
-            plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
-            plt.close()
-
-        f.create_dataset('u',data=velo_data)
+        f.create_dataset('velocity',data=velo_data)
         f.close
         # u = np.flip(result_4d['u_inst_c'],axis=2)
         # v = - np.flip(result_4d['v_inst_c'],axis=2)
