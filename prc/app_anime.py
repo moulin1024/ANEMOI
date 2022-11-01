@@ -71,7 +71,7 @@ def anime(PATH, case_name):
     space = post.get_space(config)
     time = post.get_time(config)
 
-    if config['ta_flag'] > 10:
+    if config['ta_flag'] > 20:
         result_3d = post.get_result_3d(src_inp_path,src_out_path, config)
         u_avg = result_3d['u_avg_c']
         v_avg = result_3d['v_avg_c']
@@ -111,7 +111,7 @@ def anime(PATH, case_name):
 
 
 
-    if config['ts_flag'] > 0:
+    if config['ts_flag'] > 10:
 
         # u  = fctlib.load_3d('001_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
     
@@ -146,14 +146,14 @@ def anime(PATH, case_name):
             # velo_data[i,1,:,:,:] = v[128:,64-16:64+16,:128]
             
             print(i)
-            velo_data[i,:,:,0] = u[:,:,22]
-            velo_data[i,:,:,1] = v[:,:,22]
-            velo_data[i,:,:,2] = w[:,:,22]
-            # fig = figure(figsize=(8,6),dpi=100)
-            # ax1 = fig.add_subplot(111)
-            # ax1.imshow(v[:,:,22].T,origin='lower',aspect=1/1,vmin=-2,vmax=2,cmap='bwr')
-            # plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
-            # plt.close()
+            velo_data[i,:,:,0] = u[:,:,90]
+            velo_data[i,:,:,1] = v[:,:,90]
+            velo_data[i,:,:,2] = w[:,:,90]
+            fig = figure(figsize=(8,6),dpi=100)
+            ax1 = fig.add_subplot(111)
+            ax1.imshow(u[:,:,44].T,origin='lower',aspect=1/1)
+            plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
+            plt.close()
 
         f.create_dataset('velocity',data=velo_data)
         f.close
@@ -195,7 +195,7 @@ def anime(PATH, case_name):
         #     plt.close()
 
 
-    if config['turb_flag'] > 10:
+    if config['turb_flag'] > 0:
         turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():
@@ -225,9 +225,14 @@ def anime(PATH, case_name):
 
         f.close
 
-        # displacement_flap = turb_force['displacement_flap']
-        # displacement_edge = turb_force['displacement_edge']
+        displacement_flap = turb_force['moment_flap']
+        displacement_edge = turb_force['displacement_edge']
 
+        print(displacement_flap.shape)
+        plt.plot(displacement_flap[:,0,0,0])
+        print(displacement_flap[:,0,0,0])
+        # plt.xlim([900,1000])
+        plt.savefig('test.png')
         # dt = config['dt']
         # downsample = 10
         # flap_scale = 1

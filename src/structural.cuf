@@ -17,7 +17,7 @@ module structural
     real, parameter :: total_time_warmup = 20
     real, parameter :: delta_t = total_time_warmup/T_warmup
     real :: delta_r = radius/(N-1)
-    integer,parameter :: T_split = int(dt*z_i/delta_t)
+    integer,parameter :: T_split = int(dt*z_i*turb_count/delta_t)
     contains
 
     subroutine aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
@@ -218,8 +218,8 @@ module structural
         else 
             do i = 2, N+1
                 do j = 1,2
-                    ! damping_coefficent = damping*12*EI(i,j,j)/(rho(i)*radius**3)
-                    V_new(i,j) = (1-0.3*delta_t)*V_old(i,j) + &
+                    ! damping_coefficent = 
+                    V_new(i,j) = (1-0.1*delta_t)*V_old(i,j) + &
                         delta_t*((-1.0/rho(i))*((M_old(i+1,j)-(2.0*M_old(i,j))+M_old(i-1,j))/delta_r**2)+&
                         ((1.0/rho(i))*((S_old(i+1,j)-S_old(i,j))/delta_r))+(F_a(i,j)/rho(i))+g(i,j))
                 end do

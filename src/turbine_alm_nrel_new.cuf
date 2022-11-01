@@ -64,7 +64,7 @@ module turbine
         real(fp),dimension(nx,ny,nz2),intent(out),device :: fx,fy,fz
         real(fp),dimension(blade_num,n_r,n_turb,2),intent(out),device  :: CTF
         real(fp),dimension(blade_num,n_r,n_turb,2),intent(out) :: displacement_host,moment_host,velocity_host
-        real(fp),dimension(blade_num,n_r,n_turb,2)  :: CTF_host
+        real(fp),dimension(blade_num,n_r,n_turb,2)  :: CTF_host,CTF_host_old,CTF_host_new
         real(fp),dimension(blade_num,n_r,n_turb,2)  :: deformation_host
         real(fp),dimension(nx,ny,nz2) :: fx_host,fy_host,fz_host
         real(fp),dimension(n_turb),intent(out),device    :: power
@@ -77,7 +77,7 @@ module turbine
         real(fp),dimension(n_turb) :: CTUin_host,turb_rpm_host
         integer :: i,j,k,t,counter
     
-        save CTUin,turb_rpm,torque,counter,deformation,velocity,turb_loc_host
+        save CTUin,turb_rpm,torque,counter,deformation,velocity,turb_loc_host,CTF_host_old
     !---------------------------------------------------------------------------
     ! code
     !---------------------------------------------------------------------------
@@ -109,6 +109,9 @@ module turbine
             call almyaw(fx,fy,fz,CTF,power,torque,u,v,w,turb_loc,turb_rpm,deformation,velocity,t,me,nall)
             
             CTF_host = CTF
+            if (t>1) then
+                CTF_host = 0.5*(CTF_host + CTF_host_old)
+            end if
             turb_rpm_host = turb_rpm
             power_host = power
             ! write(1,11) 1.0
@@ -116,8 +119,9 @@ module turbine
             11 format(F8.4)
             ! print*,power_host/1e6
             call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
-            deformation = deformation_host
+            ! deformation = deformation_host
             velocity = velocity_host
+            CTF_host_old = CTF_host 
         end if
         
     end Subroutine turbine_force
