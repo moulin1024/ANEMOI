@@ -8,22 +8,20 @@ import seaborn as sns
 from scipy.signal import savgol_filter
 import scipy.stats as stats   
 
-root_moment = np.zeros((13,13,11,3,2,49001))
+root_moment = np.zeros((7,7,1,3,2,100001))
 
-for i in range(13):
-    for j in range(13):
+for i in range(7):
+    for j in range(7):
         for k in range(1):
-            name = "rotate--2"+"-"+str((i-6)*5)+"-"+str((j-6)*5)
-            print(name)
+            name = str(i*10)+"-"+str(j*10)+"-rotate-"+str(k)
             f = h5py.File('../job/'+name+'/output/'+name+'_force.h5','r')
             time = np.array(f.get('time'))
-            # print(time.shape)
             for l in range(3):
-                root_moment[i,j,k,l,0,:] = np.array(f.get('moment_flap')[:49001,0,0,l])/10**6
-                root_moment[i,j,k,l,1,:] = np.array(f.get('moment_edge')[:49001,0,1,l])/10**6
+                root_moment[i,j,k,l,0,:] = np.array(f.get('moment_flap')[:,0,0,l])/10**6
+                root_moment[i,j,k,l,1,:] = np.array(f.get('moment_edge')[:,0,1,l])/10**6
 
 # print(np.shape(root_moment))
-np.save('root_moment_rotate_m2.npy', root_moment)
+np.save('root_moment.npy', root_moment)
 np.save('time.npy', time)
 # caselist = ["0-0","20-10","20-20"]
 # yaw_angle = [0,10,20]

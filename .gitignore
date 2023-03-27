@@ -16,9 +16,3 @@ job/*
 *.h5
 unit_test/*
 check.sh
-post/*
-post/core.*
-test.py
-src-old
-core*
-test.py

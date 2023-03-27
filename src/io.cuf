@@ -427,7 +427,7 @@ subroutine open_ts1(me)
     implicit none
     integer me,nall
     character(3) :: fme
-    
+
     if (me <= ts_kend/nzb -1 ) then
         write(fme,'(i3.3)'), me
         open (unit=(51000+me),file=('output/p'//trim(fme)//'_'//'ts_u.bin'), &
@@ -435,8 +435,6 @@ subroutine open_ts1(me)
         open (unit=(52000+me),file=('output/p'//trim(fme)//'_'//'ts_v.bin'), &
             status='unknown', form='unformatted', access='stream')
         open (unit=(53000+me),file=('output/p'//trim(fme)//'_'//'ts_w.bin'), &
-            status='unknown', form='unformatted', access='stream')
-        open (unit=(53001+me),file=('output/p'//trim(fme)//'_'//'ts_q.bin'), &
             status='unknown', form='unformatted', access='stream')
     end if
 
@@ -495,8 +493,6 @@ subroutine open_turb(me)
         open (unit=(79000),file=('output/blade_velocity_flap.bin'), status='unknown', &
             form='unformatted', access='stream')
         open (unit=(80000),file=('output/blade_velocity_edge.bin'), status='unknown', &
-            form='unformatted', access='stream')
-        open (unit=(82000),file=('output/phase_angle.bin'), status='unknown',&
             form='unformatted', access='stream')
     end if
 
@@ -611,17 +607,16 @@ subroutine write_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz,me)
 
 end subroutine write_ta2
 
-subroutine write_ts1(u,v,w,qcrit,me)
+subroutine write_ts1(u,v,w,me)
 
     implicit none
     integer me,nall
-    real(fp), dimension(nx,ny,nz2), intent(in) :: u,v,w,qcrit
+    real(fp), dimension(nx,ny,nz2), intent(in) :: u,v,w
 
     if (me <= ts_kend/nzb -1 ) then
         write (51000+me) u(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
         write (52000+me) v(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
         write (53000+me) w(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
-        write (53001+me) qcrit(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
     end if
 
 end subroutine write_ts1
@@ -709,7 +704,6 @@ subroutine close_ts1(me)
         close (unit=(51000+me))
         close (unit=(52000+me))
         close (unit=(53000+me))
-        close (unit=(53001+me))
     end if
 
 end subroutine close_ts1
@@ -755,7 +749,6 @@ subroutine close_turb(me)
         close (unit=(78000))
         close (unit=(79000))
         close (unit=(80000))
-        close (unit=(82000))
     end if
 
 end subroutine close_turb
@@ -797,15 +790,14 @@ subroutine recompose_ta2(me)
 
 end subroutine recompose_ta2
 
-subroutine recompose_ts1(me,t)
+subroutine recompose_ts1(me)
 
     implicit none
-    integer me,nall,t
+    integer me,nall
 
-    call recompose_ts('ts_u.bin', me, t)
-    call recompose_ts('ts_v.bin', me, t)
-    call recompose_ts('ts_w.bin', me, t)
-    call recompose_ts('ts_q.bin', me, t)
+    call recompose_ts('ts_u.bin', me)
+    call recompose_ts('ts_v.bin', me)
+    call recompose_ts('ts_w.bin', me)
 
     ! call recompose_ts('ts_fx.bin', me)
     ! call recompose_ts('ts_fy.bin', me)
@@ -852,35 +844,33 @@ subroutine recompose_ta(fname, me)
 
 end subroutine recompose_ta
 
-subroutine recompose_ts(fname, me,t)
+subroutine recompose_ts(fname, me)
 
     !---------------------------------------------------------------------------
     ! declaration
     implicit none
-    integer me,nall,t
+    integer me,nall
     character(*), intent(in) :: fname
     integer :: p
     character(3) :: f
-    real(fp), allocatable :: q(:,:,:)
-    character(3) :: ftime
+    real(fp), allocatable :: q(:,:,:,:)
 
     !---------------------------------------------------------------------------
     ! main code
 
     if (me == 0) then
         
-        allocate(q(ts_nx,ts_ny,ts_kend))
+        allocate(q(ts_nx,ts_ny,ts_kend,ts_ns))
         ! loop over processor files
         do p = 0,(ts_kend/nzb -1)
             write(f,'(i3.3)'), p
             open (unit=(99),file=('output/p'//trim(f)//'_'//fname), status='old', form='unformatted', access='stream')
-            read (99) q(:,:,(nzb*p+1):(nzb*(p+1)))
+            read (99) q(:,:,(nzb*p+1):(nzb*(p+1)),:)
             close((99), status ='delete')
         end do
 
         ! save new file
-        write(ftime,'(i3.3)'),(t-ts_tstart)/100 
-        open (unit=99,file=('output/'//ftime//'_'//fname), status='unknown', form='unformatted', access='stream')
+        open (unit=99,file=('output/'//fname), status='unknown', form='unformatted', access='stream')
         write (99) q
         close(99)
 
@@ -964,27 +954,6 @@ subroutine write_inflow(u,v,w,t,me)
 
 end subroutine write_inflow
 
-
-attributes(global) subroutine compute_q_criterion(qcrit,dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz)
-    implicit none
-    integer me,nall
-
-    real(fp),dimension(nx,ny,nz2),intent(out) :: qcrit
-    real(fp),dimension(nx,ny,nz2),intent(in) :: dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz
-    integer :: i,j,k
-    ! Watch out for the inversion of axis sequence
-    i = (blockIdx%x - 1)* blockDim%x + threadIdx%x
-    j = (blockIdx%y - 1)* blockDim%y + threadIdx%y
-    k = (blockIdx%z - 1)* blockDim%z + threadIdx%z
-
-    if (k>1 .and. k<nz2) then
-        qcrit(i,j,k)=(dudx(i,j,k)*dvdy(i,j,k)+dvdy(i,j,k)*dwdz(i,j,k)+dwdz(i,j,k)*dudx(i,j,k)-&
-                     dudy(i,j,k)*dvdx(i,j,k)-dvdz(i,j,k)*dwdy(i,j,k)-dwdx(i,j,k)*dudz(i,j,k))/z_i     
-    end if
-
-end subroutine
-
-
 !-------------------------------------------------------------------------------
 ! write prec
 !-------------------------------------------------------------------------------
@@ -1063,7 +1032,7 @@ subroutine read_inflow(u,v,w,t,me)
     if (mod(t-1,inflow_count)==0) then
         i_batch = mod((t-1)/(inflow_count),batch_size) + 1
         ! Cycling inflow section: 10 times per p_count
-        cyc_pt = mod((t-1)/(inflow_count*100),ny)+1
+        cyc_pt = mod((t-1)/(inflow_count*20),ny)+1
         ! cyc_pt = ny
         prec_u(:,1:cyc_pt,:)    = u_batch(:,(ny-cyc_pt+1):ny,:,i_batch)
         prec_v(:,1:cyc_pt,:)    = v_batch(:,(ny-cyc_pt+1):ny,:,i_batch)

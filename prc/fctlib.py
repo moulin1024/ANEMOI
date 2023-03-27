@@ -209,7 +209,7 @@ def get_config(case_path):
     config['tow_c'] = float(config['tow_c'])
     config['nac_r'] = float(config['nac_r'])
     config['nac_c'] = float(config['nac_c'])
-    config['dyn_yaw_freq'] = config['dyn_yaw_freq']
+    # config['yaw_angle'] = config['yaw_angle']
     config['turb_count'] = int(config['turb_count'])
 
     # prec
@@ -340,14 +340,6 @@ def load_3d(var_name, Nx, Ny, Nz, double_flag, path):
     else:
         var = np.fromfile(os.path.join(path, var_name + '.bin'), dtype=np.float64, count=Nx*Ny*Nz)        
     var = var.reshape((Nx,  Ny,  Nz), order='F')
-    return var
-
-def load_2d(var_name, Nx, Ny, double_flag, path):
-    if double_flag == 0:
-        var = np.fromfile(os.path.join(path, var_name + '.bin'), dtype=np.float32, count=Nx*Ny)
-    else:
-        var = np.fromfile(os.path.join(path, var_name + '.bin'), dtype=np.float64, count=Nx*Ny)        
-    var = var.reshape((Nx,  Ny), order='F')
     return var
 
 def node2center_4d(var_n):

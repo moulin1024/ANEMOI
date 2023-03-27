@@ -1,10 +1,9 @@
-from turtle import distance
-import imageio
-import sys
-# distance = sys.argv[1]
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
-images = []
-for j in range(10):
-    print(j)
-    images.append(imageio.imread('job/NREL-m/output/'+str(j).zfill(3)+'_flowfield_xz.png'))
-imageio.mimsave('test.gif',images,fps=20)
+jobname = 'ultralong-0'
+data = pd.read_csv('job/'+jobname+'/src/output/root_moment.csv',header=None).to_numpy()
+print(data.shape)
+plt.plot(data)
+plt.savefig('test.png')

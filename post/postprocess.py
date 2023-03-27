@@ -25,227 +25,27 @@ def get_DEL(m_f):
     DEL = (np.sum(N*S**m)/Neq)**(1/m)
     return DEL
 
-# flowfield   = np.load('flowfield.npy')
-DEL_0 = np.load('DEL_0.npy')
-DEL_1 = np.load('DEL_1.npy')
-DEL_2 = np.load('DEL_2.npy')
-DEL_3 = np.load('DEL_3.npy')
-DEL_4 = np.load('DEL_4.npy')
-DEL_5 = np.load('DEL_5.npy')
-DEL_m1 = np.load('DEL_m1.npy')
-DEL_m2 = np.load('DEL_m2.npy')
-DEL_m3 = np.load('DEL_m3.npy')
-DEL_m4 = np.load('DEL_m4.npy')
-DEL_m5 = np.load('DEL_m5.npy')
-
-print(DEL_0.shape)
-power_0       = np.load('power_rotate_0.npy')
-power_1       = np.load('power_rotate_1.npy')
-power_2       = np.load('power_rotate_2.npy')
-power_3       = np.load('power_rotate_3.npy')
-power_4       = np.load('power_rotate_4.npy')
-power_5       = np.load('power_rotate_5.npy')
-power_m1       = np.load('power_rotate_-1.npy')
-power_m2       = np.load('power_rotate_-2.npy')
-power_m3       = np.load('power_rotate_-3.npy')
-power_m4       = np.load('power_rotate_-4.npy')
-power_m5       = np.load('power_rotate_-5.npy')
+flowfield   = np.load('flowfield.npy')
+root_moment = np.load('root_moment.npy')
+power       = np.load('power.npy')
 time        = np.load('time.npy')
 
-# print(power.shape)
+DEL = np.zeros((4,4,6,3))
+for i in range(4):
+    for j in range(4):
+        for k in range(6):
+            for l in range(3):
+                DEL[i,j,k,l] = get_DEL(root_moment[i,j,k,l,0,10000:])
 
-# DEL = np.zeros((13,13,1,3))
-# for i in range(13):
-#     print(i)
-#     for j in range(13):
-#         for k in range(1):
-#             for l in range(3):
-#                 DEL[i,j,k,l] = get_DEL(root_moment[i,j,k,l,0,10000:])
+x = np.linspace(1,512,512)*8
+y = np.linspace(1,256,256)*8
 
-# x = np.linspace(1,512,512)*8
-# y = np.linspace(1,256,256)*8
+power_reference = power[0,0,0,0]
+DEL_reference = DEL[0,0,0,0]
 
-# def powermap(power,name):
-#     plt.figure()
-#     plt.rcParams.update({'font.size': 32})
-#     total_power = np.sum(power,axis=3)
-#     power_reference = total_power[6,6,0]
-#     print(np.shape(total_power[:,:,0]))
-#     plt.imshow(total_power[:,:,0]/power_reference-1,origin='lower',extent=[-32.5,32.5,-32.5,32.5])
-#     plt.xlabel('WT1')
-#     plt.ylabel('WT2')
-#     plt.colorbar()
-#     plt.savefig(name)
-#     # plt.colorbar()
-
-# powermap(power_0,'power_0.png')
-
-def DELmap(DEL,name,climit,factor,title_name,flag):
-    plt.figure(dpi=300)
-    total_DEL = np.sum(DEL,axis=3)
-    plt.rcParams.update({'font.size': 14})
-    DEL_reference = total_DEL[6,6,0]
-    normal_DEL = np.flip(np.flip(factor*(total_DEL[:,:,0]/DEL_reference-1),axis=0),axis=1)
-    max_DEL = np.max(np.max(np.max(normal_DEL)))
-    i,j = np.where(normal_DEL == max_DEL)
-    levels = np.linspace(-climit,climit,101)
-    ticklevel = np.linspace(-climit,climit,13)
-    plt.contourf(normal_DEL.T,levels,extent=[-30,30,-30,30],vmax=climit,vmin=-climit,cmap='bwr', extend='both')
-    plt.xlabel('WT1')
-    plt.ylabel('WT2')
-    max_name = '$('+str((i[0]-6)*5)+'^\circ'+','+str((j[0]-6)*5)+'^\circ'+')$: power gain '+str(round(max_DEL*100,2))+'%'
-    print(max_name)
-    # plt.text((i[0]-6)*5-6,(j[0]-6)*5+2,max_name,fontsize=10)
-    plt.colorbar(ticks=ticklevel, format='%.2f')
-    plt.clim(-climit,climit)
-    if (flag==1):
-        plt.plot((i[0]-6)*5,(j[0]-6)*5,'o',label=max_name)
-        plt.legend(fontsize=12)
-    plt.title(title_name,fontsize=14)
-    # plt.title('Max power gain: '+str(round(max_DEL*100,2))+'%',fontsize=14)
-    plt.savefig(name)
-
-
-wt1 = np.linspace(-30,30,13)
-wt2 = np.linspace(-30,30,13)
-wt1_mesh,wt2_mesh = np.meshgrid(wt1,wt2,indexing='ij')
-
-# def decision(power,DEL,name):
-#     plt.figure()
-#     wt1 = np.linspace(-30,30,13)
-#     wt2 = np.linspace(-30,30,13)
-#     wt1_mesh,wt2_mesh = np.meshgrid(wt1,wt2,indexing='ij')
-#     total_power = np.sum(power,axis=3)
-#     power_reference = total_power[6,6,0]
-#     total_DEL = np.sum(DEL,axis=3)
-#     DEL_reference = total_DEL[6,6,0]
-#     normal_power = total_power[:,:,0]/total_power[6,6,0]-1
-#     normal_DEL = total_DEL[:,:,0]/total_DEL[6,6,0]-1
-#     plt.quiver(normal_power.flatten(),normal_DEL.flatten(),wt1_mesh.flatten(),wt2_mesh.flatten(),width=0.002)
-#     # plt.plot(normal_power.flatten(),normal_DEL.flatten(),'o')
-#     plt.xlim([-0.25,0.25])
-#     plt.ylim([-0.25,0.25])
-#     plt.savefig(name)
-
-def decision(power,DEL,name):
-    plt.figure()
-    wt1 = np.linspace(-30,30,13)
-    wt2 = np.linspace(-30,30,13)
-    wt1_mesh,wt2_mesh = np.meshgrid(wt1,wt2,indexing='ij')
-    total_power = np.sum(power,axis=3)
-    power_reference = total_power[6,6,0]
-    total_DEL = np.sum(DEL,axis=3)
-    DEL_reference = total_DEL[6,6,0]
-    normal_power = total_power[:,:,0]/total_power[6,6,0]-1
-    normal_DEL = total_DEL[:,:,0]/total_DEL[6,6,0]-1
-    # plt.quiver(normal_power.flatten(),normal_DEL.flatten(),wt1_mesh.flatten(),wt2_mesh.flatten(),width=0.002)
-    plt.quiver(wt1_mesh.flatten(),wt2_mesh.flatten(),normal_power.flatten(),-normal_DEL.flatten(),width=0.003)
-    # plt.plot(normal_power.flatten(),normal_DEL.flatten(),'o')
-    # plt.xlim([-0.25,0.25])
-    # plt.ylim([-0.25,0.25])
-    plt.savefig(name)
-
-
-def decision_new(power,DEL,name):
-    plt.figure()
-    wt1 = np.linspace(-30,30,13)
-    wt2 = np.linspace(-30,30,13)
-    wt1_mesh,wt2_mesh = np.meshgrid(wt1,wt2,indexing='ij')
-    total_power = np.sum(power,axis=3)
-    power_reference = total_power[6,6,0]
-    total_DEL = np.sum(DEL,axis=3)
-    DEL_reference = total_DEL[6,6,0]
-    normal_power = total_power[:,:,0]/total_power[6,6,0]-1
-    normal_DEL = total_DEL[:,:,0]/total_DEL[6,6,0]-1
-    # plt.quiver(normal_power.flatten(),-normal_DEL.flatten(),wt1_mesh.flatten(),wt2_mesh.flatten(),width=0.002)
-    # plt.quiver(wt1_mesh.flatten(),wt2_mesh.flatten(),normal_power.flatten(),-normal_DEL.flatten(),width=0.003)
-    plt.plot(normal_power.flatten(),-normal_DEL.flatten(),'o')
-    plt.xlim([-0.25,0.25])
-    plt.ylim([-0.25,0.25])
-    plt.savefig(name)
-
-
-
-
-# plt.figure()
-# power = power_0
-# DEL = DEL_0
-
-# total_power = np.sum(power,axis=3)
-# power_reference = total_power[6,6,0]
-# total_DEL = np.sum(DEL,axis=3)
-# DEL_reference = total_DEL[6,6,0]
-# normal_power = total_power[:,:,0]/total_power[6,6,0]-1
-# normal_DEL = total_DEL[:,:,0]/total_DEL[6,6,0]-1
-# plt.quiver(normal_power.flatten(),normal_DEL.flatten(),wt1_mesh.flatten(),wt2_mesh.flatten(),width=0.002)
-# plt.xlim([-0.25,0.25])
-# plt.ylim([-0.25,0.25])
-# plt.savefig('post.png')
-# DELmap()
-
-# DELmap(power_m1,'power_m1.png',0.15,1,'inflow degree: $-1^\circ$',1)
-# DELmap(power_m2,'power_m2.png',0.15,1,'inflow degree: $-2^\circ$',1)
-# DELmap(power_m3,'power_m3.png',0.15,1,'inflow degree: $-3^\circ$',1)
-# DELmap(power_m4,'power_m4.png',0.15,1,'inflow degree: $-4^\circ$',1)
-# DELmap(power_m5,'power_m5.png',0.15,1,'inflow degree: $-5^\circ$',1)
-DELmap(power_0,'power_0.png',0.1,1,'inflow degree: $0^\circ$',1)
-# DELmap(power_1,'power_1.png',0.15,1,'inflow degree: $1^\circ$',1)
-# DELmap(power_2,'power_2.png',0.15,1,'inflow degree: $2^\circ$',1)
-# DELmap(power_3,'power_3.png',0.15,1,'inflow degree: $3^\circ$',1)
-# DELmap(power_4,'power_4.png',0.15,1,'inflow degree: $4^\circ$',1)
-# DELmap(power_5,'power_5.png',0.15,1,'inflow degree: $5^\circ$',1)
-
-
-DELmap(DEL_0,'DEL_0.png',0.3,1,'inflow degree: $0^\circ$',0)
-# DELmap(DEL_1,'DEL_1.png',0.2,-1,'inflow degree: $1^\circ$',0)
-# DELmap(DEL_2,'DEL_2.png',0.2,-1,'inflow degree: $2^\circ$',0)
-# DELmap(DEL_3,'DEL_3.png',0.2,-1,'inflow degree: $3^\circ$',0)
-# DELmap(DEL_4,'DEL_4.png',0.2,-1,'inflow degree: $4^\circ$',0)
-# DELmap(DEL_5,'DEL_5.png',0.2,-1,'inflow degree: $5^\circ$',0)
-# DELmap(DEL_m1,'DEL_m1.png',0.2,-1,'inflow degree: $-1^\circ$',0)
-# DELmap(DEL_m2,'DEL_m2.png',0.2,-1,'inflow degree: $-2^\circ$',0)
-# DELmap(DEL_m3,'DEL_m3.png',0.2,-1,'inflow degree: $-3^\circ$',0)
-# DELmap(DEL_m4,'DEL_m4.png',0.2,-1,'inflow degree: $-4^\circ$',0)
-# DELmap(DEL_m5,'DEL_m5.png',0.2,-1,'inflow degree: $-5^\circ$',0)
-
-# # plt.figure()
-# decision(power_0,DEL_0,'decision_0.png')
-# decision(power_1,DEL_1,'decision_1.png')
-# decision(power_2,DEL_2,'decision_2.png')
-# decision(power_3,DEL_3,'decision_3.png')
-# decision(power_4,DEL_4,'decision_4.png')
-# decision(power_5,DEL_5,'decision_5.png')
-# decision(power_m1,DEL_m1,'decision_m1.png')
-# decision(power_m2,DEL_m2,'decision_m2.png')
-# decision(power_m3,DEL_m3,'decision_m3.png')
-# decision(power_m4,DEL_m4,'decision_m4.png')
-# decision(power_m5,DEL_m5,'decision_m5.png')
-
-# decision_new(power_0,DEL_0,'decision_new_0.png')
-# decision_new(power_1,DEL_1,'decision_new_1.png')
-# decision_new(power_2,DEL_2,'decision_new_2.png')
-# decision_new(power_3,DEL_3,'decision_new_3.png')
-# decision_new(power_4,DEL_4,'decision_new_4.png')
-# decision_new(power_5,DEL_5,'decision_new_5.png')
-# decision_new(power_m1,DEL_m1,'decision_new_m1.png')
-# decision_new(power_m2,DEL_m2,'decision_new_m2.png')
-# decision_new(power_m3,DEL_m3,'decision_new_m3.png')
-# decision_new(power_m4,DEL_m4,'decision_new_m4.png')
-# decision_new(power_m5,DEL_m5,'decision_new_m5.png')
-
-
-# decision_new(power_0,DEL_0,'decision_new_0.png')
-# decision_new(power_1,DEL_1,'decision_new_1.png')
-# decision_new(power_3,DEL_3,'decision_new_3.png')
-# decision_new(power_4,DEL_4,'decision_new_4.png')
-# decision_new(power_5,DEL_5,'decision_new_5.png')
-# decision_new(power_m3,DEL_m3,'decision_new_m3.png')
-# decision_new(power_m5,DEL_m5,'decision_new_m5.png')
-# plt.savefig('total_decision.png')
-# print(total_power)
 
 # plt.figure(figsize=(12, 6), dpi=80)
-# plt.plot(time,root_moment[0,0,0,0,0,:],lw=1,alpha=0.5)
+# plt.plot(time,root_moment[0,0,0,0,:],lw=1,alpha=0.5)
 # plt.savefig('series.png')
 
 # DEL = np.zeros((4,4,3))
@@ -292,36 +92,34 @@ DELmap(DEL_0,'DEL_0.png',0.3,1,'inflow degree: $0^\circ$',0)
 # anim.save('animation_inflow.gif',writer='pillow', fps=1)
 
 
-# total_DEL = np.sum(DEL,axis=3)
-# total_power = np.sum(power,axis=3)
-
-# print(total_power)
+total_DEL = np.sum(DEL,axis=3)
+total_power = np.sum(power,axis=3)
 
 
-# for i in range(1):
-#     fig,ax = plt.subplots(1,3,figsize=(24, 6),dpi=100)
-#     plt.rcParams.update({'font.size': 16})
-#     normal_power = total_power[:,:,i]/total_power[6,6,i]-1
-#     normal_DEL = total_DEL[:,:,i]/total_DEL[6,6,i]-1
-#     ax[0].cla()
-#     im0 = ax[0].imshow(normal_power.T,origin='lower',cmap='bwr',vmin=-0.2,vmax=0.2,extent=[-30,30,-30,30])
-#     ax[0].set_xlabel('$\gamma_1$ (degree)',fontsize=16)
-#     ax[0].set_ylabel('$\gamma_2$ (degree)',fontsize=16)
-#     plt.colorbar(im0,ax=ax[0])
-#     ax[0].set_title('$\Delta P/P_{0}$')
-#     ax[1].cla()
-#     im1 = ax[1].imshow(-normal_DEL.T,origin='lower',cmap='bwr',vmin=-0.2,vmax=0.2,extent=[-30,30,-30,30])
-#     ax[1].set_xlabel('$\gamma_1$ (degree)',fontsize=16)
-#     ax[1].set_ylabel('$\gamma_2$ (degree)',fontsize=16)
-#     ax[1].set_title('$-\Delta DEL/DEL_{0}$')
-#     # plt.colorbar(im1,ax=ax[1])
-#     ax[2].cla()
-#     ax[2].plot(normal_power.flatten(),-normal_DEL.flatten(),'o')
-#     ax[2].set_xlim([-0.2,0.2])
-#     ax[2].set_ylim([-0.2,0.2])
-#     ax[2].set_xlabel('$\Delta P/P_{0}$',fontsize=16)
-#     ax[2].set_ylabel('$\Delta DEL/DEL_{0}$',fontsize=16)
-#     plt.savefig('decision'+'_'+str(i)+'.png')
+for i in range(6):
+    fig,ax = plt.subplots(1,3,figsize=(24, 6),dpi=100)
+    plt.rcParams.update({'font.size': 16})
+    normal_power = total_power[:,:,i]/total_power[0,0,i]-1
+    normal_DEL = total_DEL[:,:,i]/total_DEL[0,0,i]-1
+    ax[0].cla()
+    im0 = ax[0].imshow(normal_power.T,origin='lower',cmap='bwr',vmin=-0.15,vmax=0.15,extent=[-5,35,-5,35])
+    ax[0].set_xlabel('$\gamma_1$ (degree)',fontsize=16)
+    ax[0].set_ylabel('$\gamma_2$ (degree)',fontsize=16)
+    plt.colorbar(im0,ax=ax[0])
+    ax[0].set_title('$\Delta P/P_{0}$')
+    ax[1].cla()
+    im1 = ax[1].imshow(normal_DEL.T,origin='lower',cmap='bwr',vmin=-0.15,vmax=0.15,extent=[-5,35,-5,35])
+    ax[1].set_xlabel('$\gamma_1$ (degree)',fontsize=16)
+    ax[1].set_ylabel('$\gamma_2$ (degree)',fontsize=16)
+    ax[1].set_title('$\Delta DEL/DEL_{0}$')
+    # plt.colorbar(im1,ax=ax[1])
+    ax[2].cla()
+    ax[2].plot(normal_power.flatten(),normal_DEL.flatten(),'o')
+    ax[2].set_xlim([-0.15,0.15])
+    ax[2].set_ylim([-0.15,0.15])
+    ax[2].set_xlabel('$\Delta P/P_{0}$',fontsize=16)
+    ax[2].set_ylabel('$\Delta DEL/DEL_{0}$',fontsize=16)
+    plt.savefig('decision'+'_'+str(i)+'.png')
 
 
 

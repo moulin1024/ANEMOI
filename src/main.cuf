@@ -31,12 +31,12 @@ program main
     ! flow
     real(fp),dimension(nx,ny):: zo_host,ustar_host,m_host
     real(fp),dimension(nx,ny,nz2) :: u_host,v_host,w_host,&
-                                    rhsx_host,rhsy_host,rhsz_host,qcrit_host
+                                    rhsx_host,rhsy_host,rhsz_host
     real(fp), dimension(nx,ny,nz2) :: lm_old_host,mm_old_host,qn_old_host,nn_old_host
 
     real(fp),dimension(nx,ny,nz2) :: fx_host,fy_host,fz_host
     real(fp),dimension(nx,ny),device :: zo,ustar,m 
-    real(fp),dimension(:,:,:),allocatable,device  :: u,v,w,p,q,&       ! Velocity & pressure   
+    real(fp),dimension(:,:,:),allocatable,device  :: u,v,w,p,&       ! Velocity & pressure   
                                              cx,cy,cz,&          ! Convection term      
                                              txx,txy,txz,&       ! Stress term
                                              tyy,tyz,tzz,&       
@@ -56,8 +56,8 @@ program main
     real(fp),dimension(:),allocatable,device    :: power,thrust,CTU_local
     real(fp),dimension(n_turb)     :: power_host,mean_power,sum_power,CTU_local_host
     real(fp),dimension(:,:,:,:),allocatable,device :: CTF,CTF_alm  !< Force on the blade element (CTFx,CTFt)    
-    real(fp),dimension(n_phi,n_r,n_turb,2)         :: CTF_host     !< Force on the blade element (CTFx,CTFt)
-    real(fp),dimension(3,n_r,n_turb,2)             :: CTF_alm_host !< Force on the blade element (CTFx,CTFt)
+    real(fp),dimension(n_phi,n_r,n_turb,2)         :: CTF_host !< Force on the blade element (CTFx,CTFt)
+    real(fp),dimension(3,n_r,n_turb,2)             :: CTF_alm_host     !< Force on the blade element (CTFx,CTFt)
     real(fp),dimension(blade_num,n_r,n_turb,2) :: displacement_host,moment_host,velocity_host   
     ! real(fp), dimension(3,181) :: alpha_cl_cd_host
     ! real(fp), dimension(3,181),device :: alpha_cl_cd
@@ -102,7 +102,6 @@ program main
 
     integer :: localRank
     character(len=10) :: rankStr
-    character(4) :: ftime
 
     ! MPI_Comm loc_comm
     ! MPI_COMM_SPLIT_TYPE(COMM, SPLIT_TYPE, KEY, INFO, NEWCOMM, IERROR)
@@ -146,8 +145,7 @@ program main
     allocate(u(nx,ny,nz2),&
              v(nx,ny,nz2),&
              w(nx,ny,nz2),&
-             p(nx,ny,nz2),&
-             q(nx,ny,nz2),&       ! Velocity & pressure   
+             p(nx,ny,nz2),&       ! Velocity & pressure   
              cx(nx,ny,nz2),&
              cy(nx,ny,nz2),&
              cz(nx,ny,nz2),&          ! Convection term      
@@ -280,12 +278,12 @@ program main
 
     !---------------------------------------------------------------------------
     ! init ts outputs
-    ! if (ts_flag > 0) then
-    !     if (ts_flag == 1) then
-    !         call open_ts1(me)
-    !         ! call open_ts2(me)
-    !     end if
-    ! end if
+    if (ts_flag > 0) then
+        if (ts_flag == 1) then
+            call open_ts1(me)
+            ! call open_ts2(me)
+        end if
+    end if
 
     !---------------------------------------------------------------------------
     ! init inflow
@@ -369,21 +367,15 @@ program main
             ! v_host = fy 
             ! w_host = fz 
 
-            call compute_q_criterion<<<grid, tBlock>>>(q,dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz)
-            
             u_host = u
             v_host = v 
-            w_host = w
-            qcrit_host = q
+            w_host = w 
             ustar_host = ustar 
 
             call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
             if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*10) == 0) then 
                 print *,'Write instant field:'
-                call open_ts1(me)
-                call write_ts1(u_host,v_host,w_host,qcrit_host,me)
-                call close_ts1(me)
-                call recompose_ts1(me,t)
+                call write_ts1(u_host,v_host,w_host,me)
             end if
             ! print *,mean_power,power_host
         end if
@@ -532,7 +524,6 @@ program main
             if (device_id == 0 ) then
                 ! if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
                 if (mod(t-1,turb_count)==0) then
-                    ! call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
                     call turbine_force(Fx,Fy,Fz,CTF_alm,power,displacement_host,moment_host,velocity_host,u,v,w,turb_loc,t)
                     CTF_alm_host = CTF_alm
                     call write_turb(CTF_alm_host,displacement_host,moment_host,velocity_host,me)
@@ -744,13 +735,13 @@ program main
     ! ! close and recompose ts outputs
     ! !---------------------------------------------------------------------------
 
-    ! if (ts_flag > 0) then
-    !    if (ts_flag==1) then
-    !        call close_ts1(me)
-    !     !    call close_ts2(me)
-    !        call recompose_ts1(me,t)
-    !    end if
-    ! end if
+    if (ts_flag > 0) then
+       if (ts_flag==1) then
+           call close_ts1(me)
+        !    call close_ts2(me)
+           call recompose_ts1(me)
+       end if
+    end if
 
     !---------------------------------------------------------------------------
     ! close turb
