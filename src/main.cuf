@@ -77,6 +77,7 @@ program main
                                                 ta_u2,ta_v2,ta_w2,ta_uv 
 
     real(fp), device :: d_avg1,d_avg2
+    real(fp) d_avg_host
 
     !---------------------------------------------------------------------------
     ! fft plan
@@ -331,7 +332,7 @@ program main
 #endif
         rhsx_f  = rhsx 
         rhsy_f  = rhsy 
-        rhsz_f  = rhsz 
+        rhsz_f  = rhsz
 
 #ifdef USE_NVTX    
     call nvtxEndRange
@@ -420,21 +421,17 @@ program main
         if (me==0) then
 
             ! Porte-agel 2000 JFM correction
-	        !$cuf kernel do(2) <<<(*,*),(16,16)>>>
-            do i = 1, nx
-                do j = 1, ny
-                    d_avg1 = d_avg1 + dudz(i,j,3) ! Plane average
-                    d_avg2 = d_avg2 + dvdz(i,j,3) ! Plane average
-                end do
-            end do
-
-            ! ! Special treate ment for nzb == 1
-            ! if (nzb > 1 .and. me == 0) then
-            !     k_corr = 3
-            ! elseif (nzb == 1 .and. me == 1) then
-            !     k_corr = 2
-            ! endif
-
+            ! !$cuf kernel do(2) <<<(*,*),(16,16)>>>
+            ! do i = 1, nx
+            !     do j = 1, ny
+            !         d_avg1 = d_avg1 + dudz(i,j,3) ! Plane average
+            !         d_avg2 = d_avg2 + dvdz(i,j,3) ! Plane average
+            !     end do
+            ! end do
+            ! Compute the plane average of the horizontal velocity gradient
+            call plane_average<<<grid_2d, tBlock_2d>>>(d_avg1,dudz)
+            call plane_average<<<grid_2d, tBlock_2d>>>(d_avg2,dvdz)
+            ! Apply P-A correction
             call ddz_uv_corr<<<grid_2d, tBlock_2d>>>(dudz,d_avg1,3)
             call ddz_uv_corr<<<grid_2d, tBlock_2d>>>(dvdz,d_avg2,3)
 

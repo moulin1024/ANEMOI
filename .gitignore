@@ -16,3 +16,5 @@ job/*
 *.h5
 unit_test/*
 check.sh
+*.ipynb
+prc/app_anime.py

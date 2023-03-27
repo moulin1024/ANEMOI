@@ -27,7 +27,7 @@ from pathlib import Path
 from matplotlib.pyplot import figure
 from matplotlib import animation, rc
 from mpl_toolkits.mplot3d import Axes3D
-import fatigue
+# import fatigue
 # from pyevtk.hl import gridToVTK
 
 
@@ -65,8 +65,7 @@ def anime(PATH, case_name):
     space = post.get_space(config)
     time = post.get_time(config)
 
-    turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
-
+    
     if config['ta_flag'] > 0:
         result_3d = post.get_result_3d(src_inp_path,src_out_path, config)
         u_avg = result_3d['u_avg_c']
@@ -95,16 +94,6 @@ def anime(PATH, case_name):
 
         f.close
 
-        fig = figure(figsize=(8,8))
-        ax = fig.add_subplot(111)
-        # im = ax.imshow(u_avg[176,63-8:63+8,45-32:45+32].T,origin='lower',aspect=0.25)
-        # print(np.mean(u_avg[176,63-8:63+8,45-32:45+32]))
-        # im = ax.imshow()
-        im = ax.quiver(v_avg[176,::4,::4].T,w_avg[176,::4,::4].T,scale=50)
-        plt.savefig(out_path+'/test.png')
-        print('check')
-
-
 
     if config['ts_flag'] > 0:
 
@@ -124,16 +113,16 @@ def anime(PATH, case_name):
         # # f.close
 
         u = result_4d['u_inst_c']
-        v = result_4d['v_inst_c']
-        w = result_4d['w_inst_c']
+        # v = result_4d['v_inst_c']
+        # w = result_4d['w_inst_c']
 
         # fig,ax = plt.subplots(1,1)
         fig = figure(figsize=(8,8))
         ax1 = fig.add_subplot(111)
         hub = [256/8,896/8]
 
-        dx = 8
-        dy = 8
+        # dx = 8
+        # dy = 8
         # # ax2 = fig.add_subplot(212)
         def animate(i):  
               
@@ -151,7 +140,7 @@ def anime(PATH, case_name):
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
 
-            im = ax1.imshow(u[i,:,:,44].T,origin='lower',aspect=1)
+            im = ax1.imshow(u[i,32,:,:].T,origin='lower',aspect=1/4)
             # if (i==9):
                 # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
@@ -162,12 +151,13 @@ def anime(PATH, case_name):
             # ax1.set_ylim([0,128])
 
             # ax2.plot(m_flap[:i*100,0,0,0])
-            print(i,np.mean(u[i,(224-32):(224-16),(128-16):(128+16),89].flatten()))
+            # print(i,np.mean(u[i,(224-32):(224-16),(128-16):(128+16),89].flatten()))
             return
         anim = animation.FuncAnimation(fig, animate, frames=10)
         anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=10)
 
     if config['turb_flag'] > 0:
+        turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():
             f.attrs[key] = value
