@@ -93,7 +93,7 @@ module control
                 ! CTUin(i_turb) = 0.5*CTUin_old(i_turb) + 0.5* CTUin(i_turb)
             ! end if
             tsr = 7.5!33.4-8.65*CTUin(i_turb)+0.97*CTUin(i_turb)**2-0.0365*CTUin(i_turb)**3
-            turb_rpm(i_turb) = tsr*CTUin(i_turb)*cos(turb_loc(i_turb,4))/64.0*60.0/(2*pi)
+            turb_rpm(i_turb) = tsr*CTUin(i_turb)*cos(turb_loc(i_turb,4))/63.0*60.0/(2*pi)
             CTUin_old(i_turb) = CTUin(i_turb)
         end do
 
@@ -177,8 +177,8 @@ module control
         integer :: i,j,k,hub_x,hub_y,hub_z,i_turb,istat
         
 
-        j = threadidx%x - int(i1/2) - 1
-        k = threadidx%y - int(i1/2) - 1 
+        j = threadidx%x - int(i1/2)
+        k = threadidx%y - int(i1/2) 
         i_turb = blockidx%x
         
         hub_x = nint(turb_loc(i_turb,1)/dx)

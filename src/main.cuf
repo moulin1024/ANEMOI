@@ -228,8 +228,8 @@ program main
         end if
     endif
 
-    ! call load_surface(zo_host,'input/zo.bin')
-    zo  = 0.005!zo_host
+    call load_surface(zo_host,'input/zo.bin')
+    zo  = zo_host
 
     !---------------------------------------------------------------------------
     ! load turbine aero data

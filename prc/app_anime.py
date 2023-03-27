@@ -27,7 +27,7 @@ from pathlib import Path
 from matplotlib.pyplot import figure
 from matplotlib import animation, rc
 from mpl_toolkits.mplot3d import Axes3D
-# import fatigue
+import fatigue
 # from pyevtk.hl import gridToVTK
 
 
@@ -65,7 +65,7 @@ def anime(PATH, case_name):
     space = post.get_space(config)
     time = post.get_time(config)
 
-    # turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
+    turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
 
     if config['ta_flag'] > 0:
         result_3d = post.get_result_3d(src_inp_path,src_out_path, config)
@@ -151,7 +151,7 @@ def anime(PATH, case_name):
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
 
-            im = ax1.imshow(u[i,:,128,:].T,origin='lower',aspect=1/8)
+            im = ax1.imshow(u[i,:,:,44].T,origin='lower',aspect=1)
             # if (i==9):
                 # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
