@@ -13,6 +13,8 @@ module dimen
     real(fp), parameter :: Sc=1.0,Co=0.1,nnn=1.
     real(fp), parameter :: u_scale=1._fp
     real(fp), parameter :: iRe=1.5d-5
+    integer, parameter :: clockwise = -1
+    integer, parameter :: blade_num = 3
 
     !-------------------------------------------------------------------------------
     ! init

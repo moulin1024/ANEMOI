@@ -1,0 +1,105 @@
+module init
+!###############################################################################
+! wire-les: i/o subroutines
+!###############################################################################
+! author trevaz (tristan.revaz@epfl.ch)
+    use precision
+    use iso_c_binding
+    use cudafor
+    use cufft_m
+    use dimen
+    use io
+    use update_m
+contains
+    subroutine init_variables(u,v,w,rhsx,rhsy,rhsz,lm_old,mm_old,qn_old,nn_old,zo,me,nall)
+        implicit none
+        real(fp),dimension(nx,ny,nz2),intent(inout),device :: u,v,w,rhsx,rhsy,rhsz,lm_old,mm_old,qn_old,nn_old
+        real(fp),dimension(nx,ny),intent(inout),device :: zo
+        real(fp),dimension(nx,ny,nz2) :: u_host,v_host,w_host,rhsx_host,rhsy_host,rhsz_host,lm_old_host,mm_old_host,qn_old_host,nn_old_host
+        real(fp),dimension(nx,ny) :: zo_host
+        integer me,nall
+
+        call load_variable(u_host,'input/u.bin',me,nall)
+        call load_variable(v_host,'input/v.bin',me,nall)
+        call load_variable(w_host,'input/w.bin',me,nall)
+
+        ! bc bot
+        if (me==0) then
+            w_host(:,:,2)=0._fp
+        end if
+
+        ! bc top (part1)
+        if (me==nprocs-1) then
+            w_host(:,:,nzb+1)=0._fp
+        end if
+
+        ! TODO: DO THIS ON GPU
+        call update_uv_cpu(u_host,me,nall)
+        call update_uv_cpu(v_host,me,nall)
+        call update_w_cpu (w_host,me,nall)
+
+        ! bc top (part2)
+        if (me==nprocs-1) then
+            u_host(:,:,nzb+1)=u_host(:,:,nzb)
+            v_host(:,:,nzb+1)=v_host(:,:,nzb)
+        endif
+
+        ! Copy to device
+        u  = u_host
+        v  = v_host
+        w  = w_host
+
+        if (resub_flag > 0 .or. sim_flag > 1) then
+            call init_rhs(rhsx,rhsy,rhsz)
+            call load_variable(rhsx_host,'input/rhsx.bin',me,nall)
+            call load_variable(rhsy_host,'input/rhsy.bin',me,nall)
+            call load_variable(rhsz_host,'input/rhsz.bin',me,nall)
+            
+            ! Copy to device
+            rhsx  = rhsx_host
+            rhsy  = rhsy_host
+            rhsz  = rhsz_host
+
+            if (model == 3) then
+                call load_variable(lm_old_host,'input/lm_old.bin',me,nall)
+                call load_variable(mm_old_host,'input/mm_old.bin',me,nall)
+                call load_variable(qn_old_host,'input/qn_old.bin',me,nall)
+                call load_variable(nn_old_host,'input/nn_old.bin',me,nall)
+
+                lm_old = lm_old_host
+                mm_old = mm_old_host
+                qn_old = qn_old_host
+                nn_old = nn_old_host
+            end if
+        endif
+
+        call load_surface(zo_host,'input/zo.bin')
+        zo  = zo_host
+    end subroutine init_variables
+
+    subroutine init_turbine(turb_loc)
+        implicit none
+        real(fp), dimension(n_turb,5),device,intent(inout) :: turb_loc
+        real(fp), dimension(n_turb,5) :: turb_loc_host
+        integer k,i_turb
+        if (turb_flag > 0) then
+            open(unit=199,file='input/turb_loc.dat')
+            read(199,*)
+            do k=1,n_turb
+                read(199,*) turb_loc_host(k,1:5)
+            end do
+            close(199)
+
+            do i_turb=1,n_turb
+                turb_loc_host(i_turb,1) = turb_loc_host(i_turb,1)/z_i       ! x
+                turb_loc_host(i_turb,2) = turb_loc_host(i_turb,2)/z_i       ! y
+                turb_loc_host(i_turb,3) = turb_loc_host(i_turb,3)/z_i       ! z
+                turb_loc_host(i_turb,4) = turb_loc_host(i_turb,4)/180*pi    ! yaw
+                turb_loc_host(i_turb,5) = turb_loc_host(i_turb,5)/180*pi    ! tilt
+            end do
+        
+            ! Copy to device
+            turb_loc = turb_loc_host
+        end if
+    end subroutine init_turbine
+end module init

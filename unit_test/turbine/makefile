@@ -10,13 +10,13 @@ FC = mpif90
 
 FFLAGS = -O3 -Mpreprocess -mcmodel=medium
 CUDA = -Mcuda -lcufft -ta=nvidia 
-PRECISION=-DDOUBLE
+# PRECISION=-DDOUBLE
 
 ################################################################################
 # OBJ, PROG
 ################################################################################
 
-OBJ = precision.o dimen.o control.o turbine_new_alm_check.o\
+OBJ = precision.o dimen.o control.o structural.o rotation.o turbine_alm_nrel_new.o\
 	  test.o \
 
 PROG = wireles
@@ -29,7 +29,9 @@ build:
 	# $(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c turbine_lib_cpu.f90
 	# $(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c turbine_cpu.f90
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c control.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c turbine_new_alm_check.cuf
+		$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c structural.cuf
+		$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c rotation.cuf
+	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c turbine_alm_nrel_new.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c test.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(OBJ) -o $(PROG).run $(LIBS)
 

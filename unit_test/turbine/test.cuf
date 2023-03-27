@@ -31,7 +31,7 @@
     real(fp),dimension(3,181),device :: alpha_cl_cd_gpu
     integer istat,i,j,k,t
     type(c_ptr) plan_batch(2)
-    
+    real(fp),dimension(blade_num,n_r,n_turb,2) :: displacement_host,moment_host,velocity_host   
     integer(kind=cuda_stream_kind) :: stream(3)
     real :: max_error
     integer :: token,request
@@ -63,7 +63,7 @@
     allocate(thrust(n_turb),power(n_turb),omega(n_turb))
 
     t = 1
-    u_host = 4.9
+    u_host = 10
     v_host = 0
     w_host = 0
 
@@ -81,22 +81,25 @@
         open(unit=199,file='input/turb_loc.dat')
         read(199,*)
         do k=1,n_turb
-            read(199,*) turb_loc_host(k,1:4)
+            read(199,*) turb_loc_host(k,1:5)
         end do
         close(199)
     end if
 
     do i_turb=1,n_turb
-        turb_loc_host(i_turb,1) = turb_loc_host(i_turb,1)/z_i
-        turb_loc_host(i_turb,2) = turb_loc_host(i_turb,2)/z_i
-        turb_loc_host(i_turb,3) = turb_loc_host(i_turb,3)/z_i
-        turb_loc_host(i_turb,4) = turb_loc_host(i_turb,4)/180*pi
+        turb_loc_host(i_turb,1) = turb_loc_host(i_turb,1)/z_i       ! x
+        turb_loc_host(i_turb,2) = turb_loc_host(i_turb,2)/z_i       ! y
+        turb_loc_host(i_turb,3) = turb_loc_host(i_turb,3)/z_i       ! z
+        turb_loc_host(i_turb,4) = turb_loc_host(i_turb,4)/180*pi    ! yaw
+        turb_loc_host(i_turb,5) = turb_loc_host(i_turb,5)/180*pi    ! tilt
     end do
+    ! Copy to device
+    turb_loc = turb_loc_host
+
     print *,turb_loc_host
 
-    turb_loc = turb_loc_host
         t = 1
-        call turbine_force(fx,fy,fz,power,u,v,w,turb_loc,t)
+        call turbine_force(Fx,Fy,Fz,CTF,power,displacement_host,moment_host,velocity_host,u,v,w,turb_loc,t)
     
         ! t = 1000
         ! call turbine_force(fx,fy,fz,power,u,v,w,turb_loc,t)

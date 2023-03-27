@@ -36,7 +36,7 @@ DEP0  =   precision.o
 DEP1  =   dimen.o cufft_m.o
 DEP2  =   update.o convection.o derivative.o filter.o io.o pressure.o rhs.o time.o control.o structural.o rotation.o
 DEP3  =   divergence.o turbine_alm_nrel_new.o
-DEP4  =   sgs.o sgs_mgm.o wall.o
+DEP4  =   sgs.o sgs_mgm.o wall.o init.o
 
 
 ifdef USE_NVTX
@@ -63,7 +63,7 @@ $(DEP2): %.o: %.cuf precision.o dimen.o
 	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
 $(DEP3): %.o: %.cuf precision.o dimen.o derivative.o control.o
 	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
-$(DEP4): %.o: %.cuf precision.o dimen.o cufft_m.o filter.o
+$(DEP4): %.o: %.cuf precision.o dimen.o cufft_m.o filter.o init.o
 	$(FC) $(FFLAGS) $(CUDA) $(INC) $(PRECISION) -c $<
 
 # --- clean ---

@@ -114,7 +114,7 @@ def anime(PATH, case_name):
     if config['ts_flag'] > 10:
 
         # u  = fctlib.load_3d('001_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
-    
+        mean_induction = np.zeros([511,128])
         f = h5py.File(out_path+'/'+case_name+'_flowfield.h5','w')
         # for key, value in config.items():
         #     f.attrs[key] = value
@@ -123,7 +123,13 @@ def anime(PATH, case_name):
         f.create_dataset('x',data=space['x'])
         f.create_dataset('y',data=space['y'])
         f.create_dataset('z',data=space['z_c'])
+        x = space['x']
+        y = space['y'] - 255
+        z = space['z_c'] - 90
 
+        yy,zz = np.meshgrid(y,z,indexing='xy')
+        phi = np.arctan(zz/yy)
+        r = np.sqrt(yy**2 + zz**2)
         f.create_dataset('t_sample',data=time['t_ts'])
         # f.create_dataset('u',data=result_4d['u_inst_c'][:,:,:])
         # f.create_dataset('v',data=result_4d['v_inst_c'])
@@ -133,7 +139,7 @@ def anime(PATH, case_name):
         t_count = (config['nsteps']-config['ts_tstart'])//100
         velo_data = np.zeros([t_count,config['nx'],config['ny'],3])
 
-        for i in range(t_count):
+        for i in range(10):
             # print(i)
             # qcrit = fctlib.load_3d(str(i).zfill(4)+'_ts_slice_u', config['nx'],  config['ny'], config['double_flag'], src_out_path)
             # qcrit = fctlib.load_3d(str(i).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
@@ -151,7 +157,17 @@ def anime(PATH, case_name):
             velo_data[i,:,:,2] = w[:,:,90]
             fig = figure(figsize=(8,6),dpi=100)
             ax1 = fig.add_subplot(111)
-            ax1.imshow(u[:,:,44].T,origin='lower',aspect=1/1)
+            induction = (1 - u[64,:,:].T/u[44,:,:].T)
+            mean_induction = induction + mean_induction
+            tang_v = -v[64,:,:].T*zz/r+w[64,:,:].T*yy/r
+            tang_induction = tang_v/(1.71*r)
+
+            # mean_induction = tang_induction + mean_induction
+            # im = ax1.imshow(mean_induction/(i+1),vmin=0,vmax=0.3,origin='lower',aspect=1/4)
+
+            im = ax1.imshow(tang_induction,origin='lower',aspect=1/4)
+            # im = ax1.contourf(y,z,phi)
+            plt.colorbar(im)
             plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
             plt.close()
 
@@ -218,7 +234,7 @@ def anime(PATH, case_name):
         # f.create_dataset('displacement_flap',data=turb_force['displacement_flap'][:,:,:,:])
         # f.create_dataset('displacement_edge',data=turb_force['displacement_edge'][:,:,:,:])
         f.create_dataset('moment_flap',data=turb_force['moment_flap'][::2,:,:,:])
-        # f.create_dataset('moment_edge',data=turb_force['moment_edge'][:,:,:,:])
+        f.create_dataset('moment_edge',data=turb_force['moment_edge'][::2,:,:,:])
         # f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
         # f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
         f.create_dataset('phase',data=turb_force['phase'][::2,:])
@@ -226,7 +242,7 @@ def anime(PATH, case_name):
         f.close
 
         displacement_flap = turb_force['moment_flap']
-        displacement_edge = turb_force['displacement_edge']
+        displacement_edge = turb_force['moment_edge']
 
         print(displacement_flap.shape)
         plt.plot(displacement_flap[:,0,0,0])
