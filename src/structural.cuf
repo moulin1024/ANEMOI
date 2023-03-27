@@ -17,7 +17,7 @@ module structural
     real, parameter :: total_time_warmup = 20
     real, parameter :: delta_t = total_time_warmup/T_warmup
     real :: delta_r = radius/(N-1)
-    integer,parameter :: T_split = int(dt*z_i/delta_t)
+    integer,parameter :: T_split = int(dt*z_i*turb_count/delta_t)
     contains
 
     subroutine aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
@@ -32,11 +32,11 @@ module structural
         real(fp),dimension(blade_num,N+2,n_turb,2) :: V, S, M, q
         real(fp),dimension(blade_num,n_turb) :: phase_angle
         integer,intent(in) :: t
-        real :: time = 0.0
-        real :: omega(n_turb),gamma,phi,tau
-        real,dimension(2) :: g, initial_phase
+        ! real :: time = 0.0
+        real :: omega(n_turb),gamma,phi,tau,time
+        real,dimension(n_r,2) :: g, initial_phase
         real,dimension(N+2,2) :: F_a
-        integer :: j,i_blade,i_turb,i
+        integer :: j,i_blade,i_turb,i,i_r
         integer :: counter = 1
 
         save V, S, M, q, EI, r_location,rho, phase_angle
@@ -61,8 +61,8 @@ module structural
                     do j = 1, T_warmup       
                         phi = phase_angle(i_blade,i_turb)  
 
-                        g(1) =  9.8*Sin(tau)
-                        g(2) = -(9.8*Cos(phi)*Cos(tau)) 
+                        g(:,1) = 9.8*Sin(tau)
+                        g(:,2) = -(9.8*Cos(phi)*Cos(tau)) 
 
                         F_a(2:N+1,1) = CTF_host(i_blade,n_r_s:n_r,i_turb,1)*dx*dy*dz*z_i**2/delta_r
                         F_a(2:N+1,2) = CTF_host(i_blade,n_r_s:n_r,i_turb,2)*dx*dy*dz*z_i**2/delta_r
@@ -95,10 +95,11 @@ module structural
                 gamma = turb_loc_host(i_turb,4)
                 tau = turb_loc_host(i_turb,5)
                 do j = 1, T_split            
-                    phi = mod(phase_angle(i_blade,i_turb) + omega(i_turb)*delta_t*j,2*pi)  
-                    g(1) =  9.8*Sin(tau)
-                    g(2) = -(9.8*Cos(phi)*Cos(tau)) 
-
+                    phi = mod(phase_angle(i_blade,i_turb) + omega(i_turb)*delta_t*j,2*pi)
+                    do i_r = 2,N+1
+                        g(i_r,1) = 9.8*Sin(tau) + delta_r*(i_r-1)*cos(phi)*(dyn_yaw_freq(i_turb)*2*pi)**2*sin(dyn_yaw_freq(i_turb)*2*pi*(t*dt*z_i+delta_t*j))
+                        g(i_r,2) = -(9.8*Cos(phi)*Cos(tau)) 
+                    end do
 
                     F_a(2:N+1,1) = CTF_host(i_blade,n_r_s:n_r,i_turb,1)*dx*dy*dz*z_i**2/delta_r
                     F_a(2:N+1,2) = CTF_host(i_blade,n_r_s:n_r,i_turb,2)*dx*dy*dz*z_i**2/delta_r
@@ -130,6 +131,7 @@ module structural
             phase_angle(1,i_turb) = mod(phase_angle(1,i_turb) + turb_rpm_host(i_turb)/60*2*pi*dt*z_i*turb_count,2*pi) 
         end do
 
+        write (82000) phase_angle
 
         do i_turb = 1,n_turb
             do i = 2, N+1
@@ -195,7 +197,7 @@ module structural
         real,dimension(N+2,2,2),intent(in) :: EI
         real,dimension(N+2),intent(in) :: rho,r_location
         real,dimension(N+2,2) :: F_a
-        real,intent(in) :: g(2)
+        real,intent(in) :: g(N+2,2)
         real,intent(in) :: delta_t,delta_r
         real,intent(in) :: damping,omega
         integer,intent(in) :: flag
@@ -210,16 +212,16 @@ module structural
                     ! damping_coefficent = damping*12*EI(i,j,j)/(rho(i)*radius**3)
                     V_new(i,j) = (1-damping*delta_t)*V_old(i,j) + &
                         delta_t*((-1.0/rho(i))*((M_old(i+1,j)-(2.0*M_old(i,j))+M_old(i-1,j))/delta_r**2)+&
-                        ((1.0/rho(i))*((S_old(i+1,j)-S_old(i,j))/delta_r))+(F_a(i,j)/rho(i))+g(j))
+                        ((1.0/rho(i))*((S_old(i+1,j)-S_old(i,j))/delta_r))+(F_a(i,j)/rho(i))+g(i,j))
                 end do
             end do
         else 
             do i = 2, N+1
                 do j = 1,2
-                    ! damping_coefficent = damping*12*EI(i,j,j)/(rho(i)*radius**3)
-                    V_new(i,j) = (1-0.00214*12*EI(i,j,j)/(rho(i)*radius**3)*delta_t)*V_old(i,j) + &
+                    ! damping_coefficent = 
+                    V_new(i,j) = (1-0.1*delta_t)*V_old(i,j) + &
                         delta_t*((-1.0/rho(i))*((M_old(i+1,j)-(2.0*M_old(i,j))+M_old(i-1,j))/delta_r**2)+&
-                        ((1.0/rho(i))*((S_old(i+1,j)-S_old(i,j))/delta_r))+(F_a(i,j)/rho(i))+g(j))
+                        ((1.0/rho(i))*((S_old(i+1,j)-S_old(i,j))/delta_r))+(F_a(i,j)/rho(i))+g(i,j))
                 end do
             end do
         end if

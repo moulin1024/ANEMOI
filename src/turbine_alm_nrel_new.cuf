@@ -52,7 +52,8 @@ module turbine
     real(fp), dimension(n_turb), parameter :: dA_tower = [(2.d0*tow_r(i_turb)*dz,i_turb = 1,n_turb)]
     real(fp), dimension(n_turb), parameter :: dA_nacell = [(pi*nac_r(i_turb)**2.d0, i_turb=1,n_turb)]
 
-    real(fp),parameter :: hub_tower_gap = 0.0 ! The gap between the tower and the hub (2 cm for WiRE-01)
+    real(fp),parameter :: hub_tower_gap = 0.0!turb_r(1) ! The gap between the tower and the hub (2 cm for WiRE-01)
+
     contains
     
     Subroutine turbine_force(Fx,Fy,Fz,CTF,power,displacement_host,moment_host,velocity_host,u,v,w,turb_loc,t)
@@ -63,7 +64,7 @@ module turbine
         real(fp),dimension(nx,ny,nz2),intent(out),device :: fx,fy,fz
         real(fp),dimension(blade_num,n_r,n_turb,2),intent(out),device  :: CTF
         real(fp),dimension(blade_num,n_r,n_turb,2),intent(out) :: displacement_host,moment_host,velocity_host
-        real(fp),dimension(blade_num,n_r,n_turb,2)  :: CTF_host
+        real(fp),dimension(blade_num,n_r,n_turb,2)  :: CTF_host,CTF_host_old,CTF_host_new
         real(fp),dimension(blade_num,n_r,n_turb,2)  :: deformation_host
         real(fp),dimension(nx,ny,nz2) :: fx_host,fy_host,fz_host
         real(fp),dimension(n_turb),intent(out),device    :: power
@@ -76,7 +77,7 @@ module turbine
         real(fp),dimension(n_turb) :: CTUin_host,turb_rpm_host
         integer :: i,j,k,t,counter
     
-        save CTUin,turb_rpm,torque,counter,deformation,velocity,turb_loc_host
+        save CTUin,turb_rpm,torque,counter,deformation,velocity,turb_loc_host,CTF_host_old
     !---------------------------------------------------------------------------
     ! code
     !---------------------------------------------------------------------------
@@ -100,16 +101,27 @@ module turbine
         !---------------------------------------------------------------------------
         ! compute models
         if(turbine_model == 1)then
-            ! call tower(fx,fy,fz,u,v,w,turb_loc,t) 
-            ! call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
-            call controller_lambda(turb_rpm,CTUin,u,turb_loc,t)
-            call almyaw(fx,fy,fz,CTF,power,u,v,w,turb_loc,turb_rpm,deformation,velocity,t,me,nall)
-            CTF_host = CTF
-            turb_rpm_host = turb_rpm
+            call tower(fx,fy,fz,u,v,w,turb_loc,t) 
+            call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
+            ! call controller_lambda(turb_rpm,CTUin,u,turb_loc,t)
+            call controller_adaptive(turb_rpm,CTUin,u,turb_loc,torque,t)
+            torque = 0._fp
+            call almyaw(fx,fy,fz,CTF,power,torque,u,v,w,turb_loc,turb_rpm,deformation,velocity,t,me,nall)
             
+            CTF_host = CTF
+            if (t>1) then
+                CTF_host = 0.5*(CTF_host + CTF_host_old)
+            end if
+            turb_rpm_host = turb_rpm
+            power_host = power
+            ! write(1,11) 1.0
+            write(111, '(E11.4)') power_host
+            11 format(F8.4)
+            ! print*,power_host/1e6
             call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
             ! deformation = deformation_host
             velocity = velocity_host
+            CTF_host_old = CTF_host 
         end if
         
     end Subroutine turbine_force
@@ -317,8 +329,8 @@ module turbine
         j_global = int(turb_loc(i_turb,2)/dy) + j - ker_d_y/2 
         k_global = k + 1  
 
-        coord_x = i_global*dx-(turb_loc(i_turb,1)-hub_tower_gap*cos(turb_loc(i_turb,4)))
-        coord_y = j_global*dy-(turb_loc(i_turb,2)-hub_tower_gap*sin(turb_loc(i_turb,4)))
+        coord_x = i_global*dx-turb_loc(i_turb,1)
+        coord_y = j_global*dy-turb_loc(i_turb,2)
         coord_z = (k_global-1.5)*dz-turb_z(i_turb)
 
         ! Formulate the gaussian kernel
@@ -363,9 +375,6 @@ module turbine
         hub_k(i_turb) = int(hub_kk)
         lz1(i_turb) = dble(hub_kk-hub_k(i_turb))
         lz2(i_turb) = (1.d0-lz1(i_turb))
-        ! Streamwise velocity at the nacelle
-        ! CTU = u(nint((turb_loc(i_turb,1)-hub_tower_gap*cos(turb_loc(i_turb,4)))/dx),nint((turb_loc(i_turb,2)-hub_tower_gap*sin(turb_loc(i_turb,4)))/dy),hub_k(i_turb))*lz1(i_turb) + &
-        !       u(nint((turb_loc(i_turb,1)-hub_tower_gap*cos(turb_loc(i_turb,4)))/dx),nint((turb_loc(i_turb,2)-hub_tower_gap*sin(turb_loc(i_turb,4)))/dy),hub_k(i_turb)+1)*lz2(i_turb)
 
         ! Streamwise velocity i0 grid in front of the nacelle
         CTUin(i_turb) = u(nint(nint(turb_loc(i_turb,1)/dx)*dx/dx)-i0,nint(nint(turb_loc(i_turb,2)/dy)*dy/dy),hub_k(i_turb))*lz1(i_turb) + &
@@ -508,17 +517,15 @@ module turbine
         end do
 
 
-        ! phase_angle_host = phase_angle
-        ! stop
-        ! print *,phase_angle_host
-        ! write (82000) phase_angle_host
+        phase_angle_host = phase_angle
+        write (82000) phase_angle_host
 
 
         call force_compute_alm<<<grid_alm,tBlock_alm>>>(CTF,power,torque,&
                                                         u,v,w,&
                                                         twist_angle,chord_length,&
                                                         turb_rpm,turb_loc,turb_aerodyn,phase_angle,&
-                                                        turb_aerodyn_nrel,deformation,velocity)
+                                                        turb_aerodyn_nrel,deformation,velocity,t)
         
         !$cuf kernel do(3) <<<*,*>>>
         ! (blade_num,n_r,n_turb,2)
@@ -531,8 +538,8 @@ module turbine
             end do
         end do
 
-        call force_projection_pre<<<grid_full,tBlock_full>>>(sum_ker,turb_loc,phase_angle,twist_angle,chord_length,deformation)
-        call force_projection<<<grid_full,tBlock_full>>>(fx,fy,fz,CTF,sum_ker,turb_loc,phase_angle,twist_angle,chord_length,deformation)
+        call force_projection_pre<<<grid_full,tBlock_full>>>(sum_ker,turb_loc,phase_angle,twist_angle,chord_length,deformation,t)
+        call force_projection<<<grid_full,tBlock_full>>>(fx,fy,fz,CTF,sum_ker,turb_loc,phase_angle,twist_angle,chord_length,deformation,t)
     end Subroutine almyaw
 
     attributes(global) subroutine force_compute_pre_alm(twist_angle,chord_length,&
@@ -567,7 +574,7 @@ module turbine
                                                     u,v,w,&
                                                     twist_angle,chord_length,&
                                                     turb_rpm,turb_loc,turb_aerodyn,&
-                                                    phase_angle,turb_aerodyn_nrel,deformation,velocity)
+                                                    phase_angle,turb_aerodyn_nrel,deformation,velocity,t)
         !----------------------------------------------------------------------------
         ! Declaration
         !----------------------------------------------------------------------------
@@ -583,15 +590,15 @@ module turbine
         real(fp),dimension(n_r,n_turb),intent(in)          :: twist_angle,chord_length
         real(fp),dimension(12,181),intent(in)              :: turb_aerodyn_nrel
         real(fp),dimension(blade_num,n_r,n_turb,2),intent(in)  :: deformation,velocity
-
+        integer,value,intent(in)                          :: t
         !     ! Internal variables
         real(fp) :: c_w_1d(8),c_uv_1d(8)
         real(fp) :: blade_ii,blade_jj,blade_kk_uv,blade_kk_w  
         real(fp) :: CTphi,sin_CTphi,cos_CTphi
         real(fp) :: CTU,CTV,CTW,CTUrel,AoA,AoA1
         real(fp) :: CTCL,CTCD,CTU_origin,CTV_origin,CTW_origin
-        real(fp) :: f1_tip,f2_tip,f1_hub,f2_hub,g
-        real(fp) :: mu(3),CTU_relative_flex(3),CTU_relative_rigid(3),U_edgewise
+        real(fp) :: f1_tip,f2_tip,f1_hub,f2_hub,g,gamma,dyn_yaw_speed
+        real(fp) :: mu(3),CTU_relative_flex(3),CTU_relative_rigid(3),U_edgewise,time
         !     real(fp) :: cos_Tang
         integer :: i_turb,blade,i_r,istat,blade_ijk(4)
         !----------------------------------------------------------------------------
@@ -603,9 +610,14 @@ module turbine
         i_turb    = blockIdx%x
     
         if (i_r >= n_r_s) then
-
+            gamma = turb_loc(i_turb,4)
+            if (i_turb == 1) then
+                time = t*dt*z_i
+                gamma = turb_loc(i_turb,4)*(sin(2*pi*dyn_yaw_freq(i_turb)*time))
+                dyn_yaw_speed = (turb_loc(i_turb,4)*2*pi*dyn_yaw_freq(i_turb)*cos(2*pi*dyn_yaw_freq(i_turb)*time))*cos(phase_angle(blade,i_turb))*(r(i_r,i_turb)*z_i)
+            end if
             call elementCoordinate(mu,deformation(blade,i_r,i_turb,1),deformation(blade,i_r,i_turb,2),&
-                            turb_loc(i_turb,4),phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))
+                            gamma,phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))
 
             blade_ii   = turb_loc(i_turb,1)/dx+(mu(1))/dx
             blade_jj   = turb_loc(i_turb,2)/dy+(mu(2))/dy
@@ -630,13 +642,13 @@ module turbine
             ! Project from the original grid-align reference to the disk normal reference 
             call relativeVelocity(CTU_relative_flex,CTU_relative_rigid,ctu,ctv,ctw,&
                                   deformation(blade,i_r,i_turb,1),deformation(blade,i_r,i_turb,2),&
-                                  turb_loc(i_turb,4),phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))
+                                  gamma,phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))
             
             ! Compute the tangential velocity relative to the rotating blade   
 
             U_edgewise = turb_rpm(i_turb)/60*2*pi*(r(i_r,i_turb)*z_i) - clockwise*CTU_relative_flex(3) + velocity(blade,i_r,i_turb,2)          
             ! Find the attack angle and relative inflow velocity for the blade element
-            CTphi     = atan((CTU_relative_flex(1) - velocity(blade,i_r,i_turb,1))/U_edgewise)
+            CTphi     = atan((CTU_relative_flex(1) - velocity(blade,i_r,i_turb,1)+dyn_yaw_speed)/U_edgewise)
             sin_CTphi = sin(CTphi)
             cos_CTphi = cos(CTphi)
             ! Convert to degree
@@ -674,7 +686,7 @@ module turbine
         end if
     end subroutine force_compute_alm
       
-    attributes(global) subroutine force_projection_pre(sum_ker,turb_loc,phase_angle,twist_angle,chord_length,deformation)
+    attributes(global) subroutine force_projection_pre(sum_ker,turb_loc,phase_angle,twist_angle,chord_length,deformation,t)
         !----------------------------------------------------------------------------
         ! Declaration
         !----------------------------------------------------------------------------
@@ -685,10 +697,11 @@ module turbine
         real(fp),dimension(blade_num,n_turb),intent(in)    :: phase_angle
         real(fp),dimension(n_r,n_turb),intent(in)          :: twist_angle,chord_length
         real(fp),dimension(blade_num,n_r,n_turb,2),intent(in)  :: deformation
+        integer,value,intent(in)                          :: t
         ! Internal variables
         real(fp) :: sigma_x,sigma_yz,sigma,tmp1,tmp2,tmp3,ker_u,ker_w    
-        real(fp) :: mu_x,mu_y,mu_z,mu(3)
-        real(fp) :: coord_x,coord_y,coord_z_u,coord_z_w
+        real(fp) :: mu_x,mu_y,mu_z,mu(3),gamma
+        real(fp) :: coord_x,coord_y,coord_z_u,coord_z_w,time
         integer :: i,j,k,i_turb,blade,i_r,istat, i_global, j_global, k_global
         !----------------------------------------------------------------------------
         ! code
@@ -702,11 +715,16 @@ module turbine
         ! Loop through turbine
         ! TODO: replace by loop through x masking grid?
         do i_turb = 1,n_turb
+            gamma = turb_loc(i_turb,4)
+            if (i_turb == 1) then
+                time = t*dt*z_i
+                gamma = turb_loc(i_turb,4)*(sin(2*pi*dyn_yaw_freq(i_turb)*time))
+            end if
 
             if (i_r >= n_r_s) then
                 ! Blade element relative coordinates to the hub
                 call elementCoordinate(mu,deformation(blade,i_r,i_turb,1),deformation(blade,i_r,i_turb,2),&
-                                       turb_loc(i_turb,4),phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))
+                                       gamma,phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))
 
                 ! global index for kernel
                 i_global = int(turb_loc(i_turb,1)/dx) + i - mask_x/2
@@ -743,7 +761,7 @@ module turbine
     end subroutine force_projection_pre
 
 
-    attributes(global) subroutine force_projection(fx,fy,fz,CTF,sum_ker,turb_loc,phase_angle,twist_angle,chord_length,deformation)
+    attributes(global) subroutine force_projection(fx,fy,fz,CTF,sum_ker,turb_loc,phase_angle,twist_angle,chord_length,deformation,t)
     !----------------------------------------------------------------------------
     ! Declaration
     !----------------------------------------------------------------------------
@@ -755,6 +773,7 @@ module turbine
         real(fp),dimension(blade_num,n_turb),intent(in)    :: phase_angle
         real(fp),dimension(n_r,n_turb),intent(in)          :: twist_angle,chord_length
         real(fp),dimension(blade_num,n_r,n_turb,2),intent(in)  :: deformation 
+        integer,value,intent(in)                          :: t 
         ! Internal variables
         real(fp) :: sin_CTangx,cos_CTangz  
         real(fp) :: sigma,sigma_x,sigma_yz,tmp1,tmp2,tmp3
@@ -763,7 +782,7 @@ module turbine
         real(fp) :: angle_uv,angle_z
         real(fp) :: mu_x,mu_y,mu_z,mu(3)
         real(fp) :: CTFy,CTFx_origin,CTFy_origin,CTFz_origin,CTF_origin(3)
-        real(fp) :: CTx,CTy,CTzu,CTzw
+        real(fp) :: CTx,CTy,CTzu,CTzw,gamma,time
         integer :: i,j,k,i_turb,blade,i_r,i_global,j_global,k_global,istat
     !----------------------------------------------------------------------------
     ! code
@@ -776,20 +795,25 @@ module turbine
         i_r     = threadIdx%y
 
         do i_turb = 1,n_turb
+            gamma = turb_loc(i_turb,4)
+            if (i_turb == 1) then
+                time = t*dt*z_i
+                gamma = turb_loc(i_turb,4)*(sin(2*pi*dyn_yaw_freq(i_turb)*time))
+            end if
             if (i_r >= n_r_s) then
                 call elementCoordinate(mu,deformation(blade,i_r,i_turb,1),deformation(blade,i_r,i_turb,2),&
-                                       turb_loc(i_turb,4),phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))
+                                       gamma,phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))
                 mu_x = mu(1)
                 mu_y = mu(2)
                 mu_z = mu(3)
                  ! global index for kernel
-                i_global = int(turb_loc(i_turb,1)/dx-(hub_tower_gap*cos(turb_loc(i_turb,4)))/dx) + i - mask_x/2
-                j_global = int(turb_loc(i_turb,2)/dy-(hub_tower_gap*sin(turb_loc(i_turb,4)))/dy) + j - mask_y/2
+                i_global = int(turb_loc(i_turb,1)/dx-(hub_tower_gap*cos(gamma))/dx) + i - mask_x/2
+                j_global = int(turb_loc(i_turb,2)/dy-(hub_tower_gap*sin(gamma))/dy) + j - mask_y/2
                 k_global = k 
 
                 ! Grid coordinates in the hub-centered reference frame
-                coord_x = i_global*dx-(turb_loc(i_turb,1)-hub_tower_gap*cos(turb_loc(i_turb,4)))
-                coord_y = j_global*dy-(turb_loc(i_turb,2)-hub_tower_gap*sin(turb_loc(i_turb,4)))
+                coord_x = i_global*dx-(turb_loc(i_turb,1)-hub_tower_gap*cos(gamma))
+                coord_y = j_global*dy-(turb_loc(i_turb,2)-hub_tower_gap*sin(gamma))                
                 coord_z_u = (k_global-1.5)*dz-turb_loc(i_turb,3)
                 coord_z_w = coord_z_u - 0.5*dz
 
@@ -808,7 +832,7 @@ module turbine
                 ! Rotate the force from the disk-normal reference to the original reference
                 call forceRotation(CTF_origin,CTF(blade,i_r,i_turb,1),CTF(blade,i_r,i_turb,2),&
                                     deformation(blade,i_r,i_turb,1),deformation(blade,i_r,i_turb,2),&
-                                    turb_loc(i_turb,4),phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))
+                                    gamma,phase_angle(blade,i_turb),turb_loc(i_turb,5),dr(i_turb),r(i_r,i_turb))
                 
                 CTFx_origin = CTF_origin(1)
                 CTFy_origin = CTF_origin(2)
