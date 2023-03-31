@@ -436,6 +436,8 @@ subroutine open_ts1(me)
             status='unknown', form='unformatted', access='stream')
         open (unit=(53000+me),file=('output/p'//trim(fme)//'_'//'ts_w.bin'), &
             status='unknown', form='unformatted', access='stream')
+        open (unit=(53100+me),file=('output/p'//trim(fme)//'_'//'ts_q.bin'), &
+            status='unknown', form='unformatted', access='stream')
     end if
 
 end subroutine open_ts1
@@ -494,6 +496,7 @@ subroutine open_turb(me)
             form='unformatted', access='stream')
         open (unit=(80000),file=('output/blade_velocity_edge.bin'), status='unknown', &
             form='unformatted', access='stream')
+        open (unit=(90000), FILE="output/ta_power.dat")  
     end if
 
 end subroutine open_turb
@@ -618,7 +621,7 @@ subroutine write_ts1(u,v,w,me)
         write (52000+me) v(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
         write (53000+me) w(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
     end if
-
+    
 end subroutine write_ts1
 
 subroutine write_log(log_ustar,log_umax,me)

@@ -19,8 +19,6 @@ CUDA = -Mcuda -lcufft -ta=nvidia
 # NVTX uncomment next line to add nvtx markers. Make sure that CUDA_HOME is available in your env.
 USE_NVTX = 1
 
-
-
 ################################################################################
 # LIBS
 ################################################################################
@@ -35,7 +33,7 @@ PROG = wireles_src
 DEP0  =   precision.o
 DEP1  =   dimen.o cufft_m.o
 DEP2  =   update.o convection.o derivative.o filter.o io.o pressure.o rhs.o time.o control.o structural.o rotation.o
-DEP3  =   divergence.o turbine_alm_nrel.o
+DEP3  =   divergence.o turbine_admr.o
 DEP4  =   sgs.o sgs_mgm.o wall.o
 
 

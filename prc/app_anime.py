@@ -140,7 +140,7 @@ def anime(PATH, case_name):
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
 
-            im = ax1.imshow(u[i,32,:,:].T,origin='lower',aspect=1/4)
+            im = ax1.imshow(u[i,:,:,19].T,origin='lower',aspect=1/4)
             # if (i==9):
                 # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
@@ -148,7 +148,7 @@ def anime(PATH, case_name):
             ax1.set_xlabel('x')
             ax1.set_ylabel('y')
             # ax1.axis('scaled') 
-            # ax1.set_ylim([0,128])
+            # ax1.set_ylim([0,64])
 
             # ax2.plot(m_flap[:i*100,0,0,0])
             # print(i,np.mean(u[i,(224-32):(224-16),(128-16):(128+16),89].flatten()))
@@ -156,7 +156,7 @@ def anime(PATH, case_name):
         anim = animation.FuncAnimation(fig, animate, frames=10)
         anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=10)
 
-    if config['turb_flag'] > 0:
+    if config['turb_flag'] > 10:
         turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():
