@@ -36,7 +36,7 @@ program main
 
     real(fp),dimension(nx,ny,nz2) :: fx_host,fy_host,fz_host
     real(fp),dimension(nx,ny),device :: zo,ustar,m 
-    real(fp),dimension(:,:,:),allocatable,device  :: u,v,w,p,&       ! Velocity & pressure   
+    real(fp),dimension(:,:,:),allocatable,device  :: u,v,w,p,q,&       ! Velocity & pressure   
                                              cx,cy,cz,&          ! Convection term      
                                              txx,txy,txz,&       ! Stress term
                                              tyy,tyz,tzz,&       
@@ -235,7 +235,6 @@ program main
     !---------------------------------------------------------------------------
     ! load turbine aero data
     !---------------------------------------------------------------------------
-
     if (turb_flag > 0) then
         open(unit=199,file='input/turb_loc.dat')
         read(199,*)
@@ -261,7 +260,6 @@ program main
     !---------------------------------------------------------------------------
     ! init log
     if(log_flag > 0) call open_log(me)
-
     !---------------------------------------------------------------------------'
     ! init ta outputs
     if (ta_flag > 0) then
@@ -269,23 +267,15 @@ program main
             call initialize_ta1(ta_u,ta_v,ta_w,&
                                 ta_u2,ta_v2,ta_w2,ta_uv)
             call open_ta1(me)
-        ! elseif (ta_flag == 2) then
-        !     call initialize_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz)
-        !     call open_ta2(me)
         end if
     end if
-
-    ! print *, 'init ta outputs complete'
-
     !---------------------------------------------------------------------------
     ! init ts outputs
     if (ts_flag > 0) then
         if (ts_flag == 1) then
             call open_ts1(me)
-            ! call open_ts2(me)
         end if
     end if
-
     !---------------------------------------------------------------------------
     ! init inflow
     if (sim_flag > 1) then
@@ -294,7 +284,6 @@ program main
     !---------------------------------------------------------------------------
     ! init turb
     if(turb_flag > 0) call open_turb(me)
-
     if (me == 0) OPEN(unit=(1993), FILE="output/ta_power.dat")  
     !---------------------------------------------------------------------------
     ! init fft 
@@ -310,9 +299,6 @@ program main
         call cufftPlan2d(plan_2d(1),ny,nx,CUFFT_D2Z)
         call cufftPlan2d(plan_2d(2),ny,nx,CUFFT_Z2D)
     end if
-    !---------------------------------------------------------------------------
-    ! copy cpu data to gpu memory
-
     device_id = me
 #ifdef USE_NVTX    
     call nvtxEndRange
@@ -321,21 +307,21 @@ program main
     ! start time loop
     !===========================================================================
 #ifdef USE_NVTX
-    call nvtxStartRange("start time loop")
+call nvtxStartRange("start time loop")
 #endif
     do t=1,nsteps
         !-----------------------------------------------------------------------
         ! save previous time's right-hand-sides for adams-bashforth
         !-----------------------------------------------------------------------
 #ifdef USE_NVTX
-        call nvtxStartRange("save prv time",1)
+call nvtxStartRange("save prv time",1)
 #endif
         rhsx_f  = rhsx 
         rhsy_f  = rhsy 
         rhsz_f  = rhsz
 
 #ifdef USE_NVTX    
-    call nvtxEndRange
+call nvtxEndRange
 #endif
         !-----------------------------------------------------------------------
         ! derivatives
@@ -343,7 +329,7 @@ program main
         !-----------------------------------------------------------------------
         ! spectral deriv (and filter)
 #ifdef USE_NVTX
-        call nvtxStartRange("deriv and filter",1)
+call nvtxStartRange("deriv and filter",1)
 #endif
         call ddxy_filter(u,dudx,dudy,plan_batch)
 
@@ -364,24 +350,22 @@ program main
         call update_w_async(dwdy,request,me,nall)
 
         if (mod(t,c_count*10)==0) then
-            ! u_host = fx
-            ! v_host = fy 
-            ! w_host = fz 
-
+            call compute_q_criterion<<<grid, tBlock>>>(qcrit,
+                                                       dudx,dudy,dudz,
+                                                       dvdx,dvdy,dvdz,
+                                                       dwdx,dwdy,dwdz)
+            
+            qcrit_host = qcrit
             u_host = u
             v_host = v 
             w_host = w 
             ustar_host = ustar 
-
             call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
             if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*10) == 0) then 
                 print *,'Write instant field:'
-                call write_ts1(u_host,v_host,w_host,me)
+                call write_ts1(u_host,v_host,w_host,qcrit_host,me)
             end if
-            ! print *,mean_power,power_host
         end if
-
-
         !-----------------------------------------------------------------------
         ! bc top uv
         if (me==nprocs-1) then
@@ -407,43 +391,32 @@ program main
         call update_uv_async(dwdz,request,me,nall)
         
 #ifdef USE_NVTX
-        call nvtxEndRange
-        call nvtxStartRange("wall",3)
+call nvtxEndRange
+call nvtxStartRange("wall",3)
 #endif
         !-----------------------------------------------------------------------
         ! wall
         !-----------------------------------------------------------------------
         ! we need to hide this wall modif to the other processor because
         ! dudz, dvdz change location (from w node to uv nodes) --> no update
-
         if (nprocs >= 2) call mpi_wait(REQUEST,STATUS2,IERR)
-        
         if (me==0) then
-
             ! Porte-agel 2000 JFM correction
-            ! !$cuf kernel do(2) <<<(*,*),(16,16)>>>
-            ! do i = 1, nx
-            !     do j = 1, ny
-            !         d_avg1 = d_avg1 + dudz(i,j,3) ! Plane average
-            !         d_avg2 = d_avg2 + dvdz(i,j,3) ! Plane average
-            !     end do
-            ! end do
             ! Compute the plane average of the horizontal velocity gradient
             call plane_average<<<grid_2d, tBlock_2d>>>(d_avg1,dudz)
             call plane_average<<<grid_2d, tBlock_2d>>>(d_avg2,dvdz)
             ! Apply P-A correction
             call ddz_uv_corr<<<grid_2d, tBlock_2d>>>(dudz,d_avg1,3)
             call ddz_uv_corr<<<grid_2d, tBlock_2d>>>(dvdz,d_avg2,3)
-
+            ! Compute wall stress
             call wall_stress(txz,tyz,dudz,dvdz,ustar,m,u,v,zo,t,plan_2d)
         end if
-
         !-----------------------------------------------------------------------
         ! compute convec
         !-----------------------------------------------------------------------
 #ifdef USE_NVTX
-        call nvtxEndRange
-        call nvtxStartRange("Convection",3)
+call nvtxEndRange
+call nvtxStartRange("Convection",3)
 #endif
         call convec<<<grid,tBlock>>>(cx,cy,cz,&
                                      u,v,w,&
@@ -455,8 +428,8 @@ program main
         ! compute sgs: LASD model
         !-----------------------------------------------------------------------
 #ifdef USE_NVTX
-        call nvtxEndRange
-        call nvtxStartRange("SGS",3)
+call nvtxEndRange
+call nvtxStartRange("SGS",3)
 #endif
         if (model == 3) then
             call subgrid_stress(txx,txy,txz,tyy,tyz,tzz,&
@@ -466,32 +439,29 @@ program main
                                 dwdx,dwdy,dwdz, &
                                 LM_old,MM_old,QN_old,NN_old,cs2,&
                                 t,me,nall)
-
         else if (model == 4) then
-
             call sgs_stag(txx,txy,txz,&
-                        tyy,tyz,tzz,&
-                        dudx,dudy,dudz,&
-                        dvdx,dvdy,dvdz,&
-                        dwdx,dwdy,dwdz,me)
+                          tyy,tyz,tzz,&
+                          dudx,dudy,dudz,&
+                          dvdx,dvdy,dvdz,&
+                          dwdx,dwdy,dwdz,me)
         end if
-
         call update_w(txz,me,nall)
         call update_w(tyz,me,nall)
         call update_uv(tzz,me,nall)
         !-----------------------------------------------------------------------
         ! top bc
-         if (me==nprocs-1) then
-            !$cuf kernel do <<<*,*>>>
-             do j=1,ny
-               do i=1,nx
-                 tzz (i,j,nzb+1)=tzz (i,j,nzb)
-               end do
-             end do
-         end if
- #ifdef USE_NVTX
-        call nvtxEndRange
-        call nvtxStartRange("Divergence",4)
+        if (me==nprocs-1) then
+        !$cuf kernel do <<<*,*>>>
+            do j=1,ny
+            do i=1,nx
+                tzz (i,j,nzb+1)=tzz (i,j,nzb)
+            end do
+            end do
+        end if
+#ifdef USE_NVTX
+call nvtxEndRange
+call nvtxStartRange("Divergence",4)
 #endif       
         !-----------------------------------------------------------------------
         ! Divergence
@@ -504,8 +474,8 @@ program main
         ! assemble matrix
         !-----------------------------------------------------------------------
 #ifdef USE_NVTX
-        call nvtxEndRange
-        call nvtxStartRange("RHS and timestepping",4)
+call nvtxEndRange
+call nvtxStartRange("RHS and timestepping",4)
 #endif       
         !-----------------------------------------------------------------------
         ! rhs0
@@ -517,21 +487,18 @@ program main
         ! applying pressure gradient (not needed fror)
         if (sim_flag == 0 .or. sim_flag == 1 .or. sim_flag == 2)   call const_pres_grad<<<grid, tBlock>>>(rhsx,device_id)
         if (turb_flag == 1) then
-
             if (device_id == 0 ) then
-                ! if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
-                if (mod(t-1,turb_count)==0) then
-                    call turbine_force(Fx,Fy,Fz,CTF_alm,power,displacement_host,moment_host,velocity_host,u,v,w,turb_loc,t)
-                    CTF_alm_host = CTF_alm
-                    call write_turb(CTF_alm_host,displacement_host,moment_host,velocity_host,me)
-                end if
-
+                if (mod(t-1,turb_count)==0) call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
+                ! if (mod(t-1,turb_count)==0) then
+                !     call turbine_force(Fx,Fy,Fz,CTF_alm,power,displacement_host,moment_host,velocity_host,u,v,w,turb_loc,t)
+                !     CTF_alm_host = CTF_alm
+                !     call write_turb(CTF_alm_host,displacement_host,moment_host,velocity_host,me)
+                ! end if
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsz,fz)
             end if
         end if
-    
         !-----------------------------------------------------------------------
         ! Time stepping
         !-----------------------------------------------------------------------        
@@ -562,11 +529,10 @@ program main
                 end do
             end do
         end if
-
         call update_w(w,me,nall)
- #ifdef USE_NVTX
-        call nvtxEndRange
-        call nvtxStartRange("pressure correction",5)
+#ifdef USE_NVTX
+call nvtxEndRange
+call nvtxStartRange("pressure correction",5)
 #endif
         !-----------------------------------------------------------------------
         ! pressure correction
@@ -582,7 +548,6 @@ program main
         call pressure_poisson(p,rhs_p,dpdx,dpdy,me,nall,t,plan_batch)
         call update_uv(p,me,nall)
         call ddz<<<grid, tBlock>>>(dpdz,p,0)
-        
         ! bc bot dpdz
         if (me==0) then
         !$cuf kernel do <<<*,*>>>
@@ -592,7 +557,6 @@ program main
                 end do
             end do
         end if
-
         ! bc top dpdz
         if (me==nprocs-1) then
         !$cuf kernel do <<<*,*>>>
@@ -602,49 +566,40 @@ program main
                 end do
             end do
         end if
-
         !----------------------------------------------------------------------
         ! correct velocity
         call velo_corr<<<grid, tBlock>>>(u,dpdx )
         call velo_corr<<<grid, tBlock>>>(v,dpdy )
         call velo_corr<<<grid, tBlock>>>(w,dpdz )
 #ifdef USE_NVTX
-        call nvtxEndRange
+call nvtxEndRange
 #endif
         !-----------------------------------------------------------------------
         ! io
         !-----------------------------------------------------------------------
         !-----------------------------------------------------------------------
         ! write inflow
-
         if (sim_flag == 2) then
             call write_inflow(u,v,w,t,me)
         end if
-
         !-----------------------------------------------------------------------
         ! read (and force) inflow
-
         if (sim_flag == 3) then
             call read_inflow(u,v,w,t,me)
         end if
-
         ! call read_inflow_const(u,v,w,t,me)
         ! !-----------------------------------------------------------------------
         ! ! compute time average outputs (just the sum at this stage)
-
         if (ta_flag > 0 .and. t >= ta_tstart .and. mod(t,c_count) == 0) then
             if (ta_flag==1) then
                 call compute_ta1<<<grid1,tBlock1>>>(u,v,w,&
                                                     ta_u,ta_v,ta_w,&
                                                     ta_u2,ta_v2,ta_w2,ta_uv )
-            ! elseif (ta_flag == 2) then
-        !         call compute_ta2(u,v,w,txz,dudz,ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz,me)
             end if
 
         end if
         !-----------------------------------------------------------------------
         !  write and re-initalize ta_ (from the sum)
-
         if (ta_flag > 0 .and. t >= ta_tstart .and. mod(t-ta_tstart+1,p_count) == 0) then
             print *,'Write average field:'
             if (ta_flag==1) then
@@ -654,33 +609,20 @@ program main
                 ta_u2_host = ta_u2 
                 ta_v2_host = ta_v2 
                 ta_w2_host = ta_w2 
-                ta_uv_host = ta_uv 
-                
+                ta_uv_host = ta_uv            
                 call write_ta1(ta_u_host,ta_v_host,ta_w_host,&
                                ta_u2_host,ta_v2_host,ta_w2_host,ta_uv_host,me)
                 call initialize_ta1(ta_u,ta_v,ta_w,&
                                     ta_u2,ta_v2,ta_w2,ta_uv )
-        !     elseif (ta_flag == 2) then
-        !         call write_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz,me)
-        !         call initialize_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz)
             end if
-
         end if
-
-        ! !-----------------------------------------------------------------------
-        ! ! ts outputs
-
-
-        ! !-----------------------------------------------------------------------
-        ! ! turb outputs
-
+        !-----------------------------------------------------------------------
+        ! turb outputs
         if (t >= ta_tstart .and. turb_flag > 0 .and. me == 0) then
-
             !$cuf kernel do(1) <<<*,*>>>
             do i_turb = 1,n_turb
                 ta_power(i_turb) = ta_power(i_turb) + power(i_turb)/p_count
             end do
-
             if (mod(t-ta_tstart+1,p_count) == 0) then
                 ta_power_host = ta_power
                 print *, 'ta_power: ', ta_power_host
@@ -689,62 +631,47 @@ program main
                     write (1993,*)  ta_power_host(i_turb)
                 end do
             endif
-
         endif
-
   enddo
 #ifdef USE_NVTX
     call nvtxEndRange
 #endif
- ! ===============================================================================
- ! end time loop
- !===============================================================================
-
+! ===============================================================================
+! end time loop
+!===============================================================================
     !---------------------------------------------------------------------------
     ! close log
     !---------------------------------------------------------------------------
     if(log_flag > 0) call close_log(me)
-
     if (me == 0) close (unit=1993)
     ! !---------------------------------------------------------------------------
     ! ! close inflow
     ! !---------------------------------------------------------------------------
-
     if (sim_flag > 1) then
        call close_inflow_m(me)
     end if
-
-    ! !---------------------------------------------------------------------------
-    ! ! close and recompose ta outputs
-    ! !---------------------------------------------------------------------------
-
+    !---------------------------------------------------------------------------
+    ! close and recompose ta outputs
+    !---------------------------------------------------------------------------
     if (ta_flag > 0) then
        if (ta_flag==1) then
            call close_ta1(me)
            call recompose_ta1(me)
-    !    elseif (ta_flag == 2) then
-    !        call close_ta2(me)
-    !        call recompose_ta2(me)
        end if
     end if
-
-    ! !---------------------------------------------------------------------------
-    ! ! close and recompose ts outputs
-    ! !---------------------------------------------------------------------------
-
+    !---------------------------------------------------------------------------
+    ! close and recompose ts outputs
+    !---------------------------------------------------------------------------
     if (ts_flag > 0) then
        if (ts_flag==1) then
            call close_ts1(me)
-        !    call close_ts2(me)
            call recompose_ts1(me)
        end if
     end if
-
     !---------------------------------------------------------------------------
     ! close turb
     !---------------------------------------------------------------------------
     if(turb_flag > 0) call close_turb(me)
-
     !---------------------------------------------------------------------------
     ! save variables
     !---------------------------------------------------------------------------
@@ -765,7 +692,6 @@ program main
     call save_variable(rhsz_host,'input/rhsz.bin',me,nall)
 
     if (model == 3) then
-
         lm_old_host = lm_old
         mm_old_host = mm_old
         qn_old_host = qn_old
@@ -776,25 +702,19 @@ program main
         call save_variable(qn_old_host,'input/qn_old.bin',me,nall)
         call save_variable(nn_old_host,'input/nn_old.bin',me,nall)
     end if
-    ! !---------------------------------------------------------------------------
-    ! ! save warmup data for precursor and main
-    ! !---------------------------------------------------------------------------
-
+    !---------------------------------------------------------------------------
+    ! save warmup data for precursor and main
+    !---------------------------------------------------------------------------
     if (me == 0 .and. sim_flag < 2) then
        if (resub_flag == 0 ) call system('mkdir ../init_data')
        call system('cp input/* ../init_data')
     end if
-
-    ! !---------------------------------------------------------------------------
-    ! ! print end
-    ! !---------------------------------------------------------------------------
-
+    !---------------------------------------------------------------------------
+    ! print end
+    !---------------------------------------------------------------------------
     call print_end(t01,me)
-
-    ! !---------------------------------------------------------------------------
-    ! ! mpi finalize
-    ! !---------------------------------------------------------------------------
-
+    !---------------------------------------------------------------------------
+    ! mpi finalize
+    !---------------------------------------------------------------------------
     999 call mpi_finalize(ierr)
-
 end program main
