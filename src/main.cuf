@@ -352,9 +352,6 @@ program main
     ! instant field output
     !-----------------------------------------------------------------------
         if (mod(t,c_count*10)==0) then
-
-            call compute_q_criterion<<<grid, tBlock>>>(q_crit,dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz)
-            q_crit_host = q_crit
             u_host = u
             v_host = v 
             w_host = w 
@@ -362,6 +359,8 @@ program main
             call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
             if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*10) == 0) then 
                 print *,'Write instant field:'
+                call compute_q_criterion<<<grid, tBlock>>>(q_crit,dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz)
+                q_crit_host = q_crit
                 call write_ts1(u_host,v_host,w_host,q_crit_host,me)
             end if
         end if
