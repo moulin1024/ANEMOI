@@ -175,8 +175,8 @@ def get_turb(src_out_path, config):
     turb['moment_edge']  = fctlib.load_4d('blade_moment_edge', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
     turb['velocity_flap']  = fctlib.load_4d('blade_velocity_flap', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
     turb['velocity_edge']  = fctlib.load_4d('blade_velocity_edge', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
-    # turb['moment']  = fctlib.load_4d('blade_moment', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
-
+    turb['phase']  = fctlib.load_4d('phase_angle', int((config['nsteps']-1)/(config['turb_count']))+1,1,3,config['turb_nb'], config['double_flag'], src_out_path)
+    
     return turb
 
 def get_result_3d(src_inp_path, src_out_path, config):
@@ -251,6 +251,7 @@ def get_result_4d(src_out_path, config):
         result_4d['u_inst_c'] = fctlib.load_4d('ts_u', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
         result_4d['v_inst_c'] = fctlib.load_4d('ts_v', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
         result_4d['w_inst_c'] = node2center_4d(fctlib.load_4d('ts_w', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path))
+        result_4d['q_inst_c'] = fctlib.load_4d('ts_q', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
     else:
         result_4d= {}
         result_4d['u_inst_c'] = fctlib.load_4d('ts_u', config['ts_ns'], 

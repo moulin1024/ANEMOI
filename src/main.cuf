@@ -155,7 +155,7 @@ program main
                  ta_uv(nx,ny,nzb))
     end if
     ! Allocate instant field term
-    if (ta_flag == 1) then
+    if (ts_flag == 1) then
         allocate(q_crit(nx,ny,nzb))
     end if
     ! Allocate LASD model related variables
@@ -352,9 +352,9 @@ program main
     ! instant field output
     !-----------------------------------------------------------------------
         if (mod(t,c_count*10)==0) then
-            ! call compute_q_criterion<<<grid, tBlock>>>(qcrit,dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz)
-            
-            ! qcrit_host = qcrit
+
+            call compute_q_criterion<<<grid, tBlock>>>(q_crit,dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz)
+            q_crit_host = q_crit
             u_host = u
             v_host = v 
             w_host = w 
@@ -362,7 +362,7 @@ program main
             call print_log(log_ustar,log_umax,u_host,v_host,w_host,ustar_host,t01,t,me,nall)
             if (ts_flag > 0 .and. t >= ts_tstart .and. mod(t-ts_tstart+1,c_count*10) == 0) then 
                 print *,'Write instant field:'
-                call write_ts1(u_host,v_host,w_host,me)
+                call write_ts1(u_host,v_host,w_host,q_crit_host,me)
             end if
         end if
     !-----------------------------------------------------------------------
@@ -452,8 +452,15 @@ program main
         ! Apply turbine forcing
         if (turb_flag == 1) then 
             if (device_id == 0 ) then
+                ! if (mod(t-1,turb_count)==0) then
+                !     call turbine_force(Fx,Fy,Fz,u,v,w,turb_loc,t)
+                ! end if
+
                 if (mod(t-1,turb_count)==0) then
-                    call turbine_force(Fx,Fy,Fz,u,v,w,turb_loc,t)
+                    ! call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
+                    call turbine_force(Fx,Fy,Fz,CTF_alm,power,displacement_host,moment_host,velocity_host,u,v,w,turb_loc,t)
+                    CTF_alm_host = CTF_alm
+                    call write_turb(CTF_alm_host,displacement_host,moment_host,velocity_host,me)
                 end if
 
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)

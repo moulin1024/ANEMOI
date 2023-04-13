@@ -102,6 +102,40 @@ module control
         ! print *, CTUin_host
     end subroutine controller_lambda
 
+    subroutine controller_adaptive(turb_rpm,CTUin,u,turb_loc,torque,t)
+        implicit none
+        ! Interface variables
+        real(fp),dimension(n_turb),intent(out),device  :: turb_rpm,CTUin
+        real(fp),dimension(n_turb)  :: debug
+        real(fp),dimension(:),allocatable,device  :: turb_rpm_old
+        real(fp),dimension(n_turb)  :: turb_rpm_host,CTUin_host
+        real(fp),dimension(nx,ny,nz2),intent(in),device   :: u
+        real(fp),dimension(n_turb,5),intent(in),device :: turb_loc
+        real(fp),dimension(n_turb),intent(in),device  :: torque 
+        integer,intent(in) :: t
+        real(fp) :: tsr,delta_q
+
+        ! Internal variables
+        integer i_turb,i,j,k,istat
+
+        type(dim3) :: grid,tBlock
+        tblock = dim3(i1,i1,1)
+        grid = dim3(n_turb,1,1)
+
+        save turb_rpm_old!,CTUin_old
+    
+        if (t == 1) allocate(turb_rpm_old(n_turb))
+       
+        !$cuf kernel do(1) <<<*,*>>>
+        do i_turb = 1,n_turb
+            turb_rpm(i_turb) = 8.7 + 0.00262*torque(i_turb)/1000 - 0.024*sqrt(4334 + 15*torque(i_turb)/1000)
+            if (t>1000) then
+                turb_rpm(i_turb) = 0.5*turb_rpm_old(i_turb)+ 0.5*turb_rpm(i_turb)
+                turb_rpm_old(i_turb) = turb_rpm(i_turb)
+            end if
+        end do
+    end subroutine controller_adaptive
+
     subroutine controller_fix(turb_rpm,CTUin,u,turb_loc,t)
         implicit none
         ! Interface variables

@@ -356,7 +356,7 @@ module sgs
                 kk = kk + 1
             end do
         end do
-        ! LM(i,j,k) = Mij(1) !u_hat(i,j,k,1)!uu_hat(i,j,k,1)
+
         call symm_dot_prod(LM(i,j,k),Lij,Mij) ! LM & QN
         call symm_dot_prod(MM(i,j,k),Mij,Mij) ! MM & NN
     end subroutine LMQN_kernel
@@ -445,15 +445,10 @@ module sgs
         !---------------------------------------------------------------------------
         i = (blockIdx%x - 1)* blockDim%x + threadIdx%x;
         j = (blockIdx%y - 1)* blockDim%y + threadIdx%y;
-        k = (blockIdx%z - 1)* blockDim%z + threadIdx%z;
-        k = k + 1   ! k = 2,nzb+1
+        k = (blockIdx%z - 1)* blockDim%z + threadIdx%z + 1;
         
-        ! if (rank==nprocs-1) then
-        ! kend=nzb
-        ! else
         kend=nzb+1
-        ! end if
-
+        
         if (k<=kend) then
             xint = - u_lag(i,j,k)*dtl
             yint = - v_lag(i,j,k)*dtl
@@ -469,11 +464,6 @@ module sgs
                 Tn=max(0.0_fp,Tn)
                 eps=(dtl/Tn)/(1.+dtl/Tn)
             end if
-
-            ! if(abs(xint).gt.dx.or.abs(yint).gt.dy.or.abs(zint).gt.dz)then
-            !     write(*,*)'timestep too large for lagrangian averaging'
-            !     stop
-            ! end if
 
             call interp3d(xint,yint,zint,i,j,k,a_old,a_interp,rank,t)
             call interp3d(xint,yint,zint,i,j,k,b_old,b_interp,rank,t)
@@ -513,29 +503,19 @@ module sgs
         ! end if
 
         if (k<=kend) then
-            ! if (LM(i,j,k).lt.0._fp.or.QN(i,j,k).lt.0._fp) then
-            !     Cs2(i,j,k)=0._fp
-            !     LM(i,j,k)=0._fp  !   LM
-            !     QN(i,j,k)=0._fp  !   QN
-            ! else
-                Cs2_2d = LM(i,j,k)/MM(i,j,k)    ! LM/MM
-                Cs2_2d = max(0.0_fp,Cs2_2d)
+            Cs2_2d = LM(i,j,k)/MM(i,j,k)    ! LM/MM
+            Cs2_2d = max(0.0_fp,Cs2_2d)
 
-                Cs2_4d = QN(i,j,k)/NN(i,j,k)    ! QN/NN
-                Cs2_4d = max(0.0_fp,Cs2_4d)
+            Cs2_4d = QN(i,j,k)/NN(i,j,k)    ! QN/NN
+            Cs2_4d = max(0.0_fp,Cs2_4d)
 
-                Beta = (Cs2_4d/Cs2_2d)**(log(tf1)/(log(tf2)-log(tf1)))
-                Beta = max(Beta,beta_min)
-                ! Beta = min(Beta,beta_max)
+            Beta = (Cs2_4d/Cs2_2d)**(log(tf1)/(log(tf2)-log(tf1)))
+            Beta = max(Beta,beta_min)
+            ! Beta = min(Beta,beta_max)
 
-                Cs2(i,j,k)=Cs2_2d/Beta
-                Cs2(i,j,k)=max(Cs2(i,j,k),cs2_min)
-                Cs2(i,j,k)=min(Cs2(i,j,k),cs2_max)
-
-                ! if (cs2(i,j,k).lt.0) then
-                !     cs2(i,j,k) = 0.0
-                ! endif
-            ! end if
+            Cs2(i,j,k)=Cs2_2d/Beta
+            Cs2(i,j,k)=max(Cs2(i,j,k),cs2_min)
+            Cs2(i,j,k)=min(Cs2(i,j,k),cs2_max)
 
         end if
 
@@ -670,8 +650,7 @@ module sgs
 
         i = (blockIdx%x - 1)* blockDim%x + threadIdx%x;
         j = (blockIdx%y - 1)* blockDim%y + threadIdx%y;
-        k = (blockIdx%z - 1)* blockDim%z + threadIdx%z;
-        k = k + 1
+        k = (blockIdx%z - 1)* blockDim%z + threadIdx%z + 1;
         ! the only reason doing that is: only at bottom(me=0,k=2),
         ! dudz and dvdz are computed at u layer
         

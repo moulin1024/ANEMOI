@@ -97,24 +97,26 @@ def anime(PATH, case_name):
 
     if config['ts_flag'] > 0:
 
-        # f = h5py.File(out_path+'/'+case_name+'_flowfield.h5','w')
-        # for key, value in config.items():
-        #     f.attrs[key] = value
+        f = h5py.File(out_path+'/'+case_name+'_flowfield.h5','w')
+        for key, value in config.items():
+            f.attrs[key] = value
         result_4d = post.get_result_4d(src_out_path, config)
-        # # f.create_dataset('x',data=space['x'])
-        # # f.create_dataset('y',data=space['y'])
-        # # f.create_dataset('z',data=space['z_c'])
+        f.create_dataset('x',data=space['x'])
+        f.create_dataset('y',data=space['y'])
+        f.create_dataset('z',data=space['z_c'])
 
-        # # f.create_dataset('t_sample',data=time['t_ts'])
-        # # f.create_dataset('u',data=result_4d['u_inst_c'])
-        # # f.create_dataset('v',data=result_4d['v_inst_c'])
-        # # f.create_dataset('w',data=result_4d['w_inst_c'])
+        f.create_dataset('t_sample',data=time['t_ts'])
+        f.create_dataset('u',data=result_4d['u_inst_c'])
+        f.create_dataset('v',data=result_4d['v_inst_c'])
+        f.create_dataset('w',data=result_4d['w_inst_c'])
+        f.create_dataset('q',data=result_4d['q_inst_c'])
 
-        # # f.close
+        f.close
 
         u = result_4d['u_inst_c']
         # v = result_4d['v_inst_c']
         # w = result_4d['w_inst_c']
+        q = result_4d['q_inst_c']
 
         # fig,ax = plt.subplots(1,1)
         fig = figure(figsize=(8,8))
@@ -140,7 +142,7 @@ def anime(PATH, case_name):
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
 
-            im = ax1.imshow(u[i,:,:,19].T,origin='lower',aspect=1/4)
+            im = ax1.imshow(q[i,:,:,90].T,origin='lower',aspect=1/1)
             # if (i==9):
                 # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
@@ -156,7 +158,7 @@ def anime(PATH, case_name):
         anim = animation.FuncAnimation(fig, animate, frames=10)
         anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=10)
 
-    if config['turb_flag'] > 10:
+    if config['turb_flag'] > 0:
         turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():
@@ -168,15 +170,16 @@ def anime(PATH, case_name):
         f.create_dataset('tilt',data=turb_loc['yaw'].to_numpy())
         
         turb_force = post.get_turb(src_out_path, config)
-        f.create_dataset('time',data=time['t'])
-        f.create_dataset('fx',data=turb_force['fx'])
-        f.create_dataset('ft',data=turb_force['ft'])
-        f.create_dataset('displacement_flap',data=turb_force['displacement_flap'])
-        f.create_dataset('displacement_edge',data=turb_force['displacement_edge'])
-        f.create_dataset('moment_flap',data=turb_force['moment_flap'])
-        f.create_dataset('moment_edge',data=turb_force['moment_edge'])
-        f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
-        f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
+        f.create_dataset('time',data=time['t'][::2])
+        # f.create_dataset('fx',data=turb_force['fx'][::,:,:,:])
+        # f.create_dataset('ft',data=turb_force['ft'][::,:,:,:])
+        f.create_dataset('displacement_flap',data=turb_force['displacement_flap'][::2,:,:,:])
+        f.create_dataset('displacement_edge',data=turb_force['displacement_edge'][::2,:,:,:])
+        f.create_dataset('moment_flap',data=turb_force['moment_flap'][::2,:,:,:])
+        f.create_dataset('moment_edge',data=turb_force['moment_edge'][::2,:,:,:])
+        # f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
+        # f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
+        f.create_dataset('phase',data=turb_force['phase'][::2,:])
 
         f.close
 

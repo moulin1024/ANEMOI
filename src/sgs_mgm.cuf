@@ -43,7 +43,6 @@ attributes(global) subroutine mgm(txx,txy,txz,&
     k = (blockIdx%z - 1)* blockDim%z + threadIdx%z;
     
     ! u, v node
-    ! do k = 2, nzb+1
     if (k>1 .and. k<nz2) then
         if (k == 2 .and. device_id == 0) then
             ux_ = dudx(i,j,k)
@@ -82,17 +81,17 @@ attributes(global) subroutine mgm(txx,txy,txz,&
         G23 = vx_*wx_+ryx2*vy_*wy_+rzx2*vz_*wz_
 
         Gkk = G11 + G22 + G33
-        ! ! ! !! Tensor G_ij S_ij
+        ! Tensor G_ij S_ij
         if (abs(Gkk) > 1e-6) then
             GijSij = G11*S11+G22*S22+G33*S33&
                 + 2._fp*(G12*S12+G13*S13+G23*S23)
-            ! ! ! !! Clip the energy backscatter
+            ! Clip the energy backscatter
             GijSij = min(GijSij,0._fp)
-            ! ! ! !! Eq. 3
+            ! Eq. 3
             Ksgs = (2._fp*delta/Ce_const)**2*(GijSij/Gkk)**2
             
             factor = 2._fp*Ksgs/Gkk
-            ! ! ! ! Eq. 1
+            ! Eq. 1
             txx(i,j,k) = factor*G11 - 2._fp*iRe/(u_scale*z_i)*S11
             tyy(i,j,k) = factor*G22 - 2._fp*iRe/(u_scale*z_i)*S22
             tzz(i,j,k) = factor*G33 - 2._fp*iRe/(u_scale*z_i)*S33
@@ -107,9 +106,8 @@ attributes(global) subroutine mgm(txx,txy,txz,&
             tzz(i,j,k) = factor*s33
             txy(i,j,k) = factor*s12
         end if
-    ! end do
     end if
-    ! ! ! w node
+    ! w node
     if (device_id == 0) then
         kstart = 3  ! At the bottom the stress is pre-determined
     else 
