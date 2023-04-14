@@ -97,21 +97,21 @@ def anime(PATH, case_name):
 
     if config['ts_flag'] > 0:
 
-        f = h5py.File(out_path+'/'+case_name+'_flowfield.h5','w')
-        for key, value in config.items():
-            f.attrs[key] = value
+        # f = h5py.File(out_path+'/'+case_name+'_flowfield.h5','w')
+        # for key, value in config.items():
+        #     f.attrs[key] = value
         result_4d = post.get_result_4d(src_out_path, config)
-        f.create_dataset('x',data=space['x'])
-        f.create_dataset('y',data=space['y'])
-        f.create_dataset('z',data=space['z_c'])
+        # f.create_dataset('x',data=space['x'])
+        # f.create_dataset('y',data=space['y'])
+        # f.create_dataset('z',data=space['z_c'])
 
-        f.create_dataset('t_sample',data=time['t_ts'])
-        f.create_dataset('u',data=result_4d['u_inst_c'])
-        f.create_dataset('v',data=result_4d['v_inst_c'])
-        f.create_dataset('w',data=result_4d['w_inst_c'])
-        f.create_dataset('q',data=result_4d['q_inst_c'])
+        # f.create_dataset('t_sample',data=time['t_ts'])
+        # f.create_dataset('u',data=result_4d['u_inst_c'])
+        # f.create_dataset('v',data=result_4d['v_inst_c'])
+        # f.create_dataset('w',data=result_4d['w_inst_c'])
+        # f.create_dataset('q',data=result_4d['q_inst_c'])
 
-        f.close
+        # f.close
 
         u = result_4d['u_inst_c']
         # v = result_4d['v_inst_c']
@@ -127,7 +127,7 @@ def anime(PATH, case_name):
         # dy = 8
         # # ax2 = fig.add_subplot(212)
         def animate(i):  
-              
+            print(i)
             # values = u[i,:,:,45]
             ax1.cla()
             # ax2.cla()
@@ -142,7 +142,7 @@ def anime(PATH, case_name):
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
 
-            im = ax1.imshow(q[i,:,:,90].T,origin='lower',aspect=1/1)
+            im = ax1.imshow(u[i,:,:,17].T,origin='lower',aspect=1/1)
             # if (i==9):
                 # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
@@ -158,7 +158,7 @@ def anime(PATH, case_name):
         anim = animation.FuncAnimation(fig, animate, frames=10)
         anim.save(out_path+'/animation_xz.gif',writer='pillow', fps=10)
 
-    if config['turb_flag'] > 0:
+    if config['turb_flag'] > 10:
         turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():

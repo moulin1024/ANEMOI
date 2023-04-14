@@ -1,13 +1,14 @@
 import numpy as np
 import pandas as pd 
+import matplotlib.pyplot as plt
 
-def plot_turbine(HR_coord,power):
-    for i in range(HR_coord.shape[0]):
-        color_value = power[i,:]/np.max(power)
-        point1 = [HR_coord[i,0]-1.5*np.sin(HR_coord[i,2]),HR_coord[i,1]+1.5*np.cos(HR_coord[i,2])]
-        point2 = [HR_coord[i,0]+1.5*np.sin(HR_coord[i,2]),HR_coord[i,1]-1.5*np.cos(HR_coord[i,2])]
-        # plt.plot(HR_coord[i,0],HR_coord[i,1],'ko')
-        plt.plot([point1[0],point2[0]],[point1[1],point2[1]],color=((color_value,0,1)),linewidth=4)
+# def plot_turbine(HR_coord,power):
+#     for i in range(HR_coord.shape[0]):
+#         color_value = power[i,:]/np.max(power)
+#         point1 = [HR_coord[i,0]-1.5*np.sin(HR_coord[i,2]),HR_coord[i,1]+1.5*np.cos(HR_coord[i,2])]
+#         point2 = [HR_coord[i,0]+1.5*np.sin(HR_coord[i,2]),HR_coord[i,1]-1.5*np.cos(HR_coord[i,2])]
+#         # plt.plot(HR_coord[i,0],HR_coord[i,1],'ko')
+#         plt.plot([point1[0],point2[0]],[point1[1],point2[1]],color=((color_value,0,1)),linewidth=4)
 
 x_coord = np.linspace(0,63,10)
 y_coord = np.zeros(10)
@@ -20,17 +21,36 @@ for i in range(8):
 HR_coord = np.reshape(HR_coord,[2,80]).T
 z_coord = np.zeros([80,1])+70
 yaw = np.zeros([80,1])
+tilt = np.zeros([80,1])
+# yaw_2d = np.reshape(yaw,[10,8])
+# yaw_2d[-1,:] = np.pi/6
+# yaw = np.reshape(yaw_2d,[80,1])
 power = np.random.rand(80,1)
 HR_coord = np.append(HR_coord,z_coord,axis=1)
 HR_coord = np.append(HR_coord,yaw,axis=1)
+HR_coord = np.append(HR_coord,tilt,axis=1)
+# print(HR_coord[0,3])
+
+plt.figure()
+for i in range(HR_coord.shape[0]):
+    color_value = power[i,:]/np.max(power)
+    point1 = [HR_coord[i,0]-2*np.sin(HR_coord[i,3]),HR_coord[i,1]+2*np.cos(HR_coord[i,3])]
+    point2 = [HR_coord[i,0]+2*np.sin(HR_coord[i,3]),HR_coord[i,1]-2*np.cos(HR_coord[i,3])]
+    print(point1)
+    plt.plot([point1[0],point2[0]],[point1[1],point2[1]],'k',linewidth=1)
+    plt.plot(HR_coord[i,0],HR_coord[i,1],'o',color=((color_value[0],0,1)))
+
+
 # plot_turbine(HR_coord,power)
-# plt.show()
+plt.show()
 
+# 4.5*560
+# 3.5*560
 D = 80
-Displacement = np.tile([2560,2560], (80, 1))
+Displacement = np.tile([4096-4.5*560,4096-3.5*560], (80, 1))
 HR_coord[:,0:2] = HR_coord[:,0:2]*D+Displacement
-
+HR_coord[:,3] = HR_coord[:,3]/np.pi*180 
 df = pd.DataFrame(HR_coord)
-df.columns = ["x", "y","z", "gamma"]
+df.columns = ["x", "y","z", "gamma","tilt"]
 df.to_csv("./HornsRev.dat",index=None)
-print(HR_coord)
+# print(HR_coord)

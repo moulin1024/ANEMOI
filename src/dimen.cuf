@@ -56,7 +56,7 @@ module dimen
     integer, parameter :: turb_flag = $turb_flag
     integer, parameter :: n_turb = $turb_nb
     integer, parameter :: turb_count=$turb_count
-    real(fp), parameter, dimension(n_turb) :: dyn_yaw_freq = $dyn_yaw_freq
+    ! real(fp), parameter, dimension(n_turb) :: dyn_yaw_freq = $dyn_yaw_freq
 
     integer, parameter :: blade_num = 3      ! Don't change it! (because of cuda kernel)
     integer, parameter :: n_phi = 64    ! Don't change it! (because of cuda kernel)
@@ -64,20 +64,20 @@ module dimen
     integer, parameter :: n_r_s = 1
     integer, parameter :: clockwise = -1
     ! Smearing keneral
-    integer, parameter :: mask_x = 32
-    integer, parameter :: mask_y = 64
-    integer, parameter :: mask_z = 32
+    ! integer, parameter :: mask_x = 32
+    ! integer, parameter :: mask_y = 64
+    ! integer, parameter :: mask_z = 32
 
-    integer, parameter :: ker_d_x = 32
-    integer, parameter :: ker_d_y = 32
-    integer, parameter :: ker_d_z = 16
+    ! integer, parameter :: ker_d_x = 32
+    ! integer, parameter :: ker_d_y = 32
+    ! integer, parameter :: ker_d_z = 16
     
     !-------------------------------------------------------------------------------
     ! spec
     ! real(fp), parameter, dimension(n_turb) :: turb_x != ${turb_x}/z_i
     ! real(fp), parameter, dimension(n_turb) :: turb_y != ${turb_y}/z_i
     real(fp), parameter, dimension(n_turb) :: turb_r = ${turb_r}/z_i
-    real(fp), parameter, dimension(n_turb) :: turb_z = ${turb_z}/z_i
+    ! real(fp), parameter, dimension(n_turb) :: turb_z = ${turb_z}/z_i
     real(fp), parameter, dimension(n_turb) :: turb_w = ${turb_w}
     real(fp), parameter, dimension(n_turb) :: nac_r = ${nac_r}/z_i
     real(fp), parameter, dimension(n_turb) :: tow_r = ${tow_r}/z_i
