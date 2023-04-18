@@ -361,7 +361,7 @@ program main
                 print *,'Write instant field:'
                 ! call compute_q_criterion<<<grid, tBlock>>>(q_crit,dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz)
                 ! q_crit_host = q_crit
-                call write_ts1(u_host,v_host,w_host,q_crit_host,me)
+                call write_ts1(u_host,v_host,w_host,me)
             end if
         end if
     !-----------------------------------------------------------------------
@@ -575,6 +575,24 @@ program main
                                     ta_u2,ta_v2,ta_w2,ta_uv )
             end if
         end if
+
+        if (t >= ta_tstart .and. turb_flag > 0 .and. me == 0) then
+
+            !$cuf kernel do(1) <<<*,*>>>
+            do i_turb = 1,n_turb
+                ta_power(i_turb) = ta_power(i_turb) + power(i_turb)/p_count
+            end do
+
+            if (mod(t-ta_tstart+1,p_count) == 0) then
+                ta_power_host = ta_power
+                print *, 'ta_power: ', ta_power_host
+                ta_power = 0._fp
+                do i_turb = 1,n_turb
+                    write (90000,*)  ta_power_host(i_turb)
+                end do
+            endif
+
+        endif
         #ifdef USE_NVTX
             call nvtxEndRange
         #endif

@@ -436,8 +436,8 @@ subroutine open_ts1(me)
             status='unknown', form='unformatted', access='stream')
         open (unit=(53000+me),file=('output/p'//trim(fme)//'_'//'ts_w.bin'), &
             status='unknown', form='unformatted', access='stream')
-        open (unit=(53001+me),file=('output/p'//trim(fme)//'_'//'ts_q.bin'), &
-            status='unknown', form='unformatted', access='stream')
+        ! open (unit=(53001+me),file=('output/p'//trim(fme)//'_'//'ts_q.bin'), &
+        !     status='unknown', form='unformatted', access='stream')
     end if
 
 end subroutine open_ts1
@@ -612,17 +612,17 @@ subroutine write_ta2(ta_u,ta_v,ta_w,ta_u2,ta_v2,ta_w2,ta_uw,ta_txz,ta_dudz,me)
 
 end subroutine write_ta2
 
-subroutine write_ts1(u,v,w,qcrit,me)
+subroutine write_ts1(u,v,w,me)
 
     implicit none
     integer me,nall
-    real(fp), dimension(nx,ny,nz2), intent(in) :: u,v,w,qcrit
+    real(fp), dimension(nx,ny,nz2), intent(in) :: u,v,w
 
     if (me <= ts_kend/nzb -1 ) then
         write (51000+me) u(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
         write (52000+me) v(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
         write (53000+me) w(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
-        write (53001+me) qcrit(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
+        ! write (53001+me) qcrit(ts_istart:ts_iend,ts_jstart:ts_jend,2:nzb+1)
     end if
 
 end subroutine write_ts1
@@ -710,7 +710,7 @@ subroutine close_ts1(me)
         close (unit=(51000+me))
         close (unit=(52000+me))
         close (unit=(53000+me))
-        close (unit=(53001+me))
+        ! close (unit=(53001+me))
     end if
 
 end subroutine close_ts1
@@ -805,7 +805,7 @@ subroutine recompose_ts1(me)
     call recompose_ts('ts_u.bin', me)
     call recompose_ts('ts_v.bin', me)
     call recompose_ts('ts_w.bin', me)
-    call recompose_ts('ts_q.bin', me)
+    ! call recompose_ts('ts_q.bin', me)
 
     ! call recompose_ts('ts_fx.bin', me)
     ! call recompose_ts('ts_fy.bin', me)

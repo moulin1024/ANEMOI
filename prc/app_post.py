@@ -251,7 +251,7 @@ def get_result_4d(src_out_path, config):
         result_4d['u_inst_c'] = fctlib.load_4d('ts_u', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
         result_4d['v_inst_c'] = fctlib.load_4d('ts_v', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
         result_4d['w_inst_c'] = node2center_4d(fctlib.load_4d('ts_w', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path))
-        result_4d['q_inst_c'] = fctlib.load_4d('ts_q', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
+        # result_4d['q_inst_c'] = fctlib.load_4d('ts_q', config['ts_ns'], config['nx'], config['ny'], config['nz'], config['double_flag'], src_out_path)[:,:,:,:-1]
     else:
         result_4d= {}
         result_4d['u_inst_c'] = fctlib.load_4d('ts_u', config['ts_ns'], 

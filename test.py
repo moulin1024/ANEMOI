@@ -2,13 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import h5py as h5
 
-f = h5.File('./job/HR1/output/HR1_stat.h5','r')
+f = h5.File('./job/HR1-p/output/HR1-p_stat.h5','r')
 u_avg = f['u_avg'][:]
 u_std = f['u_std'][:]
-height = np.asarray(np.arange(127)+0.5)*(1280/127)
+height = np.asarray(np.arange(127)+0.5)*(1270/127)
 u_mean = np.mean(np.mean(u_avg,axis=0),axis=0)
 uu_mean = np.mean(np.mean(u_std,axis=0),axis=0)
-u_log_law = 0.29/0.4*np.log(height/0.001)
+u_log_law = 0.333/0.4*np.log(height/0.005)
 plt.semilogy(u_mean,height,'o-')
 plt.semilogy(u_log_law,height,'--')
 

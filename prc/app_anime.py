@@ -116,7 +116,7 @@ def anime(PATH, case_name):
         u = result_4d['u_inst_c']
         # v = result_4d['v_inst_c']
         # w = result_4d['w_inst_c']
-        q = result_4d['q_inst_c']
+        # q = result_4d['q_inst_c']
 
         # fig,ax = plt.subplots(1,1)
         fig = figure(figsize=(8,8))
@@ -141,8 +141,8 @@ def anime(PATH, case_name):
             # ax2.set_xlabel('x')
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
-
-            im = ax1.imshow(u[i,:,:,17].T,origin='lower',aspect=1/1)
+            # print(u[i,128,128,7])
+            im = ax1.imshow(u[i,:,:,7].T,origin='lower',aspect=1/1)
             # if (i==9):
                 # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
