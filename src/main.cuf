@@ -580,9 +580,8 @@ program main
 
             !$cuf kernel do(1) <<<*,*>>>
             do i_turb = 1,n_turb
-                ta_power(i_turb) = ta_power(i_turb) + power(i_turb)/p_count
+                ta_power(i_turb) = ta_power(i_turb) + power(i_turb)/(p_count)
             end do
-
             if (mod(t-ta_tstart+1,p_count) == 0) then
                 ta_power_host = ta_power
                 print *, 'ta_power: ', ta_power_host

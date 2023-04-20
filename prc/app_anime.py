@@ -119,7 +119,7 @@ def anime(PATH, case_name):
         # q = result_4d['q_inst_c']
 
         # fig,ax = plt.subplots(1,1)
-        fig = figure(figsize=(8,8))
+        fig = figure(figsize=(8,8),dpi=300)
         ax1 = fig.add_subplot(111)
         hub = [256/8,896/8]
 
@@ -142,15 +142,16 @@ def anime(PATH, case_name):
             # ax2.set_ylabel('y')
             # ax2.set_ylim([0,128])
             # print(u[i,128,128,7])
-            im = ax1.imshow(u[i,:,:,7].T,origin='lower',aspect=1/1)
+            im = ax1.imshow(u[i,:,:,6].T,origin='lower',extent=[0,10.24,0,5.12])
             # if (i==9):
                 # fig.colorbar(im)
             # ax1.quiver(u[i,:,:,45].T,v[i,:,:,45].T)
             # ax1.quiver(space['x'],space['y'],u[i,:,:,90].T,v[i,:,:,90].T,scale=10000)
-            ax1.set_xlabel('x')
-            ax1.set_ylabel('y')
+            ax1.set_xlabel('x (km)')
+            ax1.set_ylabel('y (km)')
             # ax1.axis('scaled') 
-            # ax1.set_ylim([0,64])
+            ax1.set_ylim([0,5.12])
+            ax1.set_xlim([2,8])
 
             # ax2.plot(m_flap[:i*100,0,0,0])
             # print(i,np.mean(u[i,(224-32):(224-16),(128-16):(128+16),89].flatten()))

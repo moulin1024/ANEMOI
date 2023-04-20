@@ -52,17 +52,20 @@ for i in range(HR_coord.shape[0]):
     print(point1)
     plt.plot([point1[0],point2[0]],[point1[1],point2[1]],'k',linewidth=1)
     plt.plot(HR_coord[i,0],HR_coord[i,1],'o',color=((color_value[0],0,1)))
-  
+# plt.xlim([-60,60])
+# plt.ylim([-60,60])
+# plt.axis('scaled')
+
 # plot_turbine(HR_coord,power)
 plt.show()
 
 # 4.5*560
 # 3.5*560
 D = 80
-Displacement = np.tile([5120,5120], (80, 1))
+Displacement = np.tile([6120,2560], (80, 1))
 HR_coord[:,0:2] = HR_coord[:,0:2]*D+Displacement
 HR_coord[:,3] = HR_coord[:,3]/np.pi*180 
 df = pd.DataFrame(HR_coord)
 df.columns = ["x", "y","z", "gamma","tilt"]
 df.to_csv("./HornsRev.dat",index=None)
-# print(HR_coord)
+print(HR_coord)
