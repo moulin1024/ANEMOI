@@ -202,8 +202,6 @@ module turbine
         real(fp),dimension(:,:,:,:,:),allocatable,device   :: coeff       !< Interpoltaion coefficient
         real(fp),dimension(:,:,:,:),allocatable,device     :: sum_ker     !< Normalization for the smearing kernel 
         integer,dimension(:,:,:,:),allocatable,device      :: blade_ijk   !< Closest grid point for a blade element
-        ! real(fp),dimension(:,:,:,:),allocatable,device     :: CTF         !< Force on the blade element (CTFx,CTFt)
-        ! real(fp),dimension(n_phi,n_r,n_turb,2)     :: CTF_host  
         real(fp),dimension(:,:),allocatable,device         :: twist_angle,solidity
         real(fp),dimension(:,:),allocatable,device         :: turb_aerodyn,turb_geo
         real(fp), dimension(:),allocatable,device          :: radius_dat,twist_dat,chord_dat
@@ -276,53 +274,18 @@ module turbine
             allocate(solidity(n_r,n_turb))
             allocate(torque(n_turb))
             allocate(turb_rpm_new(n_turb))
-            ! Pre-compute the interpolation coefficient on the blade element
-
-            call force_compute_pre<<<grid_be,tBlock_be>>>(coeff,blade_ijk,twist_angle,solidity,&
-                                                          turb_loc,radius_dat,twist_dat,chord_dat)
-            ! Pre-compute smearing parameter on the masked grid
-            sum_ker = 0
-            call force_projection_pre<<<grid_full,tBlock_full>>>(sum_ker,turb_loc)
         end if
-        ! Compute the force on the blade elements
-        ! w0 = turb_w(i_turb)
-        ! turb_w(i_turb) = turb_w(i_turb)*60.d0/(2.d0*pi)
-        ! turb_w(i_turb)=turb_w(i_turb)+0.5*( &
-        !     +7.655D-11*(1.0*SUMQ(i_turb)/(10**3))**4 &
-        !     -1.584D-7*(1.0*SUMQ(i_turb)/(10**3))**3 &
-        !     +0.0001041*(1.0*SUMQ(i_turb)/(10**3))**2 &
-        !     -0.01292*(1.0*SUMQ(i_turb)/(10**3)) &
-        !     +12.37-turb_w(i_turb))
 
-        ! turb_w(i_turb) = turb_w(i_turb)*2.d0*pi/60.d0 
-                            
-        ! err = abs(1-w0/turb_w(i_turb)) 
-        ! iter_turb_w = iter_turb_w +1.d0
-        
-        ! abs_turb_w(i_turb) = abs(turb_w(i_turb))
-        ! sign_turb_w(i_turb) = sign(1.d0,turb_w(i_turb))
+        ! Pre-compute the interpolation coefficient on the blade element
+        call force_compute_pre<<<grid_be,tBlock_be>>>(coeff,blade_ijk,twist_angle,solidity,&
+                                                        turb_loc,radius_dat,twist_dat,chord_dat)
+        ! Pre-compute smearing parameter on the masked grid
+        sum_ker = 0
+        call force_projection_pre<<<grid_full,tBlock_full>>>(sum_ker,turb_loc)
 
-        
-        do iter = 1,20
-        
-            power = 0._fp   
-            call force_compute<<<grid_be,tBlock_be>>>(CTF,power,torque,&
-                                                    u,v,w,coeff,blade_ijk,twist_angle,solidity,&
-                                                    turb_rpm,CTUin,turb_loc,turb_aerodyn)
-            ! Hard-coded V80 controller property (torque-rpm curve)
-            !$cuf kernel do <<<*,*>>>
-            do i_turb=1,n_turb
-                turb_rpm_new(i_turb) = 13.359177988890501+&
-                                      -20.294141185806257*(torque(i_turb)/10**6)+&
-                                      108.84126793708323*(torque(i_turb)/10**6)**2+&
-                                      -143.2696647968136*(torque(i_turb)/10**6)**3+&
-                                      59.38682772610579*(torque(i_turb)/10**6)**4
-                if (turb_rpm_new(i_turb) > 18.5) turb_rpm_new(i_turb) = 18.5
-                if (turb_rpm_new(i_turb) < 11.5) turb_rpm_new(i_turb) = 11.5 
-            end do
-
-            turb_rpm = turb_rpm_new
-            torque = 0._fp
+        call force_compute<<<grid_be,tBlock_be>>>(CTF,power,torque,&
+                                                u,v,w,coeff,blade_ijk,twist_angle,solidity,&
+                                                turb_rpm,CTUin,turb_loc,turb_aerodyn)
         end do
 
         call force_projection<<<grid_full,tBlock_full>>>(fx,fy,fz,CTF,sum_ker,turb_loc)

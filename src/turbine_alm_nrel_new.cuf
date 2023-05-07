@@ -41,12 +41,19 @@ module turbine
     real(fp), dimension(n_turb), parameter :: dr = [(turb_r(idx1)/real(n_r), idx1=1,n_turb)]
     real(fp), dimension(n_r,n_turb), parameter :: r  = reshape([((real(idx2-0.5_fp)*dr(idx1), idx2=1,n_r), idx1=1,n_turb)],(/n_r,n_turb/))
     real(fp), dimension(n_r,n_turb), parameter :: dA = reshape([((r(idx2,idx1)*dang*dr(idx1), idx2=1,n_r), idx1=1,n_turb)],(/n_r,n_turb/))
+    integer, parameter :: mask_x = 32
+    integer, parameter :: mask_y = 64
+    integer, parameter :: mask_z = 32
+
+    integer, parameter :: ker_d_x = 16
+    integer, parameter :: ker_d_y = 16
+    integer, parameter :: ker_d_z = 16
     
     real(fp), dimension(n_turb), parameter :: dA_tower = [(2.d0*tow_r(i_turb)*dz,i_turb = 1,n_turb)]
     real(fp), dimension(n_turb), parameter :: dA_nacell = [(pi*nac_r(i_turb)**2.d0, i_turb=1,n_turb)]
 
     real(fp),parameter :: hub_tower_gap = 0.0!turb_r(1) ! The gap between the tower and the hub (2 cm for WiRE-01)
-
+    real(fp),dimension(n_turb),parameter :: dyn_yaw_freq = (/0.0/)
     contains
     
     Subroutine turbine_force(Fx,Fy,Fz,CTF,power,displacement_host,moment_host,velocity_host,u,v,w,turb_loc,t)

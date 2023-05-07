@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import sys
 
 inflow_angle = np.deg2rad(np.float(sys.argv[1]))
+
+
 print(inflow_angle)
 # def plot_turbine(HR_coord,power):
 #     for i in range(HR_coord.shape[0]):
@@ -62,10 +64,10 @@ plt.show()
 # 4.5*560
 # 3.5*560
 D = 80
-Displacement = np.tile([6120,2560], (80, 1))
+Displacement = np.tile([5120,2560], (80, 1))
 HR_coord[:,0:2] = HR_coord[:,0:2]*D+Displacement
 HR_coord[:,3] = HR_coord[:,3]/np.pi*180 
 df = pd.DataFrame(HR_coord)
 df.columns = ["x", "y","z", "gamma","tilt"]
-df.to_csv("./HornsRev.dat",index=None)
+df.to_csv("./turb_loc_"+str(sys.argv[1])+".dat",index=None)
 print(HR_coord)

@@ -7,6 +7,7 @@ job/*
 *.run
 *.vtr
 *.vts
+*.dat
 *.gif
 *.x
 *.npy

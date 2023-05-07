@@ -361,7 +361,10 @@ program main
                 print *,'Write instant field:'
                 ! call compute_q_criterion<<<grid, tBlock>>>(q_crit,dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz)
                 ! q_crit_host = q_crit
+                                call open_ts1(me)
                 call write_ts1(u_host,v_host,w_host,me)
+                call close_ts1(me)
+                call recompose_ts1(me,t)
             end if
         end if
     !-----------------------------------------------------------------------
@@ -622,12 +625,12 @@ program main
     !---------------------------------------------------------------------------
     ! close and recompose ts outputs
     !---------------------------------------------------------------------------
-    if (ts_flag > 0) then
-       if (ts_flag==1) then
-           call close_ts1(me)
-           call recompose_ts1(me)
-       end if
-    end if
+    ! if (ts_flag > 0) then
+    !    if (ts_flag==1) then
+    !        call close_ts1(me)
+    !        call recompose_ts1(me)
+    !    end if
+    ! end if
     !---------------------------------------------------------------------------
     ! close turb
     !---------------------------------------------------------------------------
