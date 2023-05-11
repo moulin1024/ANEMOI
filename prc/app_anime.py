@@ -132,8 +132,8 @@ def anime(PATH, case_name):
         # f.close
         t_count = (config['nsteps']-config['ts_tstart'])//100
         # q_data = np.zeros([t_count,config['nx'],config['ny'],config['nz']-1])
-
-        for i in range(t_count):
+        velo_data = np.zeros([t_count,config['nx'],config['ny']])
+        for i in range(400):
             # print(i)
             # qcrit = fctlib.load_3d(str(i).zfill(4)+'_ts_slice_u', config['nx'],  config['ny'], config['double_flag'], src_out_path)
             value = fctlib.load_3d(str(i).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
@@ -145,14 +145,17 @@ def anime(PATH, case_name):
             # velo_data[i,:,:] = u[:,:,90]
             # velo_data[i,1,:,:,:] = v[128:,64-16:64+16,:128]
             # q_data[i,:,:,:] = qcrit
+
+            velo_data[i,:,:] = np.flip(value[:,:,34],axis=1)
+            
             print(i)
-            # velo_data[i,:,:,0] = u[:,:,44]
-            # velo_data[i,:,:,1] = v[:,:,44]
-            # velo_data[i,:,:,2] = w[:,:,44]
-            fig = figure(figsize=(8,2),dpi=300)
+            # # velo_data[i,:,:,0] = u[:,:,44]
+            # # velo_data[i,:,:,1] = v[:,:,44]
+            # # velo_data[i,:,:,2] = w[:,:,44]
+            fig = figure(figsize=(8,2),dpi=100)
             plt.rcParams["font.size"] = "16"
             # ax1 = fig.add_subplot(111)
-            plt.imshow(value[:,:,7].T,origin='lower',extent=[0,4096,0,1024],vmin=2,vmax=10)
+            plt.imshow(np.flip(value[:,:,7].T,axis=1),origin='lower',extent=[0,10240,0,5120],cmap='bwr')
             plt.colorbar()
             plt.xlabel('x (m)')
             plt.ylabel('z (m)')
@@ -160,7 +163,9 @@ def anime(PATH, case_name):
             plt.close()
 
         # f.create_dataset('q_criterion',data=q_data)
-        # f.close
+        f.create_dataset('velo_data',data=velo_data)
+        
+        f.close
         # u = np.flip(result_4d['u_inst_c'],axis=2)
         # v = - np.flip(result_4d['v_inst_c'],axis=2)
         # w = np.flip(result_4d['w_inst_c'],axis=2)

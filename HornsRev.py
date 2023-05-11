@@ -21,12 +21,12 @@ HR_coord = np.zeros([2,10,8])
 
 for i in range(8):
     HR_coord[0,:,i] = x_coord-7*np.sin(np.pi/180*7)*i
-    HR_coord[1,:,i] = y_coord+7*np.cos(np.pi/180*7)*i
+    HR_coord[1,:,i] = y_coord-7*np.cos(np.pi/180*7)*i
 
 
 HR_coord = np.reshape(HR_coord,[2,80]).T
 HR_coord[:,0] = HR_coord[:,0] - 4.5*7
-HR_coord[:,1] = HR_coord[:,1] - 3.5*7
+HR_coord[:,1] = HR_coord[:,1] + 3.5*7
 
 HR_coord_rotate_x = HR_coord[:,0]*np.cos(inflow_angle) + HR_coord[:,1]*np.sin(inflow_angle)
 HR_coord_rotate_y = - HR_coord[:,0]*np.sin(inflow_angle) + HR_coord[:,1]*np.cos(inflow_angle)
@@ -59,7 +59,8 @@ for i in range(HR_coord.shape[0]):
 # plt.axis('scaled')
 
 # plot_turbine(HR_coord,power)
-plt.show()
+# plt.show()
+plt.savefig('wind farm.png')
 
 # 4.5*560
 # 3.5*560
