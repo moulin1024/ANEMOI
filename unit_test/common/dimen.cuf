@@ -55,6 +55,8 @@ module dimen
     integer :: idx1,idx3,idx2
     integer, parameter :: turb_flag = 0
     integer, parameter :: n_turb = 1
+    integer, parameter :: blade_num = 3
+    integer, parameter :: turb_count = 10
 
     !-------------------------------------------------------------------------------
     ! spec

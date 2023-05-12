@@ -1,0 +1,35 @@
+ program test_structure
+    use, intrinsic :: iso_c_binding 
+    use cudafor
+    use dimen
+    use precision
+    use structural
+    implicit none
+
+    real(fp),dimension(blade_num,n_r,n_turb,2) :: displacement_host,moment_host,velocity_host
+    real(fp),dimension(blade_num,n_r,n_turb,2) :: CTF_host
+    real(fp),dimension(blade_num,n_r,n_turb,2) :: deformation_host
+    real(fp),dimension(n_turb) :: turb_rpm_host    
+    real(fp),dimension(n_turb,5) :: turb_loc_host
+    integer :: k,i_turb,t
+    open(unit=199,file='input/turb_loc.dat')
+    read(199,*)
+    do k=1,n_turb
+        read(199,*) turb_loc_host(k,1:5)
+    end do
+    close(199)
+    do i_turb=1,n_turb
+        turb_loc_host(i_turb,1) = turb_loc_host(i_turb,1)/z_i       ! x
+        turb_loc_host(i_turb,2) = turb_loc_host(i_turb,2)/z_i       ! y
+        turb_loc_host(i_turb,3) = turb_loc_host(i_turb,3)/z_i       ! z
+        turb_loc_host(i_turb,4) = turb_loc_host(i_turb,4)/180*pi    ! yaw
+        turb_loc_host(i_turb,5) = turb_loc_host(i_turb,5)/180*pi    ! tilt
+    end do
+
+    ! print *,turb_loc_host
+    turb_rpm_host = 12.1
+    t = 1
+    call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
+
+end program test_structure
+
