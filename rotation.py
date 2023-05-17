@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 import sys
 theta = sys.argv[1]
+case = sys.argv[1]
+
 
 theta = np.radians(np.double(theta))
 

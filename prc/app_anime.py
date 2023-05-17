@@ -164,7 +164,7 @@ def anime(PATH, case_name):
             fig = figure(figsize=(8,2),dpi=100)
             plt.rcParams["font.size"] = "16"
             # ax1 = fig.add_subplot(111)
-            plt.imshow(np.flip(u[:,:,34].T,axis=0),origin='lower',extent=[0,config['lx'],0,config['ly']],vmin=0,vmax=10)
+            plt.imshow(np.flip(u[:,:,7].T,axis=0),origin='lower',extent=[0,config['lx'],0,config['ly']],vmin=3,vmax=8)
             plt.colorbar()
             plt.xlabel('x (m)')
             plt.ylabel('z (m)')

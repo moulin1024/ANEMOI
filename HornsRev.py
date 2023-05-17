@@ -4,16 +4,7 @@ import matplotlib.pyplot as plt
 import sys
 
 inflow_angle = np.deg2rad(np.float(sys.argv[1]))
-
-
-print(inflow_angle)
-# def plot_turbine(HR_coord,power):
-#     for i in range(HR_coord.shape[0]):
-#         color_value = power[i,:]/np.max(power)
-#         point1 = [HR_coord[i,0]-1.5*np.sin(HR_coord[i,2]),HR_coord[i,1]+1.5*np.cos(HR_coord[i,2])]
-#         point2 = [HR_coord[i,0]+1.5*np.sin(HR_coord[i,2]),HR_coord[i,1]-1.5*np.cos(HR_coord[i,2])]
-#         # plt.plot(HR_coord[i,0],HR_coord[i,1],'ko')
-#         plt.plot([point1[0],point2[0]],[point1[1],point2[1]],color=((color_value,0,1)),linewidth=4)
+casename = sys.argv[2]
 
 x_coord = np.linspace(0,63,10)
 y_coord = np.zeros(10)
@@ -46,21 +37,21 @@ HR_coord = np.append(HR_coord,yaw,axis=1)
 HR_coord = np.append(HR_coord,tilt,axis=1)
 # print(HR_coord[0,3])
 
-plt.figure()
-for i in range(HR_coord.shape[0]):
-    color_value = power[i,:]/np.max(power)
-    point1 = [HR_coord[i,0]-2*np.sin(HR_coord[i,3]),HR_coord[i,1]+2*np.cos(HR_coord[i,3])]
-    point2 = [HR_coord[i,0]+2*np.sin(HR_coord[i,3]),HR_coord[i,1]-2*np.cos(HR_coord[i,3])]
-    print(point1)
-    plt.plot([point1[0],point2[0]],[point1[1],point2[1]],'k',linewidth=1)
-    plt.plot(HR_coord[i,0],HR_coord[i,1],'o',color=((color_value[0],0,1)))
-# plt.xlim([-60,60])
-# plt.ylim([-60,60])
-# plt.axis('scaled')
+# plt.figure()
+# for i in range(HR_coord.shape[0]):
+#     color_value = power[i,:]/np.max(power)
+#     point1 = [HR_coord[i,0]-2*np.sin(HR_coord[i,3]),HR_coord[i,1]+2*np.cos(HR_coord[i,3])]
+#     point2 = [HR_coord[i,0]+2*np.sin(HR_coord[i,3]),HR_coord[i,1]-2*np.cos(HR_coord[i,3])]
+#     print(point1)
+#     plt.plot([point1[0],point2[0]],[point1[1],point2[1]],'k',linewidth=1)
+#     plt.plot(HR_coord[i,0],HR_coord[i,1],'o',color=((color_value[0],0,1)))
+# # plt.xlim([-60,60])
+# # plt.ylim([-60,60])
+# # plt.axis('scaled')
 
-# plot_turbine(HR_coord,power)
-# plt.show()
-plt.savefig('wind farm.png')
+# # plot_turbine(HR_coord,power)
+# # plt.show()
+# plt.savefig('wind farm.png')
 
 # 4.5*560
 # 3.5*560
@@ -70,5 +61,5 @@ HR_coord[:,0:2] = HR_coord[:,0:2]*D+Displacement
 HR_coord[:,3] = HR_coord[:,3]/np.pi*180 
 df = pd.DataFrame(HR_coord)
 df.columns = ["x", "y","z", "gamma","tilt"]
-df.to_csv("./turb_loc_"+str(sys.argv[1])+".dat",index=None)
-print(HR_coord)
+df.to_csv("./job/"+casename+"/input/turb_loc.dat",index=None)
+# print(HR_coord)
