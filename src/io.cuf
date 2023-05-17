@@ -640,7 +640,7 @@ subroutine write_log(log_ustar,log_umax,me)
 
 end subroutine write_log
 
-subroutine write_turb(CTF,displacement_host,moment_host,velocity_host,me)
+subroutine write_turb_alm(CTF,displacement_host,moment_host,velocity_host,me)
 
     implicit none
     integer me,nall
@@ -658,8 +658,20 @@ subroutine write_turb(CTF,displacement_host,moment_host,velocity_host,me)
         write (80000) velocity_host(:,:,:,2)
     end if
 
-end subroutine write_turb
+end subroutine write_turb_alm
 
+subroutine write_turb_rigid(CTF_host,me)
+
+    implicit none
+    integer me,nall
+    real(fp), dimension(n_phi,n_r,n_turb,2) , intent(in):: CTF_host
+    
+    if (me == 0) then
+        write (73000) CTF(:,:,:,1)*dx*dy*dz*z_i**2
+        write (74000) CTF(:,:,:,2)*dx*dy*dz*z_i**2
+    end if
+
+end subroutine write_turb_rigid
 
 !-------------------------------------------------------------------------------
 ! close output
@@ -1062,8 +1074,8 @@ subroutine read_inflow(u,v,w,t,me)
     if (mod(t-1,inflow_count)==0) then
         i_batch = mod((t-1)/(inflow_count),batch_size) + 1
         ! Cycling inflow section: 10 times per p_count
-        ! cyc_pt = mod((t-1)/(inflow_count*10),ny)+1
-        cyc_pt = ny
+        cyc_pt = mod((t-1)/(inflow_count*20),ny)+1
+        ! cyc_pt = ny
         prec_u(:,1:cyc_pt,:)    = u_batch(:,(ny-cyc_pt+1):ny,:,i_batch)
         prec_v(:,1:cyc_pt,:)    = v_batch(:,(ny-cyc_pt+1):ny,:,i_batch)
         prec_w(:,1:cyc_pt,:)    = w_batch(:,(ny-cyc_pt+1):ny,:,i_batch)

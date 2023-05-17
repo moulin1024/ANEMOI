@@ -71,15 +71,15 @@ def anime(PATH, case_name):
     space = post.get_space(config)
     time = post.get_time(config)
 
-    if config['ta_flag'] > 10:
+    if config['ta_flag'] > 0:
         result_3d = post.get_result_3d(src_inp_path,src_out_path, config)
         u_avg = result_3d['u_avg_c']
-        # v_avg = result_3d['v_avg_c']
-        # w_avg = result_3d['w_avg_c']
+        v_avg = result_3d['v_avg_c']
+        w_avg = result_3d['w_avg_c']
 
         u_std = result_3d['u_std_c']
-        # v_std = result_3d['v_std_c']
-        # w_std = result_3d['w_std_c']
+        v_std = result_3d['v_std_c']
+        w_std = result_3d['w_std_c']
 
         f = h5py.File(out_path+'/'+case_name+'_stat.h5','w')
         for key, value in config.items():
@@ -90,14 +90,22 @@ def anime(PATH, case_name):
         f.create_dataset('z',data=space['z_c'])
 
         f.create_dataset('u_avg',data=u_avg )
-        # f.create_dataset('v_avg',data=v_avg)
-        # f.create_dataset('w_avg',data=w_avg)
+        f.create_dataset('v_avg',data=v_avg)
+        f.create_dataset('w_avg',data=w_avg)
 
         f.create_dataset('u_std',data=u_std)
-        # f.create_dataset('v_std',data=v_std)
-        # f.create_dataset('w_std',data=w_std)
+        f.create_dataset('v_std',data=v_std)
+        f.create_dataset('w_std',data=w_std)
 
         f.close
+
+        mean_u = np.mean(np.mean(u_avg,axis=0),axis=0)
+        print(mean_u[6])
+        u_std = result_3d['u_std_c']
+        
+        mean_std = np.mean(np.mean(u_std,axis=0),axis=0)
+        
+        print(mean_std[6]/mean_u[6])
 
     #     fig = figure(figsize=(8,8))
     #     ax = fig.add_subplot(111)
@@ -132,11 +140,13 @@ def anime(PATH, case_name):
         # f.close
         t_count = (config['nsteps']-config['ts_tstart'])//100
         # q_data = np.zeros([t_count,config['nx'],config['ny'],config['nz']-1])
-        velo_data = np.zeros([t_count,config['nx'],config['ny']])
-        for i in range(400):
+        velo_data = np.zeros([t_count,config['nx'],config['ny'],3])
+        for i in range(t_count):
             # print(i)
             # qcrit = fctlib.load_3d(str(i).zfill(4)+'_ts_slice_u', config['nx'],  config['ny'], config['double_flag'], src_out_path)
-            value = fctlib.load_3d(str(i).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            u = fctlib.load_3d(str(i).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            v = fctlib.load_3d(str(i).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            w = fctlib.load_3d(str(i).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
             # u = fctlib.load_3d(str(i).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
             # v = fctlib.load_3d(str(i).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
             # w = post.node2center_3d(fctlib.load_3d(str(i).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
@@ -146,16 +156,15 @@ def anime(PATH, case_name):
             # velo_data[i,1,:,:,:] = v[128:,64-16:64+16,:128]
             # q_data[i,:,:,:] = qcrit
 
-            velo_data[i,:,:] = np.flip(value[:,:,34],axis=1)
+            velo_data[i,:,:,0] = np.flip(u[:,:,7],axis=0)
+            velo_data[i,:,:,1] = np.flip(v[:,:,7],axis=0)
+            velo_data[i,:,:,2] = np.flip(w[:,:,7],axis=0)
             
             print(i)
-            # # velo_data[i,:,:,0] = u[:,:,44]
-            # # velo_data[i,:,:,1] = v[:,:,44]
-            # # velo_data[i,:,:,2] = w[:,:,44]
             fig = figure(figsize=(8,2),dpi=100)
             plt.rcParams["font.size"] = "16"
             # ax1 = fig.add_subplot(111)
-            plt.imshow(np.flip(value[:,:,7].T,axis=1),origin='lower',extent=[0,10240,0,5120],cmap='bwr')
+            plt.imshow(np.flip(u[:,:,7].T,axis=0),origin='lower',extent=[0,10240,0,5120],vmin=0,vmax=10)
             plt.colorbar()
             plt.xlabel('x (m)')
             plt.ylabel('z (m)')
@@ -163,7 +172,7 @@ def anime(PATH, case_name):
             plt.close()
 
         # f.create_dataset('q_criterion',data=q_data)
-        f.create_dataset('velo_data',data=velo_data)
+        f.create_dataset('hub_height_velocity',data=velo_data)
         
         f.close
         # u = np.flip(result_4d['u_inst_c'],axis=2)
