@@ -164,7 +164,7 @@ def anime(PATH, case_name):
             fig = figure(figsize=(8,2),dpi=100)
             plt.rcParams["font.size"] = "16"
             # ax1 = fig.add_subplot(111)
-            plt.imshow(np.flip(u[:,:,7].T,axis=0),origin='lower',extent=[0,10240,0,5120],vmin=0,vmax=10)
+            plt.imshow(np.flip(u[:,:,34].T,axis=0),origin='lower',extent=[0,config['lx'],0,config['ly']],vmin=0,vmax=10)
             plt.colorbar()
             plt.xlabel('x (m)')
             plt.ylabel('z (m)')
@@ -203,7 +203,7 @@ def anime(PATH, case_name):
         #     plt.close()
 
 
-    if config['turb_flag'] > 10:
+    if config['turb_flag'] > 0:
         turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():
@@ -214,22 +214,22 @@ def anime(PATH, case_name):
         f.create_dataset('yaw',data=turb_loc['yaw'].to_numpy())
         f.create_dataset('tilt',data=turb_loc['yaw'].to_numpy())
         
-        print(turb_loc['yaw'].to_numpy())
+        # print(turb_loc['yaw'].to_numpy())
         turb_force = post.get_turb(src_out_path, config)
         # power = np.squeeze(np.squeeze(turb_force['power'], axis=1), axis=1)
         # print(power.shape)
         # plt.plot(power[:,0])
         # plt.savefig('test.png')
         f.create_dataset('time',data=time['t'])
-        # f.create_dataset('fx',data=turb_force['fx'][:,:,:,:])
-        # f.create_dataset('ft',data=turb_force['ft'][:,:,:,:])
-        f.create_dataset('displacement_flap',data=turb_force['displacement_flap'])
-        f.create_dataset('displacement_edge',data=turb_force['displacement_edge'])
-        f.create_dataset('moment_flap',data=turb_force['moment_flap'])
-        f.create_dataset('moment_edge',data=turb_force['moment_edge'])
+        f.create_dataset('fx',data=turb_force['fx'][:,:,:,:])
+        f.create_dataset('ft',data=turb_force['ft'][:,:,:,:])
+        # f.create_dataset('displacement_flap',data=turb_force['displacement_flap'])
+        # f.create_dataset('displacement_edge',data=turb_force['displacement_edge'])
+        # f.create_dataset('moment_flap',data=turb_force['moment_flap'])
+        # f.create_dataset('moment_edge',data=turb_force['moment_edge'])
         # f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
         # f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
-        f.create_dataset('phase',data=turb_force['phase'])
+        # f.create_dataset('phase',data=turb_force['phase'])
 
         f.close
 

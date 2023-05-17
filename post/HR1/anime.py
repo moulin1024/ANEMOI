@@ -1,10 +1,10 @@
 from turtle import distance
 import imageio
 import sys
-case = sys.argv[1]
+# distance = sys.argv[1]
 
 images = []
 for j in range(100):
     print(j)
-    images.append(imageio.imread('job/'+case+'/output/'+str(j).zfill(3)+'_flowfield_yz.png'))
+    images.append(imageio.imread('./fig/fx_'+str(j)+'.png'))
 imageio.mimsave('test-0.gif',images,fps=30)

@@ -456,6 +456,8 @@ program main
             if (device_id == 0 ) then
                 if (mod(t-1,turb_count)==0) then
                     call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
+                    CTF_host = CTF
+                    call write_turb_rigid(CTF_host,me)
                 end if
 
                 ! if (mod(t-1,turb_count)==0) then

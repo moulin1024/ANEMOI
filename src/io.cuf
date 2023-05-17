@@ -667,8 +667,8 @@ subroutine write_turb_rigid(CTF_host,me)
     real(fp), dimension(n_phi,n_r,n_turb,2) , intent(in):: CTF_host
     
     if (me == 0) then
-        write (73000) CTF(:,:,:,1)*dx*dy*dz*z_i**2
-        write (74000) CTF(:,:,:,2)*dx*dy*dz*z_i**2
+        write (73000) CTF_host(:,:,:,1)*dx*dy*dz*z_i**2
+        write (74000) CTF_host(:,:,:,2)*dx*dy*dz*z_i**2
     end if
 
 end subroutine write_turb_rigid
