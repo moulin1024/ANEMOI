@@ -118,10 +118,10 @@ module turbine
             write(111, '(E11.4)') power_host
             11 format(F8.4)
             ! print*,power_host/1e6
-            call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
+            ! call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
             ! deformation = deformation_host
-            velocity = velocity_host
-            CTF_host_old = CTF_host 
+            ! velocity = velocity_host
+            ! CTF_host_old = CTF_host 
         end if
         
     end Subroutine turbine_force
@@ -927,15 +927,15 @@ module turbine
         CTCL = 0
         CTCD = 0.35
     else if ( radius >= 11.75 .and. radius < 15.85 ) then
-        section = 6
+        section = 1
     else if ( radius >= 15.85 .and. radius < 24.05 ) then
-        section = 6
+        section = 2
     else if ( radius >= 24.05 .and. radius < 28.15 ) then
-        section = 6
+        section = 3
     else if ( radius >= 28.15 .and. radius < 36.35 ) then
-        section = 6 
+        section = 4 
     else if ( radius >= 36.35 .and. radius < 44.55 ) then
-        section = 6
+        section = 5
     else if ( radius >= 44.55 ) then
         section = 6
     end if

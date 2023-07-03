@@ -7,7 +7,7 @@
     use precision
     use update_m
     use filter
-    use filter_cpu
+    ! use filter_cpu
     implicit none
 
     real(fp),dimension(nx,ny,nz2) :: u_host1,dudx_host1,dudy_host1
@@ -37,7 +37,7 @@
 
     allocate(u(nx,ny,nz2),dudx(nx,ny,nz2),dudy(nx,ny,nz2))
 
-    u = u_host1+me
+    u = u_host1
 
     !---------------------------------------------------------------------------
     ! GPU code
@@ -48,22 +48,22 @@
     
     call ddxy_filter(u,dudx,dudy,plan_batch)
 
-    call update_uv_async(u,request,me,nall)
-    call update_uv_async(dudx,request,me,nall)
-    call update_uv_async(dudy,request,me,nall)
+    ! call update_uv_async(u,request,me,nall)
+    ! call update_uv_async(dudx,request,me,nall)
+    ! call update_uv_async(dudy,request,me,nall)
 
     u_host2 = u 
     dudx_host2 = dudx
     dudy_host2 = dudy
-
+    print *,u_host2(256,256,128),u_host1(256,256,128)
     !---------------------------------------------------------------------------
     ! cpu code
     !---------------------------------------------------------------------------
-    call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,0)
-    call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,1)
+    ! call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,0)
+    ! call ddxy_filter_cpu(u_host1,dudx_host1,dudy_host1,1)
 
-    max_error = maxval(abs(dudx_host1(:,:,2:nzb+1)-dudx_host2(:,:,2:nzb+1)))
-    print *,'Max error',max_error
+    ! max_error = maxval(abs(dudx_host1(:,:,2:nzb+1)-dudx_host2(:,:,2:nzb+1)))
+    ! print *,'Max error',max_error
 
 
     call cufftDestroy(plan_batch(1))

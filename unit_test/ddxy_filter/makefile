@@ -8,7 +8,7 @@ FC = mpif90
 # FFLAGS
 ################################################################################
 
-FFLAGS = -O3 -Mpreprocess -lfftw3
+FFLAGS = -O3 -Mpreprocess
 CUDA = -Mcuda -lcufft -ta=nvidia 
 PRECISION=-DDOUBLE
 
@@ -16,7 +16,7 @@ PRECISION=-DDOUBLE
 # OBJ, PROG
 ################################################################################
 
-OBJ = precision.o dimen.o cufft_m.o filter.o update.o ddxy_filter_cpu.o\
+OBJ = precision.o dimen.o cufft_m.o filter.o update.o\
 	  test.o \
 
 PROG = wireles
@@ -28,12 +28,11 @@ build:
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/cufft_m.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/filter.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../../src/update.cuf
-	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c ../cpu_benchmark/ddxy_filter_cpu.f90
 	$(FC) $(FFLAGS) $(CUDA) $(PRECISION) -c test.cuf
 	$(FC) $(FFLAGS) $(CUDA) $(OBJ) -o $(PROG).run $(LIBS)
 
 run:
-	mpirun -np 2 ./wireles.run
+	mpirun -np 1 ./wireles.run
 		
 
 clean:

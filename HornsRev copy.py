@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sys
 
-inflow_angle = np.deg2rad(float(sys.argv[1]))
+inflow_angle = np.deg2rad(np.float(sys.argv[1]))
 casename = sys.argv[2]
 
 x_coord = np.linspace(0,63,10)
@@ -60,6 +60,6 @@ Displacement = np.tile([5120,2560], (80, 1))
 HR_coord[:,0:2] = HR_coord[:,0:2]*D+Displacement
 HR_coord[:,3] = HR_coord[:,3]/np.pi*180 
 df = pd.DataFrame(HR_coord)
-df.columns = ["x", "y","z", "yaw","tilt"]
+df.columns = ["x", "y","z", "gamma","tilt"]
 df.to_csv("./job/"+casename+"/input/turb_loc.dat",index=None)
 # print(HR_coord)

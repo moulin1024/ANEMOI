@@ -454,18 +454,18 @@ program main
         ! Apply turbine forcing
         if (turb_flag == 1) then 
             if (device_id == 0 ) then
-                if (mod(t-1,turb_count)==0) then
-                    call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
-                    CTF_host = CTF
-                    call write_turb_rigid(CTF_host,me)
-                end if
-
                 ! if (mod(t-1,turb_count)==0) then
-                !     ! call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
-                !     call turbine_force(Fx,Fy,Fz,CTF_alm,power,displacement_host,moment_host,velocity_host,u,v,w,turb_loc,t)
-                !     CTF_alm_host = CTF_alm
-                !     call write_turb(CTF_alm_host,displacement_host,moment_host,velocity_host,me)
+                !     call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
+                !     CTF_host = CTF
+                !     call write_turb_rigid(CTF_host,me)
                 ! end if
+
+                if (mod(t-1,turb_count)==0) then
+                    ! call turbine_force(Fx,Fy,Fz,CTF,power,u,v,w,turb_loc,t)
+                    call turbine_force(Fx,Fy,Fz,CTF_alm,power,displacement_host,moment_host,velocity_host,u,v,w,turb_loc,t)
+                    CTF_alm_host = CTF_alm
+                    call write_turb_alm(CTF_alm_host,displacement_host,moment_host,velocity_host,me)
+                end if
 
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsx,fx)
                 call turbine_force_rhs<<<grid, tBlock>>>(rhsy,fy)

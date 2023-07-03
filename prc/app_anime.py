@@ -14,6 +14,7 @@ app: create self-explained hdf5 output file
 import os, sys
 
 from matplotlib import projections
+import matplotlib.transforms as transforms
 import fctlib
 import app_post as post
 import numpy as np
@@ -147,63 +148,67 @@ def anime(PATH, case_name):
             u = fctlib.load_3d(str(i).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
             v = fctlib.load_3d(str(i).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
             w = fctlib.load_3d(str(i).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-            # u = fctlib.load_3d(str(i).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-            # v = fctlib.load_3d(str(i).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-            # w = post.node2center_3d(fctlib.load_3d(str(i).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
-            
-            # velo_data[i,2,:,:,:] = w[128:,64-16:64+16,:128]
-            # velo_data[i,:,:] = u[:,:,90]
-            # velo_data[i,1,:,:,:] = v[128:,64-16:64+16,:128]
-            # q_data[i,:,:,:] = qcrit
 
-            velo_data[i,:,:,0] = np.flip(u[:,:,7],axis=0)
-            velo_data[i,:,:,1] = np.flip(v[:,:,7],axis=0)
-            velo_data[i,:,:,2] = np.flip(w[:,:,7],axis=0)
+            velo_data[i,:,:,0] = np.flip(u[:,:,int(config['lz']/config['nz'])],axis=0)
+            velo_data[i,:,:,1] = np.flip(v[:,:,int(config['lz']/config['nz'])],axis=0)
+            velo_data[i,:,:,2] = np.flip(w[:,:,int(config['lz']/config['nz'])],axis=0)
             
             print(i)
-            fig = figure(figsize=(8,2),dpi=100)
-            plt.rcParams["font.size"] = "16"
+
+            fig = figure(figsize=(8,6),dpi=100)
             # ax1 = fig.add_subplot(111)
-            plt.imshow(np.flip(u[:,:,7].T,axis=0),origin='lower',extent=[0,config['lx'],0,config['ly']],vmin=3,vmax=8)
+            plt.imshow(u[:,:,29].T,origin='lower',aspect=1/1)
             plt.colorbar()
-            plt.xlabel('x (m)')
-            plt.ylabel('z (m)')
-            plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_yz.png',bbox_inches='tight')
-            plt.close()
+            plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
+           
+            # # Define the rotation angle in degrees
+            # rotation_degrees = 5
+
+            # data = np.flip(u[:,:,7].T,axis=0)*np.cos(np.deg2rad(-rotation_degrees)) - np.flip(-v[:,:,7].T,axis=0)*np.sin(np.deg2rad(-rotation_degrees))
+            
+            # # data = np.flip(-v[:,:,7].T,axis=0)*np.cos(np.deg2rad(rotation_degrees)) + np.flip(u[:,:,7].T,axis=0)*np.sin(np.deg2rad(rotation_degrees))
+            
+
+            # fig, ax = plt.subplots()
+            # # plt.rcParams["font.size"] = "16"
+            # im = ax.imshow(data,origin='lower',extent=[-5120,config['lx']-5120,-2560,config['ly']-2560],vmin=2,vmax=10,cmap='bwr')
+
+
+            # # Define the center of rotation
+            # rotation_center = (10240 / 2, 5120 / 2)
+
+            # # Create a translation transformation to move the center of rotation to the origin
+            # translation_to_origin = transforms.Affine2D().translate(-rotation_center[0], -rotation_center[1])
+
+            # # Create a rotation transformation
+            # rotation = transforms.Affine2D().rotate_deg(rotation_degrees)
+
+            # # Create a translation transformation to move the center of rotation back to its original position
+            # translation_to_center = transforms.Affine2D().translate(rotation_center[0], rotation_center[1])
+
+            # # Combine the transformations
+            # combined_transform = translation_to_origin + rotation + translation_to_center
+
+            # # Apply the combined transformation to the image
+            # im.set_transform(combined_transform + ax.transData)
+
+            # # plt.colorbar()
+            # ax.set_xlabel('x (m)')
+            # ax.set_ylabel('z (m)')
+            # ax.set_xlim([1500-5120,9000-5120])
+            # ax.set_ylim([320-2560,5120-320-2560])
+            # cbar = plt.colorbar(im,ax=ax)
+            # cbar.set_label('$u$ (m/s)')
+            # plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_yz.png',bbox_inches='tight')
+            # plt.close()
 
         # f.create_dataset('q_criterion',data=q_data)
         f.create_dataset('hub_height_velocity',data=velo_data)
         
         f.close
-        # u = np.flip(result_4d['u_inst_c'],axis=2)
-        # v = - np.flip(result_4d['v_inst_c'],axis=2)
-        # w = np.flip(result_4d['w_inst_c'],axis=2)
-
-        # dx = space['x'][1]-space['x'][0]
-        # dy = space['y'][1]-space['y'][0]
-        # dz = space['z_c'][1]-space['z_c'][0]
-
-        # for i in range(100):
-        #     print(i)
-        #     fig = figure(figsize=(8,6),dpi=300)
-        #     ax1 = fig.add_subplot(111,projection='3d')
-        #     u = fctlib.load_3d(str(i+901).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-        #     v = fctlib.load_3d(str(i+901).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-        #     w = post.node2center_3d(fctlib.load_3d(str(i+901).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path))
         
-        #     verts, faces, _, _ = marching_cubes(Qcriter, 0.02)
-        #     ax1.plot_trisurf(verts[:, 0]*dx, verts[:,1]*dy, faces, verts[:, 2]*dz, lw=1,alpha=0.2)
-        #     ax1.set_xlabel('x')
-        #     ax1.set_ylabel('y')
-        #     ax1.set_xlim(0,4096)
-        #     ax1.set_ylim(0,1024)
-        #     ax1.set_zlim(0,512)
-        #     ax1.set_box_aspect([8,2,1])
-        #     plt.savefig(out_path+'/'+str(i+1).zfill(3)+'_animation_xz.png')
-        #     plt.close()
 
-
-    if config['turb_flag'] > 0:
+    if config['turb_flag'] > 10:
         turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():
