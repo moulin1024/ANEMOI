@@ -120,7 +120,7 @@ def anime(PATH, case_name):
 
 
 
-    if config['ts_flag'] > 0:
+    if config['ts_flag'] > 10:
 
         # u  = fctlib.load_3d('001_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
     
@@ -208,16 +208,16 @@ def anime(PATH, case_name):
         f.close
         
 
-    if config['turb_flag'] > 10:
+    if config['turb_flag'] > 0:
         turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():
             f.attrs[key] = value
-        f.create_dataset('turb_x',data=turb_loc['x'].to_numpy())
-        f.create_dataset('turb_y',data=turb_loc['y'].to_numpy())
-        f.create_dataset('turb_z',data=turb_loc['z'].to_numpy())
-        f.create_dataset('yaw',data=turb_loc['yaw'].to_numpy())
-        f.create_dataset('tilt',data=turb_loc['yaw'].to_numpy())
+        # f.create_dataset('turb_x',data=turb_loc['x'].to_numpy())
+        # f.create_dataset('turb_y',data=turb_loc['y'].to_numpy())
+        # f.create_dataset('turb_z',data=turb_loc['z'].to_numpy())
+        # f.create_dataset('yaw',data=turb_loc['yaw'].to_numpy())
+        # f.create_dataset('tilt',data=turb_loc['yaw'].to_numpy())
         
         # print(turb_loc['yaw'].to_numpy())
         turb_force = post.get_turb(src_out_path, config)
@@ -228,16 +228,19 @@ def anime(PATH, case_name):
         f.create_dataset('time',data=time['t'])
         f.create_dataset('fx',data=turb_force['fx'][:,:,:,:])
         f.create_dataset('ft',data=turb_force['ft'][:,:,:,:])
-        # f.create_dataset('displacement_flap',data=turb_force['displacement_flap'])
-        # f.create_dataset('displacement_edge',data=turb_force['displacement_edge'])
-        # f.create_dataset('moment_flap',data=turb_force['moment_flap'])
-        # f.create_dataset('moment_edge',data=turb_force['moment_edge'])
-        # f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
-        # f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
-        # f.create_dataset('phase',data=turb_force['phase'])
+        f.create_dataset('displacement_flap',data=turb_force['displacement_flap'])
+        f.create_dataset('displacement_edge',data=turb_force['displacement_edge'])
+        f.create_dataset('moment_flap',data=turb_force['moment_flap'])
+        f.create_dataset('moment_edge',data=turb_force['moment_edge'])
+        f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
+        f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
+        f.create_dataset('phase',data=turb_force['phase'])
 
         f.close
-
+        # print(turb_force['ft'].shape)
+        plt.plot(turb_force['moment_flap'][:,0,0,0])
+        plt.plot(turb_force['moment_edge'][:,0,0,0])
+        plt.savefig('test.png')
         # displacement_flap = turb_force['displacement_flap']
         # displacement_edge = turb_force['displacement_edge']
 

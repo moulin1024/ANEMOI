@@ -118,10 +118,10 @@ module turbine
             write(111, '(E11.4)') power_host
             11 format(F8.4)
             ! print*,power_host/1e6
-            ! call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
-            ! deformation = deformation_host
-            ! velocity = velocity_host
-            ! CTF_host_old = CTF_host 
+            call aeroelastic(deformation_host,displacement_host,moment_host,velocity_host,CTF_host,turb_rpm_host,turb_loc_host,t)
+            deformation = deformation_host
+            velocity = velocity_host
+            CTF_host_old = CTF_host 
         end if
         
     end Subroutine turbine_force
@@ -742,8 +742,8 @@ module turbine
                 mu_z = mu(3)
                 ! Apply gaussian smoothing kernel
                 
-                sigma_x  = chord_length(i_r,i_turb)
-                sigma_yz = chord_length(i_r,i_turb)
+                sigma_x  = 2*chord_length(i_r,i_turb)
+                sigma_yz = 2*chord_length(i_r,i_turb)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
@@ -818,8 +818,8 @@ module turbine
                 coord_z_w = coord_z_u - 0.5*dz
 
                 ! Apply gaussian smoothing kernel
-                sigma_x  = chord_length(i_r,i_turb)
-                sigma_yz = chord_length(i_r,i_turb)
+                sigma_x  = 2*chord_length(i_r,i_turb)
+                sigma_yz = 2*chord_length(i_r,i_turb)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
