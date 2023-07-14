@@ -14,10 +14,10 @@ module rotation
         mu(2) =   radius*Cos(phi)*Cos(gamma) + radius*Sin(gamma)*Sin(phi)*Sin(tau)
         mu(3) =   radius*Sin(phi)*Cos(tau)
         
-        ! ! Flexible defmormation
-        ! mu(1) = mu(1) + deltaR*Tan(alpha)*Cos(gamma)*Cos(tau)
-        ! mu(2) = mu(2) + deltaR*Tan(alpha)*Cos(tau)*Sin(gamma)
-        ! mu(3) = mu(3) - deltaR*Tan(alpha)*Sin(tau)
+        ! Flexible defmormation
+        mu(1) = mu(1) + deltaR*Tan(alpha)*Cos(gamma)*Cos(tau)
+        mu(2) = mu(2) + deltaR*Tan(alpha)*Cos(tau)*Sin(gamma)
+        mu(3) = mu(3) - deltaR*Tan(alpha)*Sin(tau)
     end subroutine elementCoordinate
 
     attributes(device) subroutine relativeVelocity(CTU_relative_flex,CTU_relative_rigid,&
@@ -28,27 +28,32 @@ module rotation
         real(fp),dimension(3,3) :: deformMatInv
 
         ! Relative velocity on the rigid blade
-        ! CTU_relative_rigid(1) = Cos(tau)*(ctu*Cos(gamma) + ctv*Sin(gamma)) - ctw*Sin(tau)
-        ! CTU_relative_rigid(2) = Cos(phi)*(ctv*Cos(gamma) - ctu*Sin(gamma)) + Sin(phi)*(ctw*Cos(tau) + &
-        !                         (ctu*Cos(gamma) + ctv*Sin(gamma))*Sin(tau))  
-        ! CTU_relative_rigid(3) = -((ctv*Cos(gamma) - ctu*Sin(gamma))*Sin(phi)) + Cos(phi)*(ctw*Cos(tau) + &
-        !                         (ctu*Cos(gamma) + ctv*Sin(gamma))*Sin(tau))
+        CTU_relative_rigid(1) = Cos(tau)*(ctu*Cos(gamma) + ctv*Sin(gamma)) - ctw*Sin(tau)
+        CTU_relative_rigid(2) = Cos(phi)*(ctv*Cos(gamma) - ctu*Sin(gamma)) + Sin(phi)*(ctw*Cos(tau) + &
+                                (ctu*Cos(gamma) + ctv*Sin(gamma))*Sin(tau))  
+        CTU_relative_rigid(3) = -((ctv*Cos(gamma) - ctu*Sin(gamma))*Sin(phi)) + Cos(phi)*(ctw*Cos(tau) + &
+                                (ctu*Cos(gamma) + ctv*Sin(gamma))*Sin(tau))
 
-        CTU_relative_rigid(1) = ctu*Cos(gamma) + ctv*Sin(gamma)!Cos(tau)*(ctu*Cos(gamma) + ctv*Sin(gamma)) - ctw*Sin(tau)
-        CTU_relative_rigid(2) = Cos(phi)*(ctv*Cos(gamma) - ctu*Sin(gamma)) + ctw*Sin(phi)!Cos(phi)*(ctv*Cos(gamma) - ctu*Sin(gamma)) + Sin(phi)*(ctw*Cos(tau) + &
-                                !(ctu*Cos(gamma) + ctv*Sin(gamma))*Sin(tau))  
-        CTU_relative_rigid(3) = ctw*Cos(phi) - (ctv*Cos(gamma) - ctu*Sin(gamma))*Sin(phi)!-((ctv*Cos(gamma) - ctu*Sin(gamma))*Sin(phi)) + Cos(phi)*(ctw*Cos(tau) + &
-                                !(ctu*Cos(gamma) + ctv*Sin(gamma))*Sin(tau))
+        ! CTU_relative_rigid(1) = ctu*Cos(gamma) + ctv*Sin(gamma)!Cos(tau)*(ctu*Cos(gamma) + ctv*Sin(gamma)) - ctw*Sin(tau)
+        ! CTU_relative_rigid(2) = Cos(phi)*(ctv*Cos(gamma) - ctu*Sin(gamma)) + ctw*Sin(phi)!Cos(phi)*(ctv*Cos(gamma) - ctu*Sin(gamma)) + Sin(phi)*(ctw*Cos(tau) + &
+        !                         !(ctu*Cos(gamma) + ctv*Sin(gamma))*Sin(tau))  
+        ! CTU_relative_rigid(3) = ctw*Cos(phi) - (ctv*Cos(gamma) - ctu*Sin(gamma))*Sin(phi)!-((ctv*Cos(gamma) - ctu*Sin(gamma))*Sin(phi)) + Cos(phi)*(ctw*Cos(tau) + &
+        !                         !(ctu*Cos(gamma) + ctv*Sin(gamma))*Sin(tau))
 
-        ! call deformationMatrix(deformMatInv,alpha,beta,deltaR)
+        call deformationMatrix(deformMatInv,alpha,beta,deltaR)
 
         ! CTU_relative_flex(1) = CTU_relative_rigid(1)*Cos(alpha) + CTU_relative_rigid(2)*Sin(alpha)!dot_product(deformMatInv(1,:),CTU_relative_rigid)
         ! CTU_relative_flex(2) = CTU_relative_rigid(2)*Cos(alpha) - CTU_relative_rigid(1)*Sin(alpha)!dot_product(deformMatInv(2,:),CTU_relative_rigid)
         ! CTU_relative_flex(3) = CTU_relative_rigid(3)!dot_product(deformMatInv(3,:),CTU_relative_rigid)
 
-        CTU_relative_flex(1) = CTU_relative_rigid(1)!dot_product(deformMatInv(1,:),CTU_relative_rigid)
-        CTU_relative_flex(2) = CTU_relative_rigid(2)!dot_product(deformMatInv(2,:),CTU_relative_rigid)
-        CTU_relative_flex(3) = CTU_relative_rigid(3)!dot_product(deformMatInv(3,:),CTU_relative_rigid)
+        ! CTU_relative_flex(1) = CTU_relative_rigid(1)!dot_product(deformMatInv(1,:),CTU_relative_rigid)
+        ! CTU_relative_flex(2) = CTU_relative_rigid(2)!dot_product(deformMatInv(2,:),CTU_relative_rigid)
+        ! CTU_relative_flex(3) = CTU_relative_rigid(3)!dot_product(deformMatInv(3,:),CTU_relative_rigid)
+
+
+        CTU_relative_flex(1) = dot_product(deformMatInv(1,:),CTU_relative_rigid)
+        CTU_relative_flex(2) = dot_product(deformMatInv(2,:),CTU_relative_rigid)
+        CTU_relative_flex(3) = dot_product(deformMatInv(3,:),CTU_relative_rigid)
 
     end subroutine relativeVelocity
 
