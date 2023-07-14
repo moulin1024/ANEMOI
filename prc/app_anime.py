@@ -120,7 +120,7 @@ def anime(PATH, case_name):
 
 
 
-    if config['ts_flag'] > 10:
+    if config['ts_flag'] > 0:
 
         # u  = fctlib.load_3d('001_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)
     
@@ -157,7 +157,7 @@ def anime(PATH, case_name):
 
             fig = figure(figsize=(8,6),dpi=100)
             # ax1 = fig.add_subplot(111)
-            plt.imshow(u[:,:,29].T,origin='lower',aspect=1/1)
+            plt.imshow(u[:,:,22].T,origin='lower',aspect=1/1)
             plt.colorbar()
             plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
            
@@ -203,9 +203,9 @@ def anime(PATH, case_name):
             # plt.close()
 
         # f.create_dataset('q_criterion',data=q_data)
-        f.create_dataset('hub_height_velocity',data=velo_data)
+        # f.create_dataset('hub_height_velocity',data=velo_data)
         
-        f.close
+        # f.close
         
 
     if config['turb_flag'] > 0:
@@ -238,8 +238,9 @@ def anime(PATH, case_name):
 
         f.close
         # print(turb_force['ft'].shape)
+        plt.figure()
         plt.plot(turb_force['moment_flap'][:,0,0,0])
-        plt.plot(turb_force['moment_edge'][:,0,0,0])
+        # plt.plot(turb_force['moment_edge'][:,0,0,0])
         plt.savefig('test.png')
         # displacement_flap = turb_force['displacement_flap']
         # displacement_edge = turb_force['displacement_edge']

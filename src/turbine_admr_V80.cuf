@@ -610,8 +610,8 @@ module turbine
                 coord_z_w = coord_z_u - 0.5*dz
 
                 ! Apply gaussian smoothing kernel
-                sigma_x  = 2*sqrt((r(i_r)*dang)**2+dr**2)
-                sigma_yz = 2*sqrt((r(i_r)*dang)**2+dr**2)
+                sigma_x  = 2*dx!sqrt((r(i_r)*dang)**2+dr**2)
+                sigma_yz = 2*dx!sqrt((r(i_r)*dang)**2+dr**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
@@ -785,8 +785,8 @@ module turbine
                 sin_CTangx = coord_z_u/(r_u+1e-16)
                 cos_CTangz = ((coord_y)/cos(turb_loc(i_turb,4)))/(r_w+1e-16)
 
-                sigma_x  = 2*sqrt((r(i_r)*dang)**2+dr**2)
-                sigma_yz = 2*sqrt((r(i_r)*dang)**2+dr**2)
+                sigma_x  = 2*dx!sqrt((r(i_r)*dang)**2+dr**2)
+                sigma_yz = 2*dx!sqrt((r(i_r)*dang)**2+dr**2)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
