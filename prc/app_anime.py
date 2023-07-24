@@ -157,7 +157,7 @@ def anime(PATH, case_name):
 
             fig = figure(figsize=(8,6),dpi=100)
             # ax1 = fig.add_subplot(111)
-            plt.imshow(u[:,:,30].T,origin='lower',aspect=1/1,vmin=1,vmax=11)
+            plt.imshow(u[128,:,:].T,origin='lower',aspect=1/2,vmin=1,vmax=11)
             plt.colorbar()
             plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
             plt.close()
@@ -228,18 +228,22 @@ def anime(PATH, case_name):
         f.create_dataset('time',data=time['t'])
         f.create_dataset('fx',data=turb_force['fx'][:,:,:,:])
         f.create_dataset('ft',data=turb_force['ft'][:,:,:,:])
-        f.create_dataset('displacement_flap',data=turb_force['displacement_flap'])
-        f.create_dataset('displacement_edge',data=turb_force['displacement_edge'])
+        # f.create_dataset('displacement_flap',data=turb_force['displacement_flap'])
+        # f.create_dataset('displacement_edge',data=turb_force['displacement_edge'])
         f.create_dataset('moment_flap',data=turb_force['moment_flap'])
         f.create_dataset('moment_edge',data=turb_force['moment_edge'])
-        f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
-        f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
+        # f.create_dataset('velocity_flap',data=turb_force['velocity_flap'])
+        # f.create_dataset('velocity_edge',data=turb_force['velocity_edge'])
         f.create_dataset('phase',data=turb_force['phase'])
+        f.create_dataset('inflow',data=turb_force['inflow'])
 
         f.close
         # print(turb_force['ft'].shape)
         plt.figure()
-        plt.plot(turb_force['moment_flap'][:,0,0,0])
+        print(turb_force['inflow'].shape)
+        plt.plot(turb_force['inflow'][:,0,0,0])
+
+        # plt.plot(turb_force['moment_flap'][:,0,0,0])
         # plt.plot(turb_force['moment_edge'][:,0,0,0])
         plt.savefig('test.png')
         # displacement_flap = turb_force['displacement_flap']

@@ -176,6 +176,7 @@ def get_turb(src_out_path, config):
     turb['velocity_flap']  = fctlib.load_4d('blade_velocity_flap', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
     turb['velocity_edge']  = fctlib.load_4d('blade_velocity_edge', int((config['nsteps']-1)/(config['turb_count']))+1,3,32,config['turb_nb'], config['double_flag'], src_out_path)
     turb['phase']  = fctlib.load_4d('phase_angle', int((config['nsteps']-1)/(config['turb_count']))+1,1,3,config['turb_nb'], config['double_flag'], src_out_path)
+    turb['inflow']  = fctlib.load_4d('inflow', int((config['nsteps']-1)/(config['turb_count']))+1,1,3,config['turb_nb'], config['double_flag'], src_out_path)
     
     return turb
 

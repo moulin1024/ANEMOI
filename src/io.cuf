@@ -498,6 +498,8 @@ subroutine open_turb(me)
             form='unformatted', access='stream')
         open (unit=(82000),file=('output/phase_angle.bin'), status='unknown',&
             form='unformatted', access='stream')
+        open (unit=(83000),file=('output/inflow.bin'), status='unknown',&
+            form='unformatted', access='stream')   
         open (unit=(90000), FILE="output/ta_power.dat")  
     end if
 

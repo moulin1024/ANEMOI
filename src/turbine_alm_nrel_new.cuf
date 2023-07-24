@@ -417,8 +417,9 @@ module turbine
             real(fp),dimension(:,:),allocatable,device         :: twist_angle,chord_length
             real(fp),dimension(:,:),allocatable,device         :: turb_aerodyn,turb_geo
             real(fp), dimension(:),allocatable,device          :: radius_dat,twist_dat,chord_dat
-            real(fp),dimension(:,:),allocatable,device         :: phase_angle
-            real(fp),dimension(3,n_turb)                       :: phase_angle_host
+            real(fp),dimension(:,:),allocatable,device         :: phase_angle,inflow
+            real(fp),dimension(blade_num,n_turb)               :: phase_angle_host
+            real(fp),dimension(3,n_turb)                       :: inflow_host
             real(fp),dimension(n_r,n_turb)                     :: chord_length_test
             real(fp),dimension(:),allocatable,device           :: turb_rpm_new
             real(fp),dimension(n_turb) :: turb_rpm_host
@@ -441,7 +442,7 @@ module turbine
             tBlock_full = dim3(blade_num,n_r,1)
             grid_full   = dim3(mask_x,mask_y,nzb)
 
-            save twist_angle,chord_length,sum_ker,turb_aerodyn,turb_geo,turb_rpm_new,phase_angle,turb_aerodyn_nrel
+            save twist_angle,chord_length,sum_ker,turb_aerodyn,turb_geo,turb_rpm_new,phase_angle,inflow,turb_aerodyn_nrel
         !----------------------------------------------------------------------------
         ! code
         !----------------------------------------------------------------------------
@@ -502,6 +503,7 @@ module turbine
             allocate(twist_angle(n_r,n_turb))
             allocate(chord_length(n_r,n_turb))
             allocate(phase_angle(blade_num,n_turb))
+            allocate(inflow(3,n_turb))
 
             
             call force_compute_pre_alm<<<grid_alm1,tBlock_alm1>>>(twist_angle,chord_length,&
@@ -520,6 +522,15 @@ module turbine
         phase_angle_host = phase_angle
         write (82000) phase_angle_host
 
+        !$cuf kernel do(1) <<<*,*>>>
+        do i_turb = 1,n_turb
+            inflow(1,i_turb) = u(int((turb_loc(i_turb,1)-2*turb_r(i_turb))/dx),int(turb_loc(i_turb,2)/dy),int(turb_loc(i_turb,3)/dz))
+            inflow(2,i_turb) = v(int((turb_loc(i_turb,1)-2*turb_r(i_turb))/dx),int(turb_loc(i_turb,2)/dy),int(turb_loc(i_turb,3)/dz))
+            inflow(3,i_turb) = w(int((turb_loc(i_turb,1)-2*turb_r(i_turb))/dx),int(turb_loc(i_turb,2)/dy),int(turb_loc(i_turb,3)/dz))
+        end do
+
+        inflow_host = inflow
+        write (83000) inflow_host
 
         call force_compute_alm<<<grid_alm,tBlock_alm>>>(CTF,power,torque,&
                                                         u,v,w,&
