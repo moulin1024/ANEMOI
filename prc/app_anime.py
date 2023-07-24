@@ -157,10 +157,10 @@ def anime(PATH, case_name):
 
             fig = figure(figsize=(8,6),dpi=100)
             # ax1 = fig.add_subplot(111)
-            plt.imshow(u[:,:,22].T,origin='lower',aspect=1/1)
+            plt.imshow(u[:,:,30].T,origin='lower',aspect=1/1,vmin=1,vmax=11)
             plt.colorbar()
             plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
-           
+            plt.close()
             # # Define the rotation angle in degrees
             # rotation_degrees = 5
 
