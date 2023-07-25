@@ -165,9 +165,19 @@ module rotation
       if (DET > EPS) then
         AINV = TRANSPOSE(COFACTOR) / DET
       else
-        print *,'Error in deformation matrix'
-        stop    
-        end if
+        print *,'Error in deformation matrix, no deformation performed.'
+        AINV(1,1) = 1._fp
+        AINV(1,2) = 0._fp
+        AINV(1,3) = 0._fp
+        
+        AINV(2,1) = 0._fp
+        AINV(2,2) = 1._fp
+        AINV(2,3) = 0._fp
+
+        AINV(3,1) = 0._fp
+        AINV(3,2) = 0._fp
+        AINV(3,3) = 1._fp    
+      end if
       RETURN
 
       END SUBROUTINE M33INV
