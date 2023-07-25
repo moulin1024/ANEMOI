@@ -157,7 +157,7 @@ def anime(PATH, case_name):
 
             fig = figure(figsize=(8,6),dpi=100)
             # ax1 = fig.add_subplot(111)
-            plt.imshow(u[128,:,:].T,origin='lower',aspect=1/2,vmin=1,vmax=11)
+            plt.imshow(u[:,128,:].T,origin='lower',aspect=1/2,vmin=2,vmax=12)
             plt.colorbar()
             plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
             plt.close()
@@ -240,8 +240,8 @@ def anime(PATH, case_name):
         f.close
         # print(turb_force['ft'].shape)
         plt.figure()
-        print(turb_force['inflow'].shape)
-        plt.plot(turb_force['inflow'][:,0,0,0])
+        # print(turb_force['inflow'].shape)
+        plt.plot(turb_force['moment_flap'][:,0,0,0])
 
         # plt.plot(turb_force['moment_flap'][:,0,0,0])
         # plt.plot(turb_force['moment_edge'][:,0,0,0])

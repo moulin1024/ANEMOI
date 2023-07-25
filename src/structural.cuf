@@ -217,7 +217,7 @@ module structural
             do i = 2, N+1
                 do j = 1,2
                     ! damping_coefficent = 2*0.0047*2*3.1416*0.69
-                    V_new(i,j) = (1-2*0.0047*2*3.1416*1.0*delta_t)*V_old(i,j) + &
+                    V_new(i,j) = (1-2*0.0047*2*3.1416*0.69*delta_t)*V_old(i,j) + &
                         delta_t*((-1.0/rho(i))*((M_old(i+1,j)-(2.0*M_old(i,j))+M_old(i-1,j))/delta_r**2)+&
                         ((1.0/rho(i))*((S_old(i+1,j)-S_old(i,j))/delta_r))+(F_a(i,j)/rho(i))+g(j))
                 end do
