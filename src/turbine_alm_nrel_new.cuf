@@ -105,6 +105,7 @@ module turbine
             call nacelle(fx,fy,fz,CTUin,u,v,w,turb_loc,t)
             ! call controller_lambda(turb_rpm,CTUin,u,turb_loc,t)
             call controller_adaptive(turb_rpm,CTUin,u,turb_loc,torque,t)
+            ! turb_rpm = 10._fp
             torque = 0._fp
             call almyaw(fx,fy,fz,CTF,power,torque,u,v,w,turb_loc,turb_rpm,deformation,velocity,t,me,nall)
             
@@ -183,8 +184,8 @@ module turbine
             
             real(fp) :: tmp3
             integer istat
-            real(fp),parameter :: sigma_x  = 2*tow_r(1)
-            real(fp),parameter :: sigma_y  = 2*tow_r(1)
+            real(fp),parameter :: sigma_x  = dx!tow_r(1)
+            real(fp),parameter :: sigma_y  = dx!tow_r(1)
             real(fp),parameter :: tmp1  = 1._fp/(sigma_x*sigma_y*pi)
             integer,parameter :: i0 = nint(2.0*turb_r(1)/dx)
             integer,parameter :: i1 = nint(1/6*turb_r(1)/dx)
@@ -313,8 +314,8 @@ module turbine
         
         real(fp) :: tmp3
         integer istat
-        real(fp),parameter :: sigma_x  = 2*nac_r(1)
-        real(fp),parameter :: sigma_yz = 2*nac_r(1)
+        real(fp),parameter :: sigma_x  = dx!nac_r(1)
+        real(fp),parameter :: sigma_yz = dx!nac_r(1)
         real(fp),parameter :: tmp1  = 1.d0/(sigma_yz**2*sigma_x*dsqrt(pi)**3)
         integer,parameter :: i1 = nint(2.0*turb_r(1)/dx)
     !----------------------------------------------------------------------------
@@ -753,8 +754,8 @@ module turbine
                 mu_z = mu(3)
                 ! Apply gaussian smoothing kernel
                 
-                sigma_x  = 2*dx!chord_length(i_r,i_turb)
-                sigma_yz = 2*dx!chord_length(i_r,i_turb)
+                sigma_x  = 2*chord_length(i_r,i_turb)
+                sigma_yz = 2*chord_length(i_r,i_turb)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp
@@ -829,8 +830,8 @@ module turbine
                 coord_z_w = coord_z_u - 0.5*dz
 
                 ! Apply gaussian smoothing kernel
-                sigma_x  = 2*dx!chord_length(i_r,i_turb)
-                sigma_yz = 2*dx!chord_length(i_r,i_turb)
+                sigma_x  = 2*chord_length(i_r,i_turb)
+                sigma_yz = 2*chord_length(i_r,i_turb)
 
                 tmp1   = 1._fp/(sigma_yz**2*sigma_x*sqrt(pi)**3)
                 tmp2   = -1._fp

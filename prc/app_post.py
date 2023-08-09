@@ -440,6 +440,7 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     plt.grid(b=True, which='both')
 
     hub_k = int(config['turb_z']/config['dz'])-1
+    print(hub_k)
     print(result_pr['u_avg_c'][hub_k])
 
     ax = plt.subplot(232)
