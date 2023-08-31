@@ -18,3 +18,4 @@ job/*
 check.sh
 *.ipynb
 prc/app_anime.py
+src-test

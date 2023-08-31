@@ -432,7 +432,7 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     plt.subplots_adjust(hspace=0.2)
 
     ax = plt.subplot(231)
-    plt.plot(result_pr['u_avg_c']/config['u_fric'], space['z_c']/config['l_z'], 'k')
+    plt.semilogy(result_pr['u_avg_c']/config['u_fric'], space['z_c']/config['l_z'], 'k.')
     plt.xlabel(r'$\bar{u}/u_*$')
     plt.ylabel(r'$z/H$')
     ax.xaxis.set_major_locator(plt.MaxNLocator(3))

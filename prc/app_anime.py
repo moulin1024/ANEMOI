@@ -157,7 +157,7 @@ def anime(PATH, case_name):
 
             fig = figure(figsize=(8,6),dpi=100)
             # ax1 = fig.add_subplot(111)
-            plt.imshow(u[:,:,15].T,origin='lower',aspect=1/1)
+            plt.imshow(u[config['nx']//2,:,:].T,origin='lower',aspect=1/4)
             plt.colorbar()
             plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
             plt.close()
