@@ -431,7 +431,7 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     plt.ylabel(r'$z/H$')
     ax.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax.yaxis.set_major_locator(plt.MaxNLocator(4))
-    plt.grid(b=True, which='both')
+    #plt.grid(b=True, which='both')
 
     ax = plt.subplot(232)
     plt.plot(result_pr['v_avg_c']/config['u_fric'], space['z_c']/config['l_z'], 'g')
@@ -439,7 +439,7 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     plt.setp(ax.get_yticklabels(), visible=False)
     ax.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax.yaxis.set_major_locator(plt.MaxNLocator(4))
-    plt.grid(b=True, which='both')
+    #plt.grid(b=True, which='both')
 
     ax = plt.subplot(233)
     plt.plot(result_pr['w_avg_n']/config['u_fric'], space['z_n']/config['l_z'], 'b')
@@ -447,7 +447,7 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     plt.setp(ax.get_yticklabels(), visible=False)
     ax.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax.yaxis.set_major_locator(plt.MaxNLocator(4))
-    plt.grid(b=True, which='both')
+    #plt.grid(b=True, which='both')
 
     ax = plt.subplot(234)
     plt.plot(result_pr['u_std_c']/config['u_fric']**2, space['z_c']/config['l_z'], 'k')
@@ -455,7 +455,7 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     plt.ylabel(r'$z/H$')
     ax.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax.yaxis.set_major_locator(plt.MaxNLocator(4))
-    plt.grid(b=True, which='both')
+    #plt.grid(b=True, which='both')
 
     ax = plt.subplot(235)
     plt.plot(result_pr['v_std_c']/config['u_fric']**2, space['z_c']/config['l_z'], 'g')
@@ -463,7 +463,7 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     plt.setp(ax.get_yticklabels(), visible=False)
     ax.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax.yaxis.set_major_locator(plt.MaxNLocator(4))
-    plt.grid(b=True, which='both')
+    #plt.grid(b=True, which='both')
 
     ax = plt.subplot(236)
     plt.plot(result_pr['w_std_n']/config['u_fric']**2, space['z_n']/config['l_z'], 'b')
@@ -471,7 +471,7 @@ def plot_pr_uvw(space, result_pr, config, out_path):
     plt.setp(ax.get_yticklabels(), visible=False)
     ax.xaxis.set_major_locator(plt.MaxNLocator(3))
     ax.yaxis.set_major_locator(plt.MaxNLocator(4))
-    plt.grid(b=True, which='both')
+    #plt.grid(b=True, which='both')
 
     plt.subplots_adjust(wspace=0.4)
 
