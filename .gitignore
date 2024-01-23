@@ -19,3 +19,5 @@ check.sh
 *.ipynb
 prc/app_anime.py
 src-test
+prc/*
+unit_test

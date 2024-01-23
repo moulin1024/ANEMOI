@@ -141,26 +141,64 @@ def anime(PATH, case_name):
         # f.close
         t_count = (config['nsteps']-config['ts_tstart'])//100
         # q_data = np.zeros([t_count,config['nx'],config['ny'],config['nz']-1])
-        velo_data = np.zeros([t_count,config['nx'],config['ny'],3])
+        velo_data = np.zeros([t_count,config['nx'],config['ny'],32,3])
         for i in range(t_count):
             # print(i)
             # qcrit = fctlib.load_3d(str(i).zfill(4)+'_ts_slice_u', config['nx'],  config['ny'], config['double_flag'], src_out_path)
-            u = fctlib.load_3d(str(i).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-            v = fctlib.load_3d(str(i).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
-            w = fctlib.load_3d(str(i).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['nz'], config['double_flag'], src_out_path)[:,:,:-1]
+            u = fctlib.load_3d(str(i).zfill(3)+'_ts_u', config['nx'],  config['ny'],  config['ts_kend'], config['double_flag'], src_out_path)[:,:,:-1]
+            v = fctlib.load_3d(str(i).zfill(3)+'_ts_v', config['nx'],  config['ny'],  config['ts_kend'], config['double_flag'], src_out_path)[:,:,:-1]
+            w = fctlib.load_3d(str(i).zfill(3)+'_ts_w', config['nx'],  config['ny'],  config['ts_kend'], config['double_flag'], src_out_path)[:,:,:-1]
 
-            velo_data[i,:,:,0] = np.flip(u[:,:,int(config['lz']/config['nz'])],axis=0)
-            velo_data[i,:,:,1] = np.flip(v[:,:,int(config['lz']/config['nz'])],axis=0)
-            velo_data[i,:,:,2] = np.flip(w[:,:,int(config['lz']/config['nz'])],axis=0)
+            velo_data[i,:,:,:,0] = np.flip(u[:,:,:32],axis=0)
+            velo_data[i,:,:,:,1] = np.flip(v[:,:,:32],axis=0)
+            velo_data[i,:,:,:,2] = np.flip(w[:,:,:32],axis=0)
             
             print(i)
 
-            fig = figure(figsize=(8,6),dpi=100)
-            # ax1 = fig.add_subplot(111)
-            plt.imshow(u[config['nx']//2,:,:].T,origin='lower',aspect=1/4)
-            plt.colorbar()
+            fig = figure(figsize=(8,8),dpi=100)
+            ax1 = fig.add_subplot(311)
+            plot = ax1.imshow(u[:,config['ny']//2,:].T-9,origin='lower',aspect=(config['lz']/config['nz'])/(config['lx']/config['nx']),cmap='bwr',vmin=-7,vmax=7)
+            fig.colorbar(plot,ax=ax1)
+            # ax1.colorbar()
+
+            ax2 = fig.add_subplot(312)
+            plot=ax2.imshow(v[:,config['ny']//2,:].T,origin='lower',aspect=(config['lz']/config['nz'])/(config['lx']/config['nx']),cmap='bwr',vmin=-3,vmax=3)
+            fig.colorbar(plot,ax=ax2)
+            
+            # ax2.colorbar()
+            
+            ax3 = fig.add_subplot(313)
+            ax3.imshow(w[:,config['ny']//2,:].T,origin='lower',aspect=(config['lz']/config['nz'])/(config['lx']/config['nx']),cmap='bwr',vmin=-3,vmax=3)
+            fig.colorbar(plot,ax=ax3)
+            
+            # ax2.colorbar()
+            
             plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xz.png')
             plt.close()
+
+            fig = figure(figsize=(8,8),dpi=100)
+            ax1 = fig.add_subplot(311)
+            ax1.imshow(u[:,:,8].T-9,origin='lower',aspect=(config['ly']/config['ny'])/(config['lx']/config['nx']),cmap='bwr',vmin=-7,vmax=7)
+            # ax1.colorbar()
+            
+            ax2 = fig.add_subplot(312)
+            ax2.imshow(v[:,:,8].T,origin='lower',aspect=(config['ly']/config['ny'])/(config['lx']/config['nx']),cmap='bwr',vmin=-3,vmax=3)
+            # ax2.colorbar()
+            
+            ax2 = fig.add_subplot(313)
+            ax2.imshow(w[:,:,8].T,origin='lower',aspect=(config['ly']/config['ny'])/(config['lx']/config['nx']),cmap='bwr',vmin=-3,vmax=3)
+            # ax2.colorbar()
+            
+            plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xy.png')
+            plt.close()
+
+
+            # fig = figure(figsize=(8,6),dpi=100)
+            # # ax1 = fig.add_subplot(111)
+            # plt.imshow(u[:,:,23].T,origin='lower',aspect=(config['lx']/config['nx'])/(config['ly']/config['ny']))
+            # plt.colorbar()
+            # plt.savefig(out_path+'/'+str(i).zfill(3)+'_flowfield_xy.png')
+            # plt.close()
             # # Define the rotation angle in degrees
             # rotation_degrees = 5
 
@@ -203,12 +241,12 @@ def anime(PATH, case_name):
             # plt.close()
 
         # f.create_dataset('q_criterion',data=q_data)
-        # f.create_dataset('hub_height_velocity',data=velo_data)
+        f.create_dataset('hub_height_velocity',data=velo_data)
         
         # f.close
         
 
-    if config['turb_flag'] > 0:
+    if config['turb_flag'] > 10:
         turb_loc = pd.read_csv(case_path+"/input/turb_loc.dat")
         f = h5py.File(out_path+'/'+case_name+'_force.h5','w')
         for key, value in config.items():
